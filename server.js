@@ -710,6 +710,7 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
 
     // 2. Call action=createaccount API
     let creationData;
+    const returnUrl = req.protocol + '://' + req.get('host') + '/';
     try {
       creationData = await postWikiAPI(targetWiki, {
         action: 'createaccount',
@@ -718,6 +719,7 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
         mailpassword: 'true',
         reason: summaryReason,
         createtoken: createToken,
+        createreturnurl: returnUrl,
         format: 'json',
         formatversion: '2'
       }, req.session.accessToken);
