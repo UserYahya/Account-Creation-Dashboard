@@ -355,14 +355,27 @@
 
                 const letter = req.username ? req.username.trim().charAt(0).toUpperCase() : 'U';
 
+                let errorHtml = '';
+                if (req.error_message) {
+                    errorHtml = `
+                        <div class="mt-xs text-error font-body-md text-xs flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-[14px]">error</span>
+                            <span class="truncate max-w-[200px]" title="${escapeHTML(req.error_message)}">ত্রুটি: ${escapeHTML(req.error_message)}</span>
+                        </div>
+                    `;
+                }
+
                 return `
                     <tr id="req-row-${req.id}" class="hover:bg-surface-container transition-colors group">
                         <td class="px-lg py-md">
                             <div class="flex items-center gap-sm">
-                                <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold">
+                                <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold shrink-0">
                                     ${letter}
                                 </div>
-                                <span class="font-body-md text-body-md font-medium text-on-surface font-bold">${req.username}</span>
+                                <div>
+                                    <span class="font-body-md text-body-md font-medium text-on-surface font-bold block">${req.username}</span>
+                                    ${errorHtml}
+                                </div>
                             </div>
                         </td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${req.email}</td>
@@ -458,6 +471,16 @@
                 declineBtn.disabled = false;
                 declineBtn.style.opacity = "1";
             });
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         searchInput.addEventListener('input', (e) => {

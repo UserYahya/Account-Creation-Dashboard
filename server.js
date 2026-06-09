@@ -449,10 +449,12 @@ app.get('/admin/settings', isAdmin, async (req, res) => {
   const regActive = await db.get("SELECT value FROM settings WHERE key = 'registration_active'");
   const workshopUrl = await db.get("SELECT value FROM settings WHERE key = 'workshop_url'");
   const addInstructions = await db.get("SELECT value FROM settings WHERE key = 'additional_instructions'");
+  const welcomeMessage = await db.get("SELECT value FROM settings WHERE key = 'welcome_message'");
   
   const regActiveVal = regActive && regActive.value === '1' ? 'true' : 'false';
   const wUrl = workshopUrl ? workshopUrl.value : 'https://bn.wikipedia.org';
   const instructionsText = addInstructions ? addInstructions.value : '';
+  const welcomeText = welcomeMessage ? welcomeMessage.value : '';
 
   res.send(renderView('event_settings.html', {
     ADMIN_USERNAME: req.session.username,
@@ -460,7 +462,8 @@ app.get('/admin/settings', isAdmin, async (req, res) => {
     EVENT_NAME: eventName ? eventName.value : '',
     REG_ACTIVE_VAL: regActiveVal,
     WORKSHOP_URL: wUrl,
-    ADDITIONAL_INSTRUCTIONS: instructionsText
+    ADDITIONAL_INSTRUCTIONS: instructionsText,
+    WELCOME_MESSAGE: welcomeText
   }, req));
 });
 
@@ -488,7 +491,7 @@ app.get('/api/requests', isAdmin, async (req, res) => {
 
 // Save global settings
 app.post('/api/settings', isAdmin, async (req, res) => {
-  const { event_name, registration_active, workshop_url, additional_instructions } = req.body;
+  const { event_name, registration_active, workshop_url, additional_instructions, welcome_message } = req.body;
   if (!event_name) {
     return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
   }
@@ -499,6 +502,7 @@ app.post('/api/settings', isAdmin, async (req, res) => {
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('registration_active', ?)", String(registration_active));
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", workshop_url || 'https://bn.wikipedia.org');
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('additional_instructions', ?)", additional_instructions || '');
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('welcome_message', ?)", welcome_message || '');
     
     res.json({ success: true });
   } catch (err) {
@@ -657,6 +661,18 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
         requestId
       );
       
+      // --- EDIT/POST MOCK WELCOME MESSAGE ON TALK PAGE ---
+      try {
+        const welcomeMessageSetting = await db.get("SELECT value FROM settings WHERE key = 'welcome_message'");
+        let welcomeText = welcomeMessageSetting ? welcomeMessageSetting.value : '';
+        if (welcomeText.trim()) {
+          welcomeText = welcomeText.replaceAll('{{username}}', request.username);
+          console.log(`[MOCK MODE] Posted welcome message on "User talk:${request.username}":\n${welcomeText}`);
+        }
+      } catch (welcomeErr) {
+        console.error("Mock welcome message error:", welcomeErr);
+      }
+      
       return res.json({ success: true, username: request.username });
     }
 
@@ -713,6 +729,52 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
         requestId
       );
       console.log(`Account "${request.username}" successfully created on "${targetWiki}".`);
+      
+      // --- EDIT/POST WELCOME MESSAGE ON TALK PAGE ---
+      try {
+        const welcomeMessageSetting = await db.get("SELECT value FROM settings WHERE key = 'welcome_message'");
+        let welcomeText = welcomeMessageSetting ? welcomeMessageSetting.value : '';
+        
+        if (welcomeText.trim()) {
+          welcomeText = welcomeText.replaceAll('{{username}}', request.username);
+          
+          console.log(`Posting welcome message to "User talk:${request.username}" on "${targetWiki}"`);
+          
+          // 1. Fetch edit token (csrf)
+          const tokenData = await queryWikiAPI(targetWiki, {
+            action: 'query',
+            meta: 'tokens',
+            type: 'csrf',
+            format: 'json',
+            formatversion: '2'
+          }, req.session.accessToken);
+          
+          const csrfToken = tokenData.query && tokenData.query.tokens && tokenData.query.tokens.csrftoken;
+          if (csrfToken) {
+            // 2. Post edit to User talk page
+            const editResult = await postWikiAPI(targetWiki, {
+              action: 'edit',
+              title: `User talk:${request.username}`,
+              text: welcomeText,
+              summary: 'নতুন ব্যবহারকারীকে স্বাগত জানানো হলো (অ্যাকাউন্ট তৈরির ড্যাশবোর্ড)',
+              token: csrfToken,
+              format: 'json',
+              formatversion: '2'
+            }, req.session.accessToken);
+            
+            if (editResult.edit && editResult.edit.result === 'Success') {
+              console.log(`Successfully posted welcome message to "User talk:${request.username}" on "${targetWiki}".`);
+            } else {
+              console.warn(`Failed to post welcome message:`, editResult);
+            }
+          } else {
+            console.warn("Failed to retrieve csrf token for posting welcome message.");
+          }
+        }
+      } catch (welcomeErr) {
+        console.error("Error posting welcome message to talk page:", welcomeErr);
+      }
+      
       res.json({ success: true, username: request.username });
     } else {
       // Failed account creation

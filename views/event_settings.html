@@ -219,6 +219,12 @@
                             <textarea class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="additional_instructions" rows="4" placeholder="প্রতি লাইনে একটি করে অতিরিক্ত নির্দেশনা লিখুন যা ব্যবহারকারীরা রেজিস্ট্রেশন পাতায় দেখতে পাবেন।">{{ADDITIONAL_INSTRUCTIONS}}</textarea>
                             <p class="mt-xs font-label-md text-label-md text-on-surface-variant">প্রতিটি লাইন আলাদা নির্দেশনা হিসেবে প্রদর্শিত হবে।</p>
                         </div>
+                        <!-- Welcome Message Field -->
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="welcome_message">স্বাগত বার্তা (অ্যাকাউন্ট তৈরির পর আলাপ পাতায় পোস্ট করা হবে)</label>
+                            <textarea class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" id="welcome_message" rows="4" placeholder="যেমন: == উইকিপিডিয়ায় স্বাগত ==\nপ্রিয় {{username}}, স্বাগতম! -- ~~~~">{{WELCOME_MESSAGE}}</textarea>
+                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">নিবন্ধনকারী ব্যবহারকারীর নাম বোঝাতে <code>{{username}}</code> ব্যবহার করুন। এটি স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে।</p>
+                        </div>
                         <!-- Registration Toggle -->
                         <div class="flex items-center justify-between py-md border-t border-outline-variant">
                             <div>
@@ -357,6 +363,7 @@
         const dotIndicator = document.getElementById('statusIndicatorDot');
         const eventNameInput = document.getElementById('event_name');
         const additionalInstructionsInput = document.getElementById('additional_instructions');
+        const welcomeMessageInput = document.getElementById('welcome_message');
         const saveBtn = document.getElementById('saveBtn');
 
         const toastEl = document.getElementById('settingsToast');
@@ -422,6 +429,7 @@
             const workshopUrlInput = document.getElementById('workshop_url');
             const workshopUrl = workshopUrlInput.value.trim();
             const additionalInstructions = additionalInstructionsInput.value.trim();
+            const welcomeMessage = welcomeMessageInput.value.trim();
             
             if (!eventName) {
                 showToast("ইভেন্টের নাম খালি রাখা যাবে না।", "error");
@@ -440,7 +448,8 @@
                     event_name: eventName,
                     registration_active: isRegisteredActive ? 1 : 0,
                     workshop_url: workshopUrl,
-                    additional_instructions: additionalInstructions
+                    additional_instructions: additionalInstructions,
+                    welcome_message: welcomeMessage
                 })
             })
             .then(res => res.json())

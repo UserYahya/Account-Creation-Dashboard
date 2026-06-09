@@ -61,6 +61,11 @@ async function getDatabase() {
     await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', 'additional_instructions', '');
   }
 
+  const welcomeMessage = await db.get('SELECT value FROM settings WHERE key = ?', 'welcome_message');
+  if (!welcomeMessage) {
+    await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', 'welcome_message', '== উইকিপিডিয়ায় আপনাকে স্বাগত! ==\nপ্রিয় {{username}}, উইকিপিডিয়ায় আপনাকে স্বাগত। আপনার উইকিপিডিয়া যাত্রা শুভ হোক! -- ~~~~');
+  }
+
   // Migrate active event to events table if empty
   const eventsCount = await db.get('SELECT COUNT(*) as count FROM events');
   if (eventsCount.count === 0) {
