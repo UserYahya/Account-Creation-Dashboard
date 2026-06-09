@@ -670,10 +670,20 @@
                             ? `<td class="p-md text-on-surface-variant font-mono text-sm">${escapeHTML(req.email)}</td>`
                             : '';
 
+                        let userSubText = '';
+                        if (req.decision_reason) {
+                            userSubText = `<div class="text-[11px] text-on-surface-variant font-normal mt-xs bg-surface-container-low p-xs rounded border border-outline-variant max-w-[200px] break-words">মন্তব্য: ${escapeHTML(req.decision_reason)}</div>`;
+                        } else if (req.error_message) {
+                            userSubText = `<div class="text-[11px] text-error font-normal mt-xs bg-error-container/20 p-xs rounded border border-error max-w-[200px] break-words">ত্রুটি: ${escapeHTML(req.error_message)}</div>`;
+                        }
+
                         return `
                             <tr class="hover:bg-surface-container-lowest transition-colors">
                                 <td class="p-md text-center text-on-surface-variant font-bold">${req.id}</td>
-                                <td class="p-md font-bold text-on-surface">${escapeHTML(req.username)}</td>
+                                <td class="p-md font-bold text-on-surface">
+                                    <span>${escapeHTML(req.username)}</span>
+                                    ${userSubText}
+                                </td>
                                 ${emailTd}
                                 <td class="p-md text-center">${statusBadge}</td>
                                 <td class="p-md text-on-surface-variant text-sm">${formattedReq}</td>

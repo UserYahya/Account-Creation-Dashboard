@@ -29,7 +29,8 @@ async function getDatabase() {
       decided_by TEXT,
       decided_at DATETIME,
       error_message TEXT,
-      event_name TEXT
+      event_name TEXT,
+      decision_reason TEXT
     );
 
     CREATE TABLE IF NOT EXISTS events (
@@ -39,6 +40,14 @@ async function getDatabase() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Try to alter table to add decision_reason if migrating existing database
+  try {
+    await db.exec('ALTER TABLE requests ADD COLUMN decision_reason TEXT');
+  } catch (e) {
+    // Column already exists, safe to ignore
+  }
+
 
   // Insert default settings if they don't exist
   const eventName = await db.get('SELECT value FROM settings WHERE key = ?', 'event_name');

@@ -382,8 +382,8 @@
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${date}</td>
                         <td class="px-lg py-md text-right">
                             <div class="flex justify-end gap-sm">
-                                <button id="approve-btn-${req.id}" onclick="approveRequest(${req.id})" class="px-md py-xs bg-primary text-on-primary rounded-lg font-label-md text-label-md font-bold hover:bg-primary-container hover:text-on-primary-container transition-all active:scale-95">তৈরি করুন</button>
-                                <button id="decline-btn-${req.id}" onclick="declineRequest(${req.id})" class="px-md py-xs border border-error text-error rounded-lg font-label-md text-label-md font-medium hover:bg-error-container hover:text-on-error-container transition-all active:scale-95">বাতিল করুন</button>
+                                <button id="approve-btn-${req.id}" onclick="openReasonModal(${req.id}, 'approve')" class="px-md py-xs bg-primary text-on-primary rounded-lg font-label-md text-label-md font-bold hover:bg-primary-container hover:text-on-primary-container transition-all active:scale-95">তৈরি করুন</button>
+                                <button id="decline-btn-${req.id}" onclick="openReasonModal(${req.id}, 'decline')" class="px-md py-xs border border-error text-error rounded-lg font-label-md text-label-md font-medium hover:bg-error-container hover:text-on-error-container transition-all active:scale-95">বাতিল করুন</button>
                             </div>
                         </td>
                     </tr>
@@ -391,7 +391,69 @@
             }).join('');
         }
 
-        function approveRequest(id) {
+        let currentActionId = null;
+        let currentActionType = null; // 'approve' or 'decline'
+
+        const reasonModal = document.getElementById('reasonModal');
+        const reasonModalContainer = document.getElementById('reasonModalContainer');
+        const reasonModalTitle = document.getElementById('reasonModalTitle');
+        const reasonInput = document.getElementById('reasonInput');
+        const reasonModalSubmitBtn = document.getElementById('reasonModalSubmitBtn');
+
+        function openReasonModal(id, type) {
+            currentActionId = id;
+            currentActionType = type;
+            reasonInput.value = '';
+            
+            if (type === 'approve') {
+                reasonModalTitle.innerText = "অ্যাকাউন্ট অনুমোদন (ঐচ্ছিক মন্তব্য)";
+                reasonModalSubmitBtn.className = "px-md py-xs bg-primary text-on-primary rounded-lg font-label-md text-label-md font-bold hover:bg-primary-container hover:text-on-primary-container transition-all active:scale-95";
+                reasonModalSubmitBtn.innerText = "অনুমোদন ও তৈরি করুন";
+            } else {
+                reasonModalTitle.innerText = "আবেদন বাতিল (ঐচ্ছিক মন্তব্য)";
+                reasonModalSubmitBtn.className = "px-md py-xs bg-error text-on-error rounded-lg font-label-md text-label-md font-bold hover:bg-error/80 transition-all active:scale-95";
+                reasonModalSubmitBtn.innerText = "বাতিল নিশ্চিত করুন";
+            }
+
+            reasonModal.classList.remove('hidden');
+            reasonModal.classList.add('flex');
+            setTimeout(() => {
+                reasonModalContainer.classList.remove('scale-95');
+                reasonModalContainer.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeReasonModal() {
+            reasonModalContainer.classList.remove('scale-100');
+            reasonModalContainer.classList.add('scale-95');
+            setTimeout(() => {
+                reasonModal.classList.add('hidden');
+                reasonModal.classList.remove('flex');
+            }, 150);
+        }
+
+        function submitReasonAction() {
+            const id = currentActionId;
+            const type = currentActionType;
+            const reason = reasonInput.value.trim();
+            
+            closeReasonModal();
+            
+            if (type === 'approve') {
+                approveRequest(id, reason);
+            } else {
+                declineRequest(id, reason);
+            }
+        }
+
+        // Close modal when clicking outside container
+        reasonModal.addEventListener('click', (e) => {
+            if (e.target === reasonModal) {
+                closeReasonModal();
+            }
+        });
+
+        function approveRequest(id, reason = '') {
             const approveBtn = document.getElementById(`approve-btn-${id}`);
             const declineBtn = document.getElementById(`decline-btn-${id}`);
             
@@ -401,7 +463,11 @@
             approveBtn.style.opacity = "0.7";
 
             fetch(`/api/requests/${id}/approve`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason })
             })
             .then(res => res.json())
             .then(data => {
@@ -432,7 +498,7 @@
             });
         }
 
-        function declineRequest(id) {
+        function declineRequest(id, reason = '') {
             const approveBtn = document.getElementById(`approve-btn-${id}`);
             const declineBtn = document.getElementById(`decline-btn-${id}`);
             
@@ -442,7 +508,11 @@
             declineBtn.style.opacity = "0.7";
 
             fetch(`/api/requests/${id}/decline`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason })
             })
             .then(res => res.json())
             .then(data => {
@@ -490,5 +560,30 @@
         // Initialize table
         document.addEventListener('DOMContentLoaded', loadRequests);
     </script>
+
+    <!-- Reason Dialog Modal -->
+    <div id="reasonModal" class="fixed inset-0 bg-outline/40 backdrop-blur-sm hidden items-center justify-center z-50 p-md transition-all duration-300">
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl w-full max-w-md shadow-xl overflow-hidden transform scale-95 transition-all duration-300" id="reasonModalContainer">
+            <!-- Header -->
+            <div class="p-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold" id="reasonModalTitle">সিদ্ধান্তের বিবরণ</h3>
+                <button onclick="closeReasonModal()" class="text-on-surface-variant hover:text-error hover:bg-error-container/20 p-xs rounded-lg transition-colors flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[24px]">close</span>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="p-md space-y-md">
+                <div>
+                    <label for="reasonInput" class="block font-label-md text-label-md text-on-surface-variant font-bold mb-xs">মন্তব্য বা কারণ (ঐচ্ছিক)</label>
+                    <textarea id="reasonInput" rows="3" class="w-full bg-surface border border-outline-variant rounded-lg p-sm text-body-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all resize-none" placeholder="কোনো কারণ বা মন্তব্য থাকলে লিখুন..."></textarea>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="p-md border-t border-outline-variant bg-surface-container-low flex justify-end gap-sm">
+                <button onclick="closeReasonModal()" class="px-md py-xs border border-outline text-on-surface-variant rounded-lg font-label-md text-label-md font-medium hover:bg-surface-container-high transition-all">বাতিল</button>
+                <button id="reasonModalSubmitBtn" onclick="submitReasonAction()" class="px-md py-xs text-on-primary rounded-lg font-label-md text-label-md font-bold transition-all active:scale-95">নিশ্চিত করুন</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

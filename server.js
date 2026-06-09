@@ -584,7 +584,7 @@ app.get('/api/admin/download-log', isAdmin, async (req, res) => {
     const requests = await db.all('SELECT * FROM requests ORDER BY requested_at DESC');
     
     // Create CSV header (UTF-8 signature BOM first to preserve Bengali characters in Excel)
-    let csvContent = '\uFEFFID,Username,Email,Status,Event Name,Requested At,Decided By,Decided At,Error Message\n';
+    let csvContent = '\uFEFFID,Username,Email,Status,Event Name,Requested At,Decided By,Decided At,Error Message,Decision Reason\n';
     
     // Helper to escape CSV values
     const escapeCSV = (val) => {
@@ -598,8 +598,9 @@ app.get('/api/admin/download-log', isAdmin, async (req, res) => {
 
     // Populate rows
     requests.forEach(r => {
-      csvContent += `${r.id},${escapeCSV(r.username)},${escapeCSV(r.email)},${escapeCSV(r.status)},${escapeCSV(r.event_name)},${escapeCSV(r.requested_at)},${escapeCSV(r.decided_by)},${escapeCSV(r.decided_at)},${escapeCSV(r.error_message)}\n`;
+      csvContent += `${r.id},${escapeCSV(r.username)},${escapeCSV(r.email)},${escapeCSV(r.status)},${escapeCSV(r.event_name)},${escapeCSV(r.requested_at)},${escapeCSV(r.decided_by)},${escapeCSV(r.decided_at)},${escapeCSV(r.error_message)},${escapeCSV(r.decision_reason)}\n`;
     });
+
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=wikimedia_outreach_requests_log.csv');
@@ -613,11 +614,13 @@ app.get('/api/admin/download-log', isAdmin, async (req, res) => {
 // Decline request
 app.post('/api/requests/:id/decline', isAdmin, async (req, res) => {
   const requestId = req.params.id;
+  const { reason } = req.body || {};
   try {
     const db = await getDatabase();
     await db.run(
-      "UPDATE requests SET status = 'declined', decided_by = ?, decided_at = CURRENT_TIMESTAMP WHERE id = ?",
+      "UPDATE requests SET status = 'declined', decided_by = ?, decided_at = CURRENT_TIMESTAMP, decision_reason = ? WHERE id = ?",
       req.session.username,
+      reason ? reason.trim() : null,
       requestId
     );
     res.json({ success: true });
@@ -629,6 +632,8 @@ app.post('/api/requests/:id/decline', isAdmin, async (req, res) => {
 // Approve and create account on the target wiki
 app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
   const requestId = req.params.id;
+  const { reason } = req.body || {};
+
   
   try {
     const db = await getDatabase();
@@ -646,7 +651,10 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
     // Determine target wiki based on the admin's rights
     const targetWiki = req.session.adminWiki || 'bn.wikipedia.org';
     const eventName = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
-    const summaryReason = `${eventName ? eventName.value : 'ইভেন্ট'}-এর অংশগ্রহণকারীর জন্য অ্যাকাউন্ট তৈরি করা হলো।`;
+    let summaryReason = `${eventName ? eventName.value : 'ইভেন্ট'}-এর অংশগ্রহণকারীর জন্য অ্যাকাউন্ট তৈরি করা হলো।`;
+    if (reason && reason.trim()) {
+      summaryReason += ` (${reason.trim()})`;
+    }
 
     console.log(`Creating account "${request.username}" on "${targetWiki}" by admin "${req.session.username}"`);
 
@@ -656,19 +664,20 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
       
       // Update database status
       await db.run(
-        "UPDATE requests SET status = 'approved', decided_by = ?, decided_at = CURRENT_TIMESTAMP, error_message = NULL WHERE id = ?",
+        "UPDATE requests SET status = 'approved', decided_by = ?, decided_at = CURRENT_TIMESTAMP, decision_reason = ?, error_message = NULL WHERE id = ?",
         req.session.username,
+        reason ? reason.trim() : null,
         requestId
       );
       
       // --- EDIT/POST MOCK WELCOME MESSAGE ON TALK PAGE ---
       try {
-        const welcomeMessageSetting = await db.get("SELECT value FROM settings WHERE key = 'welcome_message'");
-        let welcomeText = welcomeMessageSetting ? welcomeMessageSetting.value : '';
-        if (welcomeText.trim()) {
-          welcomeText = welcomeText.replaceAll('{{username}}', request.username);
-          console.log(`[MOCK MODE] Posted welcome message on "User talk:${request.username}":\n${welcomeText}`);
-        }
+         const welcomeMessageSetting = await db.get("SELECT value FROM settings WHERE key = 'welcome_message'");
+         let welcomeText = welcomeMessageSetting ? welcomeMessageSetting.value : '';
+         if (welcomeText.trim()) {
+           welcomeText = welcomeText.replaceAll('{{username}}', request.username);
+           console.log(`[MOCK MODE] Posted welcome message on "User talk:${request.username}":\n${welcomeText}`);
+         }
       } catch (welcomeErr) {
         console.error("Mock welcome message error:", welcomeErr);
       }
@@ -693,6 +702,7 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
       throw new Error(`টোকেন আনতে ব্যর্থ হয়েছে: ${tokenErr.message}`);
     }
 
+
     const createToken = tokenData.query && tokenData.query.tokens && tokenData.query.tokens.createaccounttoken;
     if (!createToken) {
       throw new Error("সিস্টেম থেকে ক্রিয়েট অ্যাকাউন্ট টোকেন পাওয়া যায়নি।");
@@ -716,6 +726,13 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
       throw new Error(`অ্যাকাউন্ট তৈরির সাবমিশন ব্যর্থ হয়েছে: ${creationErr.message}`);
     }
 
+    console.log("MediaWiki createaccount API response:", JSON.stringify(creationData));
+
+    if (creationData.error) {
+      const errorMsg = creationData.error.info || creationData.error.code || JSON.stringify(creationData.error);
+      throw new Error(`মিডিয়াউইকি এপিআই ত্রুটি: ${errorMsg}`);
+    }
+
     const result = creationData.createaccount;
     if (!result) {
       throw new Error("সার্ভার থেকে কোনো বৈধ রেসপন্স পাওয়া যায়নি।");
@@ -724,11 +741,13 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
     if (result.status === 'PASS') {
       // Account created successfully! Update Database status
       await db.run(
-        "UPDATE requests SET status = 'approved', decided_by = ?, decided_at = CURRENT_TIMESTAMP, error_message = NULL WHERE id = ?",
+        "UPDATE requests SET status = 'approved', decided_by = ?, decided_at = CURRENT_TIMESTAMP, decision_reason = ?, error_message = NULL WHERE id = ?",
         req.session.username,
+        reason ? reason.trim() : null,
         requestId
       );
       console.log(`Account "${request.username}" successfully created on "${targetWiki}".`);
+
       
       // --- EDIT/POST WELCOME MESSAGE ON TALK PAGE ---
       try {
