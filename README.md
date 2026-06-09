@@ -1,6 +1,6 @@
 # Account Creation Dashboard
 
-অ্যাকাউন্ট তৈরির ড্যাশবোর্ড (`wmbdedu.toolforgr.org`) হলো একটি চমৎকার ও প্রিমিয়াম ওয়েব অ্যাপ্লিকেশন যা আউটরিচ ইভেন্ট বা কর্মশালার আয়োজকদের জন্য দ্রুত নতুন উইকিপিডিয়া অ্যাকাউন্ট তৈরি করতে সহায়তা করে।
+অ্যাকাউন্ট তৈরির ড্যাশবোর্ড (`acd.toolforge.org`) হলো একটি চমৎকার ও প্রিমিয়াম ওয়েব অ্যাপ্লিকেশন যা আউটরিচ ইভেন্ট বা কর্মশালার আয়োজকদের জন্য দ্রুত নতুন উইকিপিডিয়া অ্যাকাউন্ট তৈরি করতে সহায়তা করে।
 
 এটিতে সাধারণ ব্যবহারকারীদের জন্য একটি সুন্দর নিবন্ধন আবেদন ফর্ম রয়েছে এবং অ্যাডমিনদের জন্য রয়েছে সম্পূর্ণ নিরাপদ ড্যাশবোর্ড ও সেটিংস ব্যবস্থা।
 
@@ -73,13 +73,13 @@ npm start
 
 ## উইকিমিডিয়া OAuth 2.0 কনজিউমার প্রস্তাব করার নিয়ম
 
-প্রোডাকশন ডোমেইনে (যেমন: `wmbdedu.toolforgr.org`) এই টুলটি চালাতে চাইলে আপনাকে উইকিমিডিয়া মেটাতে একটি OAuth 2.0 Consumer প্রস্তাব করতে হবে:
+প্রোডাকশন ডোমেইনে (যেমন: `acd.toolforge.org`) এই টুলটি চালাতে চাইলে আপনাকে উইকিমিডিয়া মেটাতে একটি OAuth 2.0 Consumer প্রস্তাব করতে হবে:
 
 1. উইকিপিডিয়ায় লগইন থাকা অবস্থায় [Special:OAuthConsumerRegistration](https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose/oauth2) লিংকে যান।
 2. নতুন Consumer প্রস্তাব করার সময় নিচের তথ্যগুলো প্রদান করুন:
    - **Application Name:** `Wikimedia Bangladesh Outreach Toolkit`
    - **OAuth Version:** `OAuth 2.0`
-   - **Callback URL:** `https://wmbdedu.toolforgr.org/auth/callback` (অথবা আপনার কাস্টম ডোমেইন callback)
+   - **Callback URL:** `https://acd.toolforge.org/auth/callback` (অথবা আপনার কাস্টম ডোমেইন callback)
    - **Grants Required:**
      - *Basic rights* (ব্যবহারকারী সনাক্তকরণ এবং ইউজারনেম জানার জন্য)
      - *Create accounts* (অ্যাডমিনের পক্ষে অ্যাকাউন্ট তৈরি করার অনুমতি)

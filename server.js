@@ -39,7 +39,7 @@ async function queryWikiAPI(wiki, params, accessToken = null) {
   Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
   
   const headers = {
-    'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://wmbdedu.toolforgr.org; contact@wikimedia.org.bd) - Account creator for outreach event and workshop participants'
+    'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://acd.toolforge.org; contact@wikimedia.org.bd) - Account creator for outreach event and workshop participants'
   };
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
@@ -60,7 +60,7 @@ async function postWikiAPI(wiki, params, accessToken = null) {
   
   const headers = {
     'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://wmbdedu.toolforgr.org; contact@wikimedia.org.bd) - Account creator for outreach event and workshop participants'
+    'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://acd.toolforge.org; contact@wikimedia.org.bd) - Account creator for outreach event and workshop participants'
   };
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
