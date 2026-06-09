@@ -272,6 +272,31 @@
         </a>
     </nav>
 
+    <!-- Reason Dialog Modal -->
+    <div id="reasonModal" class="fixed inset-0 bg-outline/40 backdrop-blur-sm hidden items-center justify-center z-50 p-md transition-all duration-300">
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl w-full max-w-md shadow-xl overflow-hidden transform scale-95 transition-all duration-300" id="reasonModalContainer">
+            <!-- Header -->
+            <div class="p-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold" id="reasonModalTitle">সিদ্ধান্তের বিবরণ</h3>
+                <button onclick="closeReasonModal()" class="text-on-surface-variant hover:text-error hover:bg-error-container/20 p-xs rounded-lg transition-colors flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[24px]">close</span>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="p-md space-y-md">
+                <div>
+                    <label for="reasonInput" class="block font-label-md text-label-md text-on-surface-variant font-bold mb-xs">মন্তব্য বা কারণ (ঐচ্ছিক)</label>
+                    <textarea id="reasonInput" rows="3" class="w-full bg-surface border border-outline-variant rounded-lg p-sm text-body-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all resize-none" placeholder="কোনো কারণ বা মন্তব্য থাকলে লিখুন..."></textarea>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="p-md border-t border-outline-variant bg-surface-container-low flex justify-end gap-sm">
+                <button onclick="closeReasonModal()" class="px-md py-xs border border-outline text-on-surface-variant rounded-lg font-label-md text-label-md font-medium hover:bg-surface-container-high transition-all">বাতিল</button>
+                <button id="reasonModalSubmitBtn" onclick="submitReasonAction()" class="px-md py-xs text-on-primary rounded-lg font-label-md text-label-md font-bold transition-all active:scale-95">নিশ্চিত করুন</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const tableBody = document.getElementById('requestsTableBody');
         const searchInput = document.getElementById('searchInput');
@@ -560,30 +585,5 @@
         // Initialize table
         document.addEventListener('DOMContentLoaded', loadRequests);
     </script>
-
-    <!-- Reason Dialog Modal -->
-    <div id="reasonModal" class="fixed inset-0 bg-outline/40 backdrop-blur-sm hidden items-center justify-center z-50 p-md transition-all duration-300">
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl w-full max-w-md shadow-xl overflow-hidden transform scale-95 transition-all duration-300" id="reasonModalContainer">
-            <!-- Header -->
-            <div class="p-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-                <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold" id="reasonModalTitle">সিদ্ধান্তের বিবরণ</h3>
-                <button onclick="closeReasonModal()" class="text-on-surface-variant hover:text-error hover:bg-error-container/20 p-xs rounded-lg transition-colors flex items-center justify-center">
-                    <span class="material-symbols-outlined text-[24px]">close</span>
-                </button>
-            </div>
-            <!-- Body -->
-            <div class="p-md space-y-md">
-                <div>
-                    <label for="reasonInput" class="block font-label-md text-label-md text-on-surface-variant font-bold mb-xs">মন্তব্য বা কারণ (ঐচ্ছিক)</label>
-                    <textarea id="reasonInput" rows="3" class="w-full bg-surface border border-outline-variant rounded-lg p-sm text-body-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all resize-none" placeholder="কোনো কারণ বা মন্তব্য থাকলে লিখুন..."></textarea>
-                </div>
-            </div>
-            <!-- Footer -->
-            <div class="p-md border-t border-outline-variant bg-surface-container-low flex justify-end gap-sm">
-                <button onclick="closeReasonModal()" class="px-md py-xs border border-outline text-on-surface-variant rounded-lg font-label-md text-label-md font-medium hover:bg-surface-container-high transition-all">বাতিল</button>
-                <button id="reasonModalSubmitBtn" onclick="submitReasonAction()" class="px-md py-xs text-on-primary rounded-lg font-label-md text-label-md font-bold transition-all active:scale-95">নিশ্চিত করুন</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
