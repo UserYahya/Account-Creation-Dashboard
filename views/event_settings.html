@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ইভেন্ট সেটিংস - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Inter', 'Hind Siliguri', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-toggle:checked + .toggle-dot {
+            transform: translateX(100%);
+            background-color: #ffffff;
+        }
+        .custom-toggle:checked + .toggle-bg {
+            background-color: #006d42;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#005231",
+                        "on-surface": "#191c1d",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#c6292b",
+                        "outline": "#727784",
+                        "surface-tint": "#005cba",
+                        "tertiary-fixed-dim": "#ffb3ad",
+                        "surface-dim": "#d9dadb",
+                        "on-secondary-container": "#007346",
+                        "on-primary-fixed": "#001b3e",
+                        "primary": "#004e9f",
+                        "background": "#f8f9fa",
+                        "on-error": "#ffffff",
+                        "tertiary": "#a30716",
+                        "on-tertiary-fixed-variant": "#930011",
+                        "on-surface-variant": "#414753",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed": "#002111",
+                        "surface-variant": "#e1e3e4",
+                        "primary-fixed-dim": "#aac7ff",
+                        "on-tertiary-container": "#ffe1de",
+                        "secondary-fixed": "#93f7bc",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f4f5",
+                        "on-primary-container": "#dfe8ff",
+                        "secondary-fixed-dim": "#77daa1",
+                        "on-primary-fixed-variant": "#00458e",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-primary": "#ffffff",
+                        "surface": "#f8f9fa",
+                        "inverse-surface": "#2e3132",
+                        "secondary-container": "#93f7bc",
+                        "primary-container": "#0066cc",
+                        "secondary": "#006d42",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#aac7ff",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c1c6d5",
+                        "on-tertiary-fixed": "#410003",
+                        "surface-bright": "#f8f9fa",
+                        "primary-fixed": "#d7e3ff",
+                        "tertiary-fixed": "#ffdad6",
+                        "surface-container": "#edeeef",
+                        "surface-container-high": "#e7e8e9",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "sm": "8px",
+                        "xl": "40px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "container-max": "1120px",
+                        "gutter": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter", "Hind Siliguri"],
+                        "label-md": ["Inter", "Hind Siliguri"],
+                        "body-lg": ["Inter", "Hind Siliguri"],
+                        "display-lg": ["Inter", "Hind Siliguri"],
+                        "headline-md": ["Inter", "Hind Siliguri"],
+                        "headline-lg-mobile": ["Inter", "Hind Siliguri"],
+                        "headline-sm": ["Inter", "Hind Siliguri"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+    <!-- TopNavBar -->
+    <header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
+        <div class="flex justify-between items-center w-full px-lg md:px-xl max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-md">
+                <a href="/" class="font-headline-sm text-headline-sm text-on-surface font-bold">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</a>
+            </div>
+            <nav class="hidden md:flex items-center gap-lg">
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/">হোম</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়া</a>
+            </nav>
+            <div class="flex items-center gap-md">
+                <a href="/logout" class="font-label-md text-label-md text-error font-bold hover:bg-surface-container-low px-md py-xs rounded-lg transition-colors md:hidden">লগ আউট</a>
+            </div>
+        </div>
+    </header>
+    
+    <div class="flex flex-1 max-w-container-max w-full mx-auto">
+        <!-- SideNavBar -->
+        <aside class="hidden md:flex flex-col h-full w-64 bg-surface-container-low border-r border-outline-variant p-md gap-sm shrink-0">
+            <div class="mb-lg px-xs">
+                <h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">অ্যাডমিন প্যানেল</h2>
+                <p class="font-label-md text-label-md text-on-surface-variant">আউটরিচ টুল</p>
+            </div>
+            <a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all" href="/admin">
+                <span class="material-symbols-outlined">list_alt</span>
+                <span class="font-label-md text-label-md">আবেদনসমূহ</span>
+            </a>
+            <a class="flex items-center gap-md p-md bg-primary-container text-on-primary-container font-bold rounded-lg transition-transform duration-100 scale-95" href="/admin/settings">
+                <span class="material-symbols-outlined">settings_applications</span>
+                <span class="font-label-md text-label-md">ইভেন্ট সেটিংস</span>
+            </a>
+            <div class="mt-auto pt-md border-t border-outline-variant">
+                <div class="flex items-center gap-md p-xs">
+                    <div class="w-8 h-8 rounded-full bg-primary-fixed-dim flex items-center justify-center text-primary font-bold">
+                        A
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="font-label-md text-label-md truncate font-bold" id="adminUser">{{ADMIN_USERNAME}}</p>
+                        <p class="text-[10px] text-on-surface-variant truncate">{{ADMIN_WIKI}} (sysop)</p>
+                    </div>
+                </div>
+                <a href="/logout" class="block w-full text-center mt-md text-error hover:bg-error-container/20 py-sm rounded-lg font-bold font-label-md transition-colors">লগ আউট</a>
+            </div>
+        </aside>
+
+        <!-- Main Content Canvas -->
+        <main class="flex-1 p-lg md:p-xl overflow-y-auto">
+            <div class="max-w-3xl mx-auto space-y-lg">
+                <header class="mb-xl">
+                    <h1 class="font-headline-md text-headline-md text-on-surface font-bold mb-xs">ইভেন্ট সেটিংস</h1>
+                    <p class="font-body-md text-body-md text-on-surface-variant">চলমান আউটরিচ ইভেন্ট এবং ব্যবহারকারী নিবন্ধনের বৈশ্বিক কনফিগারেশন পরিবর্তন করুন।</p>
+                </header>
+
+                <!-- Toast Toast -->
+                <div id="settingsToast" class="hidden w-full p-md rounded-lg border flex items-center gap-md mb-md transition-all duration-300">
+                    <span class="material-symbols-outlined" id="toastIcon"></span>
+                    <p class="font-body-lg text-body-lg" id="toastText"></p>
+                </div>
+
+                <!-- Status Card -->
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg flex items-center justify-between flex-wrap gap-md">
+                    <div>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold mb-xs">বর্তমান অবস্থা</h3>
+                        <div class="flex items-center gap-sm">
+                            <span class="relative flex h-3 w-3">
+                                <span id="statusIndicatorPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+                                <span id="statusIndicatorDot" class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+                            </span>
+                            <span class="font-label-md text-label-md text-secondary font-bold" id="statusText">বর্তমানে রেজিস্ট্রেশন চলছে</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-md bg-surface-container p-sm rounded-full">
+                        <button class="px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant" id="stopBtn">বন্ধ করুন</button>
+                        <button class="px-md py-sm rounded-full font-label-md text-label-md transition-all bg-secondary text-on-secondary shadow-sm font-bold animate-pulse" id="startBtn">শুরু করুন</button>
+                    </div>
+                </div>
+
+                <!-- Settings Form -->
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+                    <div class="p-lg border-b border-outline-variant bg-surface-container-low">
+                        <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">ইভেন্ট কনফিগারেশন</h3>
+                    </div>
+                    <div class="p-lg space-y-lg">
+                        <!-- Event Name Field -->
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="event_name">ইভেন্টের নাম</label>
+                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_name" placeholder="ইভেন্টের নাম লিখুন" type="text" value="{{EVENT_NAME}}"/>
+                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">এই নামটি নতুন অ্যাকাউন্ট তৈরির সারসংক্ষেপে ব্যবহার করা হবে।</p>
+                        </div>
+                        <!-- Workshop URL Field -->
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="workshop_url">কর্মশালার (Workshop) ইউআরএল</label>
+                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="workshop_url" placeholder="যেমন: https://bn.wikipedia.org/wiki/Wikipedia:Workshop" type="url" value="{{WORKSHOP_URL}}"/>
+                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">নিবন্ধনকারীরা ইভেন্ট পাতায় ফিরে যাওয়ার জন্য এই লিংকটি ব্যবহার করতে পারবেন।</p>
+                        </div>
+                        <!-- Additional Instructions Field -->
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="additional_instructions">অতিরিক্ত নির্দেশনা (উইকিপিডিয়া ব্যবহারকারী নামের নীতিমালা কার্ডে যুক্ত হবে)</label>
+                            <textarea class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="additional_instructions" rows="4" placeholder="প্রতি লাইনে একটি করে অতিরিক্ত নির্দেশনা লিখুন যা ব্যবহারকারীরা রেজিস্ট্রেশন পাতায় দেখতে পাবেন।">{{ADDITIONAL_INSTRUCTIONS}}</textarea>
+                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">প্রতিটি লাইন আলাদা নির্দেশনা হিসেবে প্রদর্শিত হবে।</p>
+                        </div>
+                        <!-- Registration Toggle -->
+                        <div class="flex items-center justify-between py-md border-t border-outline-variant">
+                            <div>
+                                <h4 class="font-body-lg text-body-lg text-on-surface font-bold">রেজিস্ট্রেশন শুরু/বন্ধ করুন</h4>
+                                <p class="font-label-md text-label-md text-on-surface-variant">এটি বন্ধ করলে কোনো নতুন ব্যবহারকারী আবেদন করতে পারবেন না।</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input checked="" class="sr-only peer custom-toggle" id="regToggle" type="checkbox"/>
+                                <div class="w-14 h-8 bg-surface-variant rounded-full peer-checked:bg-secondary transition-colors duration-300"></div>
+                                <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 peer-checked:translate-x-6 shadow-sm flex items-center justify-center">
+                                    <span id="toggleCheckIcon" class="material-symbols-outlined text-[16px] text-on-surface-variant">check</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="p-lg bg-surface-container-low flex justify-end gap-md border-t border-outline-variant">
+                        <a href="/admin" class="px-lg py-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-variant transition-colors border border-outline-variant flex items-center">বাতিল করুন</a>
+                        <button id="saveBtn" class="px-lg py-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary font-bold hover:opacity-90 transition-opacity active:scale-95">পরিবর্তনগুলো সংরক্ষণ করুন</button>
+                    </div>
+                </div>
+
+                <!-- Create New Event Form Card -->
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+                    <div class="p-lg border-b border-outline-variant bg-surface-container-low">
+                        <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">নতুন ইভেন্ট যোগ করুন</h3>
+                    </div>
+                    <div class="p-lg space-y-lg">
+                        <div id="createEventError" class="hidden p-md rounded-lg border border-error bg-error-container/20 text-on-error-container font-body-md text-body-md"></div>
+                        <!-- New Event Name Field -->
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="new_event_name">নতুন ইভেন্টের নাম</label>
+                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="new_event_name" placeholder="যেমন: অমর একুশে উইকিপিডিয়া নিবন্ধ প্রতিযোগিতা ২০২৬" type="text"/>
+                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">নতুন ইভেন্টটি তৈরি হওয়ার সাথে সাথে চলমান ইভেন্ট হিসেবে সক্রিয় হয়ে যাবে।</p>
+                        </div>
+                        <!-- New Event Workshop URL Field -->
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="new_workshop_url">কর্মশালার (Workshop) ইউআরএল</label>
+                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="new_workshop_url" placeholder="যেমন: https://bn.wikipedia.org/wiki/Wikipedia:Workshop" type="url"/>
+                        </div>
+                    </div>
+                    <div class="p-lg bg-surface-container-low flex justify-end gap-md border-t border-outline-variant">
+                        <button id="createEventBtn" class="px-lg py-sm rounded-lg font-label-md text-label-md bg-secondary text-on-secondary font-bold hover:opacity-90 transition-opacity active:scale-95">নতুন ইভেন্ট সংরক্ষণ করুন</button>
+                    </div>
+                </div>
+
+                <!-- Event History Log Card -->
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+                    <div class="p-lg border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                        <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">ইভেন্ট ইতিহাস</h3>
+                        <span class="bg-primary-container text-on-primary-container text-[10px] px-sm py-xs rounded font-bold" id="eventHistoryCount">০টি ইভেন্ট</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse font-body-md text-body-md">
+                            <thead>
+                                <tr class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-bold">
+                                    <th class="p-md text-center w-12">আইডি</th>
+                                    <th class="p-md">ইভেন্টের নাম</th>
+                                    <th class="p-md">কর্মশালা লিংক</th>
+                                    <th class="p-md w-36">তৈরির তারিখ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventHistoryBody" class="divide-y divide-outline-variant">
+                                <tr>
+                                    <td colspan="4" class="p-lg text-center text-on-surface-variant">ইভেন্ট ইতিহাস লোড হচ্ছে...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around items-center h-16 px-md z-20">
+        <a href="/admin" class="flex flex-col items-center gap-xs text-on-surface-variant">
+            <span class="material-symbols-outlined">list_alt</span>
+            <span class="text-[10px]">আবেদন</span>
+        </a>
+        <a href="/admin/settings" class="flex flex-col items-center gap-xs text-primary font-bold">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings_applications</span>
+            <span class="text-[10px]">সেটিংস</span>
+        </a>
+    </nav>
+
+    <!-- Event History Modal -->
+    <div id="eventHistoryModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-md bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-xl overflow-hidden transform scale-95 transition-all duration-300" id="modalContainer">
+            <!-- Modal Header -->
+            <div class="p-lg border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                <div>
+                    <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold" id="modalEventName">ইভেন্ট ইতিহাস</h3>
+                    <p class="font-label-md text-label-md text-on-surface-variant">এই ইভেন্টের অধীনে ব্যবহারকারী অ্যাকাউন্ট তৈরির আবেদনের তালিকা।</p>
+                </div>
+                <button onclick="closeEventHistoryModal()" class="text-on-surface-variant hover:text-error hover:bg-error-container/20 p-xs rounded-lg transition-colors flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[24px]">close</span>
+                </button>
+            </div>
+            
+            <!-- Modal Body (Scrollable Table) -->
+            <div class="p-lg overflow-y-auto flex-1">
+                <div id="modalLoading" class="text-center py-xl">
+                    <span class="material-symbols-outlined text-[40px] text-primary animate-spin">sync</span>
+                    <p class="mt-sm font-body-md text-body-md text-on-surface-variant">তথ্য লোড হচ্ছে...</p>
+                </div>
+                <div id="modalError" class="hidden p-md rounded-lg border border-error bg-error-container/20 text-on-error-container font-body-md text-body-md text-center"></div>
+                
+                <div id="modalTableContainer" class="hidden overflow-x-auto border border-outline-variant rounded-lg">
+                    <table class="w-full text-left border-collapse font-body-md text-body-md">
+                        <thead>
+                            <tr class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-bold">
+                                <th class="p-md text-center w-12">আইডি</th>
+                                <th class="p-md">ব্যবহারকারী নাম</th>
+                                <th class="p-md" id="modalColEmail">ইমেইল</th>
+                                <th class="p-md w-28 text-center">স্ট্যাটাস</th>
+                                <th class="p-md w-36">আবেদনের সময়</th>
+                                <th class="p-md w-32">সিদ্ধান্ত নিয়েছে</th>
+                                <th class="p-md w-32">সিদ্ধান্তের সময়</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalTableBody" class="divide-y divide-outline-variant">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const regToggle = document.getElementById('regToggle');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusText = document.getElementById('statusText');
+        const pingIndicator = document.getElementById('statusIndicatorPing');
+        const dotIndicator = document.getElementById('statusIndicatorDot');
+        const eventNameInput = document.getElementById('event_name');
+        const additionalInstructionsInput = document.getElementById('additional_instructions');
+        const saveBtn = document.getElementById('saveBtn');
+
+        const toastEl = document.getElementById('settingsToast');
+        const toastText = document.getElementById('toastText');
+        const toastIcon = document.getElementById('toastIcon');
+
+        const createEventBtn = document.getElementById('createEventBtn');
+        const newEventNameInput = document.getElementById('new_event_name');
+        const newWorkshopUrlInput = document.getElementById('new_workshop_url');
+        const createEventError = document.getElementById('createEventError');
+
+        let isRegisteredActive = {{REG_ACTIVE_VAL}}; // Initial state: true or false
+
+        function showToast(message, type) {
+            toastEl.classList.remove('hidden');
+            toastText.innerText = message;
+            
+            if (type === 'success') {
+                toastEl.className = "w-full p-md rounded-lg border border-secondary bg-secondary-container/20 text-on-secondary-container flex items-center gap-md mb-md";
+                toastIcon.className = "material-symbols-outlined text-secondary";
+                toastIcon.innerText = "check_circle";
+            } else {
+                toastEl.className = "w-full p-md rounded-lg border border-error bg-error-container/20 text-on-error-container flex items-center gap-md mb-md";
+                toastIcon.className = "material-symbols-outlined text-error";
+                toastIcon.innerText = "error";
+            }
+            setTimeout(() => {
+                toastEl.classList.add('hidden');
+            }, 6000);
+        }
+
+        function updateUIStatus(isActive) {
+            isRegisteredActive = isActive;
+            if (isActive) {
+                statusText.innerText = 'বর্তমানে রেজিস্ট্রেশন চলছে';
+                statusText.className = 'font-label-md text-label-md text-secondary font-bold';
+                
+                pingIndicator.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75';
+                dotIndicator.className = 'relative inline-flex rounded-full h-3 w-3 bg-secondary';
+                
+                startBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all bg-secondary text-on-secondary shadow-sm font-bold';
+                stopBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant';
+                regToggle.checked = true;
+            } else {
+                statusText.innerText = 'বর্তমানে রেজিস্ট্রেশন বন্ধ আছে';
+                statusText.className = 'font-label-md text-label-md text-error font-bold';
+
+                pingIndicator.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75';
+                dotIndicator.className = 'relative inline-flex rounded-full h-3 w-3 bg-error';
+
+                stopBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all bg-error text-on-error shadow-sm font-bold';
+                startBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant';
+                regToggle.checked = false;
+            }
+        }
+
+        regToggle.addEventListener('change', (e) => updateUIStatus(e.target.checked));
+        startBtn.addEventListener('click', () => updateUIStatus(true));
+        stopBtn.addEventListener('click', () => updateUIStatus(false));
+
+        saveBtn.addEventListener('click', () => {
+            const eventName = eventNameInput.value.trim();
+            const workshopUrlInput = document.getElementById('workshop_url');
+            const workshopUrl = workshopUrlInput.value.trim();
+            const additionalInstructions = additionalInstructionsInput.value.trim();
+            
+            if (!eventName) {
+                showToast("ইভেন্টের নাম খালি রাখা যাবে না।", "error");
+                return;
+            }
+
+            saveBtn.innerText = "সংরক্ষণ করা হচ্ছে...";
+            saveBtn.disabled = true;
+
+            fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    event_name: eventName,
+                    registration_active: isRegisteredActive ? 1 : 0,
+                    workshop_url: workshopUrl,
+                    additional_instructions: additionalInstructions
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                saveBtn.innerText = "পরিবর্তনগুলো সংরক্ষণ করুন";
+                saveBtn.disabled = false;
+                if (data.success) {
+                    showToast("পরিবর্তনগুলো সফলভাবে সংরক্ষণ করা হয়েছে!", "success");
+                    loadEventHistory();
+                } else {
+                    showToast(`সংরক্ষণ করতে সমস্যা: ${data.error}`, "error");
+                }
+            })
+            .catch(err => {
+                saveBtn.innerText = "পরিবর্তনগুলো সংরক্ষণ করুন";
+                saveBtn.disabled = false;
+                showToast("সার্ভারের সাথে যোগাযোগ করতে সমস্যা হয়েছে।", "error");
+            });
+        });
+
+        // Add new event
+        createEventBtn.addEventListener('click', () => {
+            const name = newEventNameInput.value.trim();
+            const workshop_url = newWorkshopUrlInput.value.trim();
+            createEventError.classList.add('hidden');
+
+            if (!name) {
+                createEventError.innerText = "ইভেন্টের নাম আবশ্যক।";
+                createEventError.classList.remove('hidden');
+                return;
+            }
+
+            createEventBtn.innerText = "সংরক্ষণ করা হচ্ছে...";
+            createEventBtn.disabled = true;
+
+            fetch('/api/events', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, workshop_url })
+            })
+            .then(res => res.json())
+            .then(data => {
+                createEventBtn.innerText = "নতুন ইভেন্ট সংরক্ষণ করুন";
+                createEventBtn.disabled = false;
+                
+                if (data.success) {
+                    // Reset inputs
+                    newEventNameInput.value = '';
+                    newWorkshopUrlInput.value = '';
+                    
+                    // Update active event name and workshop URL inputs with the new event
+                    eventNameInput.value = name;
+                    document.getElementById('workshop_url').value = workshop_url || 'https://bn.wikipedia.org';
+                    
+                    showToast("নতুন ইভেন্ট সফলভাবে তৈরি এবং সক্রিয় করা হয়েছে!", "success");
+                    loadEventHistory();
+                } else {
+                    createEventError.innerText = data.error || "নতুন ইভেন্ট তৈরি করতে ব্যর্থ হয়েছে।";
+                    createEventError.classList.remove('hidden');
+                }
+            })
+            .catch(err => {
+                createEventBtn.innerText = "নতুন ইভেন্ট সংরক্ষণ করুন";
+                createEventBtn.disabled = false;
+                createEventError.innerText = "সার্ভারের সাথে যোগাযোগ করতে সমস্যা হয়েছে।";
+                createEventError.classList.remove('hidden');
+            });
+        });
+
+        // Load event history
+        function loadEventHistory() {
+            fetch('/api/events')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('eventHistoryBody');
+                    const countEl = document.getElementById('eventHistoryCount');
+                    
+                    if (!data.events || data.events.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="p-lg text-center text-on-surface-variant">কোনো পূর্ববর্তী ইভেন্ট পাওয়া যায়নি।</td>
+                            </tr>
+                        `;
+                        countEl.innerText = '০টি ইভেন্ট';
+                        return;
+                    }
+                    
+                    countEl.innerText = `${data.events.length}টি ইভেন্ট`;
+                    tbody.innerHTML = data.events.map(ev => {
+                        const date = new Date(ev.created_at);
+                        const formattedDate = date.toLocaleDateString('bn-BD', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric'
+                        });
+                        
+                        return `
+                            <tr class="hover:bg-surface-container-lowest transition-colors">
+                                <td class="p-md text-center text-on-surface-variant font-bold">${ev.id}</td>
+                                <td class="p-md font-bold text-on-surface">
+                                    <button onclick="showEventHistoryModal(this.getAttribute('data-event-name'))" data-event-name="${escapeHTML(ev.name)}" class="text-left text-primary hover:underline hover:text-primary-container focus:outline-none transition-all font-bold">
+                                        ${escapeHTML(ev.name)}
+                                    </button>
+                                </td>
+                                <td class="p-md">
+                                    <a href="${escapeHTML(ev.workshop_url)}" target="_blank" class="text-primary hover:underline flex items-center gap-xs truncate max-w-xs">
+                                        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                                        ${escapeHTML(ev.workshop_url)}
+                                    </a>
+                                </td>
+                                <td class="p-md text-on-surface-variant text-sm">${formattedDate}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                })
+                .catch(err => {
+                    document.getElementById('eventHistoryBody').innerHTML = `
+                        <tr>
+                            <td colspan="4" class="p-lg text-center text-error">ইতিহাস লোড করতে সমস্যা হয়েছে।</td>
+                        </tr>
+                    `;
+                });
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showEventHistoryModal(eventName) {
+            const modal = document.getElementById('eventHistoryModal');
+            const modalContainer = document.getElementById('modalContainer');
+            const modalEventName = document.getElementById('modalEventName');
+            const modalLoading = document.getElementById('modalLoading');
+            const modalError = document.getElementById('modalError');
+            const modalTableContainer = document.getElementById('modalTableContainer');
+            const modalTableBody = document.getElementById('modalTableBody');
+            const colEmail = document.getElementById('modalColEmail');
+
+            // Setup display values
+            modalEventName.innerText = eventName;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Animation transition
+            setTimeout(() => {
+                modalContainer.classList.remove('scale-95');
+                modalContainer.classList.add('scale-100');
+            }, 10);
+
+            modalLoading.classList.remove('hidden');
+            modalError.classList.add('hidden');
+            modalTableContainer.classList.add('hidden');
+
+            fetch(`/api/events/${encodeURIComponent(eventName)}/requests`)
+                .then(res => {
+                    if (!res.ok) throw new Error("আবেদন ইতিহাস লোড করা যায়নি।");
+                    return res.json();
+                })
+                .then(data => {
+                    modalLoading.classList.add('hidden');
+                    
+                    if (!data.requests || data.requests.length === 0) {
+                        modalError.innerText = "এই ইভেন্টে কোনো আবেদনের ইতিহাস পাওয়া যায়নি।";
+                        modalError.className = "p-md rounded-lg border border-outline-variant bg-surface-container-low text-on-surface-variant font-body-md text-body-md text-center";
+                        modalError.classList.remove('hidden');
+                        return;
+                    }
+
+                    const showEmail = data.showEmail;
+                    if (showEmail) {
+                        colEmail.classList.remove('hidden');
+                    } else {
+                        colEmail.classList.add('hidden');
+                    }
+
+                    modalTableBody.innerHTML = data.requests.map(req => {
+                        const dateReq = new Date(req.requested_at);
+                        const formattedReq = dateReq.toLocaleDateString('bn-BD', {
+                            year: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric'
+                        });
+
+                        let formattedDec = '-';
+                        if (req.decided_at) {
+                            const dateDec = new Date(req.decided_at);
+                            formattedDec = dateDec.toLocaleDateString('bn-BD', {
+                                year: 'numeric',
+                                month: 'numeric',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric'
+                            });
+                        }
+
+                        let statusBadge = '';
+                        if (req.status === 'pending') {
+                            statusBadge = `<span class="bg-surface-container text-on-surface-variant text-xs px-sm py-xs rounded font-bold">পেন্ডিং</span>`;
+                        } else if (req.status === 'approved') {
+                            statusBadge = `<span class="bg-secondary/20 text-secondary text-xs px-sm py-xs rounded font-bold">অনুমোদিত</span>`;
+                        } else {
+                            statusBadge = `<span class="bg-error/20 text-error text-xs px-sm py-xs rounded font-bold">প্রত্যাখ্যাত</span>`;
+                        }
+
+                        const emailTd = showEmail 
+                            ? `<td class="p-md text-on-surface-variant font-mono text-sm">${escapeHTML(req.email)}</td>`
+                            : '';
+
+                        return `
+                            <tr class="hover:bg-surface-container-lowest transition-colors">
+                                <td class="p-md text-center text-on-surface-variant font-bold">${req.id}</td>
+                                <td class="p-md font-bold text-on-surface">${escapeHTML(req.username)}</td>
+                                ${emailTd}
+                                <td class="p-md text-center">${statusBadge}</td>
+                                <td class="p-md text-on-surface-variant text-sm">${formattedReq}</td>
+                                <td class="p-md text-on-surface-variant">${escapeHTML(req.decided_by) || '-'}</td>
+                                <td class="p-md text-on-surface-variant text-sm">${formattedDec}</td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    modalTableContainer.classList.remove('hidden');
+                })
+                .catch(err => {
+                    modalLoading.classList.add('hidden');
+                    modalError.innerText = err.message || "ইতিহাস লোড করতে সমস্যা হয়েছে।";
+                    modalError.className = "p-md rounded-lg border border-error bg-error-container/20 text-on-error-container font-body-md text-body-md text-center";
+                    modalError.classList.remove('hidden');
+                });
+        }
+
+        function closeEventHistoryModal() {
+            const modal = document.getElementById('eventHistoryModal');
+            const modalContainer = document.getElementById('modalContainer');
+            
+            modalContainer.classList.remove('scale-100');
+            modalContainer.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 200);
+        }
+
+        // Initialize UI status
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUIStatus(isRegisteredActive);
+            loadEventHistory();
+
+            // Click outside to close modal
+            document.getElementById('eventHistoryModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('eventHistoryModal')) {
+                    closeEventHistoryModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

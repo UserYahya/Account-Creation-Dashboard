@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>নিবন্ধন বন্ধ - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Inter', 'Hind Siliguri', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed-variant": "#005231",
+                      "on-surface": "#191c1d",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#c6292b",
+                      "outline": "#727784",
+                      "surface-tint": "#005cba",
+                      "tertiary-fixed-dim": "#ffb3ad",
+                      "surface-dim": "#d9dadb",
+                      "on-secondary-container": "#007346",
+                      "on-primary-fixed": "#001b3e",
+                      "primary": "#004e9f",
+                      "background": "#f8f9fa",
+                      "on-error": "#ffffff",
+                      "tertiary": "#a30716",
+                      "on-tertiary-fixed-variant": "#930011",
+                      "on-surface-variant": "#414753",
+                      "on-background": "#191c1d",
+                      "on-secondary-fixed": "#002111",
+                      "surface-variant": "#e1e3e4",
+                      "primary-fixed-dim": "#aac7ff",
+                      "on-tertiary-container": "#ffe1de",
+                      "secondary-fixed": "#93f7bc",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f3f4f5",
+                      "on-primary-container": "#dfe8ff",
+                      "secondary-fixed-dim": "#77daa1",
+                      "on-primary-fixed-variant": "#00458e",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-primary": "#ffffff",
+                      "surface": "#f8f9fa",
+                      "inverse-surface": "#2e3132",
+                      "secondary-container": "#93f7bc",
+                      "primary-container": "#0066cc",
+                      "secondary": "#006d42",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary": "#ffffff",
+                      "inverse-primary": "#aac7ff",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#c1c6d5",
+                      "on-tertiary-fixed": "#410003",
+                      "surface-bright": "#f8f9fa",
+                      "primary-fixed": "#d7e3ff",
+                      "tertiary-fixed": "#ffdad6",
+                      "surface-container": "#edeeef",
+                      "surface-container-high": "#e7e8e9",
+                      "on-tertiary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "lg": "24px",
+                      "sm": "8px",
+                      "xl": "40px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "container-max": "1120px",
+                      "gutter": "16px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter", "Hind Siliguri"],
+                      "label-md": ["Inter", "Hind Siliguri"],
+                      "body-lg": ["Inter", "Hind Siliguri"],
+                      "display-lg": ["Inter", "Hind Siliguri"],
+                      "headline-md": ["Inter", "Hind Siliguri"],
+                      "headline-lg-mobile": ["Inter", "Hind Siliguri"],
+                      "headline-sm": ["Inter", "Hind Siliguri"]
+              },
+              "fontSize": {
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["26px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface flex flex-col min-h-screen">
+    <!-- TopNavBar -->
+    <header class="bg-surface border-b border-outline-variant z-50 sticky top-0">
+        <div class="flex justify-between items-center w-full px-lg md:px-xl max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-md">
+                <a href="/" class="font-headline-sm text-headline-sm text-on-surface font-bold tracking-tight">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</a>
+            </div>
+            <nav class="hidden md:flex items-center gap-lg">
+                <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="/">হোম</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়ায় ফেরত যান</a>
+            </nav>
+            <div class="flex items-center gap-md">
+                <!-- NAV_AUTH -->
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content Canvas -->
+    <main class="flex-grow flex flex-col items-center justify-center px-lg py-xl">
+        <!-- Hero Information State -->
+        <div class="max-w-2xl w-full text-center space-y-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <!-- Graphic Illustration Container -->
+            <div class="relative w-64 h-64 mx-auto mb-xl">
+                <div class="absolute inset-0 bg-primary-container/10 rounded-full scale-110 blur-xl"></div>
+                <div class="relative bg-surface-container-lowest border border-outline-variant rounded-full w-full h-full flex items-center justify-center shadow-sm">
+                    <span class="material-symbols-outlined text-[120px] text-primary transition-transform hover:scale-110 duration-500" data-icon="event_busy">event_busy</span>
+                </div>
+            </div>
+            <!-- Message Group -->
+            <div class="space-y-md">
+                <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">
+                    দুঃখিত, বর্তমানে কোনো ইভেন্ট চলছে না।
+                </h1>
+                <p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg mx-auto">
+                    পরবর্তী ইভেন্টের জন্য অনুগ্রহ করে অপেক্ষা করুন। আমাদের সাথে যুক্ত থাকার জন্য ধন্যবাদ।
+                </p>
+            </div>
+            <!-- Action Area (Secondary) -->
+            <div class="pt-lg flex flex-col sm:flex-row gap-md justify-center items-center">
+                <a class="inline-flex items-center gap-sm bg-surface-variant text-on-surface px-lg py-md rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-colors group" href="https://bn.wikipedia.org" target="_blank">
+                    <span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform" data-icon="arrow_back">arrow_back</span>
+                    উইকিপিডিয়ায় ফেরত যান
+                </a>
+            </div>
+        </div>
+        <!-- Decorative Subtle Background Pattern -->
+        <div class="fixed inset-0 -z-10 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#004e9f 0.5px, transparent 0.5px); background-size: 24px 24px;"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-outline-variant mt-xl">
+        <div class="w-full py-lg px-lg max-w-container-max mx-auto text-center space-y-md">
+            <div class="flex flex-wrap justify-center gap-lg mb-md">
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org/wiki/Privacy_policy" target="_blank">গোপনীয়তা নীতি</a>
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org" target="_blank">উইকিমিডিয়া বাংলাদেশ সম্পর্কে</a>
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org/wiki/Disclaimer" target="_blank">দাবিত্যাগ</a>
+            </div>
+            <div class="flex justify-center items-center gap-sm mb-sm">
+                <span class="text-on-surface font-bold font-body-md">উইকিমিডিয়া বাংলাদেশ</span>
+            </div>
+            <p class="text-on-surface-variant font-body-md text-body-md max-w-3xl mx-auto">
+                © উইকিমিডিয়া বাংলাদেশ। এই সাইটের বিষয়বস্তু সিসি বাই-এসএ ৪.০ লাইসেন্সের অধীনে উপলব্ধ।
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Simple entrance animation trigger
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainContent = document.querySelector('main');
+            mainContent.style.opacity = '0';
+            mainContent.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+            mainContent.style.transform = 'translateY(10px)';
+            
+            setTimeout(() => {
+                mainContent.style.opacity = '1';
+                mainContent.style.transform = 'translateY(0)';
+            }, 100);
+        });
+
+        // Toggle hover states on the main icon
+        const mainIcon = document.querySelector('[data-icon="event_busy"]');
+        if (mainIcon) {
+            mainIcon.parentElement.addEventListener('mouseenter', () => {
+                mainIcon.style.fontVariationSettings = "'FILL' 1";
+            });
+            mainIcon.parentElement.addEventListener('mouseleave', () => {
+                mainIcon.style.fontVariationSettings = "'FILL' 0";
+            });
+        }
+    </script>
+</body>
+</html>

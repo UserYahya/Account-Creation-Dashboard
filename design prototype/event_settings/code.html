@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html lang="bn"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Noto Sans', 'Noto Sans Bengali', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-toggle:checked + .toggle-dot {
+            transform: translateX(100%);
+            background-color: #ffffff;
+        }
+        .custom-toggle:checked + .toggle-bg {
+            background-color: #006d42;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#005231",
+                        "on-surface": "#191c1d",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#c6292b",
+                        "outline": "#727784",
+                        "surface-tint": "#005cba",
+                        "tertiary-fixed-dim": "#ffb3ad",
+                        "surface-dim": "#d9dadb",
+                        "on-secondary-container": "#007346",
+                        "on-primary-fixed": "#001b3e",
+                        "primary": "#004e9f",
+                        "background": "#f8f9fa",
+                        "on-error": "#ffffff",
+                        "tertiary": "#a30716",
+                        "on-tertiary-fixed-variant": "#930011",
+                        "on-surface-variant": "#414753",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed": "#002111",
+                        "surface-variant": "#e1e3e4",
+                        "primary-fixed-dim": "#aac7ff",
+                        "on-tertiary-container": "#ffe1de",
+                        "secondary-fixed": "#93f7bc",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f4f5",
+                        "on-primary-container": "#dfe8ff",
+                        "secondary-fixed-dim": "#77daa1",
+                        "on-primary-fixed-variant": "#00458e",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-primary": "#ffffff",
+                        "surface": "#f8f9fa",
+                        "inverse-surface": "#2e3132",
+                        "secondary-container": "#93f7bc",
+                        "primary-container": "#0066cc",
+                        "secondary": "#006d42",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#aac7ff",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c1c6d5",
+                        "on-tertiary-fixed": "#410003",
+                        "surface-bright": "#f8f9fa",
+                        "primary-fixed": "#d7e3ff",
+                        "tertiary-fixed": "#ffdad6",
+                        "surface-container": "#edeeef",
+                        "surface-container-high": "#e7e8e9",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "sm": "8px",
+                        "xl": "40px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "container-max": "1120px",
+                        "gutter": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Noto Sans"],
+                        "label-md": ["Noto Sans"],
+                        "body-lg": ["Noto Sans"],
+                        "display-lg": ["Noto Sans"],
+                        "headline-md": ["Noto Sans"],
+                        "headline-lg-mobile": ["Noto Sans"],
+                        "headline-sm": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-lg md:px-xl max-w-container-max mx-auto h-16">
+<div class="flex items-center gap-md">
+<span class="font-headline-sm text-headline-sm text-on-surface dark:text-inverse-on-surface font-bold">উইকিমিডিয়া বাংলাদেশ আউটরিচ টুল</span>
+</div>
+<nav class="hidden md:flex items-center gap-lg">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="#">হোম</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="#">উইকিপিডিয়া</a>
+<div class="h-6 w-[1px] bg-outline-variant mx-sm"></div>
+<button class="material-symbols-outlined text-on-surface-variant style_universal_hover p-xs rounded-full">settings</button>
+<button class="bg-primary text-on-primary px-md py-xs rounded-lg font-label-md text-label-md hover:opacity-80 transition-opacity">লগ ইন</button>
+</nav>
+<button class="md:hidden material-symbols-outlined text-on-surface">menu</button>
+</div>
+</header>
+<div class="flex flex-1 max-w-container-max w-full mx-auto">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full w-64 bg-surface-container-low dark:bg-surface-container-high border-r border-outline-variant p-md gap-sm">
+<div class="mb-lg px-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">অ্যাডমিন প্যানেল</h2>
+<p class="font-label-md text-label-md text-on-surface-variant">আউটরিচ টুল</p>
+</div>
+<a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="font-label-md text-label-md">আবেদনসমূহ</span>
+</a>
+<a class="flex items-center gap-md p-md bg-primary-container text-on-primary-container font-bold rounded-lg transition-transform duration-100 scale-95" href="#">
+<span class="material-symbols-outlined">settings_applications</span>
+<span class="font-label-md text-label-md">ইভেন্ট সেটিংস</span>
+</a>
+<a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">ব্যবহারকারী</span>
+</a>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 p-lg md:p-xl overflow-y-auto">
+<div class="max-w-3xl mx-auto">
+<header class="mb-xl">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-xs">ইভেন্ট সেটিংস</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">চলমান এবং আসন্ন আউটরিচ ইভেন্টগুলোর বৈশ্বিক কনফিগারেশন পরিবর্তন করুন।</p>
+</header>
+<!-- Status Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg mb-lg flex items-center justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs">বর্তমান অবস্থা</h3>
+<div class="flex items-center gap-sm">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<span class="font-label-md text-label-md text-secondary font-bold" id="statusText">বর্তমানে রেজিস্ট্রেশন চলছে</span>
+</div>
+</div>
+<div class="flex items-center gap-md bg-surface-container p-sm rounded-full">
+<button class="px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant" id="stopBtn">বন্ধ করুন</button>
+<button class="px-md py-sm rounded-full font-label-md text-label-md transition-all bg-secondary text-on-secondary shadow-sm font-bold" id="startBtn">শুরু করুন</button>
+</div>
+</div>
+<!-- Settings Form -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="p-lg border-b border-outline-variant bg-surface-container-low">
+<h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">সাধারণ তথ্য</h3>
+</div>
+<div class="p-lg space-y-lg">
+<!-- Event Name Field -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-xs" for="event_name">ইভেন্টের নাম</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_name" placeholder="ইভেন্টের নাম লিখুন" type="text" value="অমর একুশে উইকিপিডিয়া নিবন্ধ প্রতিযোগিতা ২০২৪"/>
+<p class="mt-xs font-label-md text-label-md text-on-surface-variant">এই নামটি নতুন অ্যাকাউন্ট তৈরির সারসংক্ষেপে ব্যবহার করা হবে।</p>
+</div>
+<!-- Registration Toggle -->
+<div class="flex items-center justify-between py-md">
+<div>
+<h4 class="font-body-lg text-body-lg text-on-surface font-semibold">রেজিস্ট্রেশন শুরু/বন্ধ করুন</h4>
+<p class="font-label-md text-label-md text-on-surface-variant">এটি বন্ধ করলে কোনো নতুন ব্যবহারকারী আবেদন করতে পারবেন না।</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer custom-toggle" id="regToggle" type="checkbox"/>
+<div class="w-14 h-8 bg-surface-variant rounded-full peer-checked:bg-secondary transition-colors duration-300"></div>
+<div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 peer-checked:translate-x-6 shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant peer-checked:text-secondary">check</span>
+</div>
+</label>
+</div>
+<!-- Visibility Options -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md pt-md">
+<div class="p-md border border-outline-variant rounded-lg hover:border-primary transition-colors cursor-pointer group">
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-primary">public</span>
+<span class="font-body-md text-body-md font-bold text-on-surface">সার্বজনীন দৃশ্যমানতা</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant">সবাই টুলটি দেখতে এবং ব্যবহার করতে পারবে।</p>
+</div>
+<div class="p-md border border-outline-variant rounded-lg bg-surface-container-low opacity-60 cursor-not-allowed">
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-on-surface-variant">lock</span>
+<span class="font-body-md text-body-md font-bold text-on-surface">ব্যক্তিগত মোড</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant">শুধুমাত্র আমন্ত্রিত ব্যবহারকারীরা প্রবেশ করতে পারবে।</p>
+</div>
+</div>
+</div>
+<div class="p-lg bg-surface-container-low flex justify-end gap-md">
+<button class="px-lg py-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-variant transition-colors border border-outline-variant">বাতিল করুন</button>
+<button class="px-lg py-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary font-bold hover:opacity-90 transition-opacity">পরিবর্তনগুলো সংরক্ষণ করুন</button>
+</div>
+</div>
+<!-- Information Card -->
+<div class="mt-xl grid grid-cols-1 md:grid-cols-3 gap-lg">
+<div class="bg-secondary-container text-on-secondary-container p-lg rounded-xl flex flex-col items-center text-center">
+<span class="font-display-lg text-display-lg font-bold mb-xs">১৫৪</span>
+<span class="font-label-md text-label-md opacity-80">মোট নিবন্ধিত</span>
+</div>
+<div class="bg-primary-container text-on-primary-container p-lg rounded-xl flex flex-col items-center text-center">
+<span class="font-display-lg text-display-lg font-bold mb-xs">৮৯</span>
+<span class="font-label-md text-label-md opacity-80">অ্যাকাউন্ট তৈরি হয়েছে</span>
+</div>
+<div class="bg-tertiary-container text-on-tertiary-container p-lg rounded-xl flex flex-col items-center text-center">
+<span class="font-display-lg text-display-lg font-bold mb-xs">১২</span>
+<span class="font-label-md text-label-md opacity-80">আবেদন ঝুলে আছে</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="w-full py-lg px-lg max-w-container-max mx-auto text-center border-t border-outline-variant mt-xl bg-surface dark:bg-surface-dim">
+<p class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant mb-md">
+            © উইকিমিডিয়া বাংলাদেশ। এই সাইটের বিষয়বস্তু সিসি বাই-এসএ ৪.০ লাইসেন্সের অধীনে উপলব্ধ।
+        </p>
+<div class="flex justify-center gap-lg">
+<a class="font-body-md text-body-md text-on-surface-variant hover:underline hover:text-primary" href="#">গোপনীয়তা নীতি</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:underline hover:text-primary" href="#">উইকিপিডিয়া সম্পর্কে</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:underline hover:text-primary" href="#">দাবিত্যাগ</a>
+</div>
+</footer>
+<script>
+        const regToggle = document.getElementById('regToggle');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = statusText.previousElementSibling;
+
+        function updateStatus(isActive) {
+            if (isActive) {
+                statusText.innerText = 'বর্তমানে রেজিস্ট্রেশন চলছে';
+                statusText.className = 'font-label-md text-label-md text-secondary font-bold';
+                statusIndicator.querySelector('.bg-secondary').classList.remove('bg-error');
+                statusIndicator.querySelector('.animate-ping').classList.remove('bg-error');
+                statusIndicator.querySelector('.bg-secondary').classList.add('bg-secondary');
+                statusIndicator.querySelector('.animate-ping').classList.add('bg-secondary');
+                
+                startBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all bg-secondary text-on-secondary shadow-sm font-bold';
+                stopBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant';
+                regToggle.checked = true;
+            } else {
+                statusText.innerText = 'বর্তমানে রেজিস্ট্রেশন বন্ধ আছে';
+                statusText.className = 'font-label-md text-label-md text-error font-bold';
+                statusIndicator.querySelector('.bg-secondary').classList.add('bg-error');
+                statusIndicator.querySelector('.animate-ping').classList.add('bg-error');
+                statusIndicator.querySelector('.bg-secondary').classList.remove('bg-secondary');
+                statusIndicator.querySelector('.animate-ping').classList.remove('bg-secondary');
+
+                stopBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all bg-error text-on-error shadow-sm font-bold';
+                startBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant';
+                regToggle.checked = false;
+            }
+        }
+
+        regToggle.addEventListener('change', (e) => updateStatus(e.target.checked));
+        startBtn.addEventListener('click', () => updateStatus(true));
+        stopBtn.addEventListener('click', () => updateStatus(false));
+    </script>
+</body></html>

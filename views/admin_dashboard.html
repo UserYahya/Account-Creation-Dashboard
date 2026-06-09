@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html class="light" lang="bn">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>অ্যাডমিন ড্যাশবোর্ড - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Inter', 'Hind Siliguri', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c6d5;
+            border-radius: 10px;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed-variant": "#005231",
+                      "on-surface": "#191c1d",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#c6292b",
+                      "outline": "#727784",
+                      "surface-tint": "#005cba",
+                      "tertiary-fixed-dim": "#ffb3ad",
+                      "surface-dim": "#d9dadb",
+                      "on-secondary-container": "#007346",
+                      "on-primary-fixed": "#001b3e",
+                      "primary": "#004e9f",
+                      "background": "#f8f9fa",
+                      "on-error": "#ffffff",
+                      "tertiary": "#a30716",
+                      "on-tertiary-fixed-variant": "#930011",
+                      "on-surface-variant": "#414753",
+                      "on-background": "#191c1d",
+                      "on-secondary-fixed": "#002111",
+                      "surface-variant": "#e1e3e4",
+                      "primary-fixed-dim": "#aac7ff",
+                      "on-tertiary-container": "#ffe1de",
+                      "secondary-fixed": "#93f7bc",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f3f4f5",
+                      "on-primary-container": "#dfe8ff",
+                      "secondary-fixed-dim": "#77daa1",
+                      "on-primary-fixed-variant": "#00458e",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-primary": "#ffffff",
+                      "surface": "#f8f9fa",
+                      "inverse-surface": "#2e3132",
+                      "secondary-container": "#93f7bc",
+                      "primary-container": "#0066cc",
+                      "secondary": "#006d42",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary": "#ffffff",
+                      "inverse-primary": "#aac7ff",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#c1c6d5",
+                      "on-tertiary-fixed": "#410003",
+                      "surface-bright": "#f8f9fa",
+                      "primary-fixed": "#d7e3ff",
+                      "tertiary-fixed": "#ffdad6",
+                      "surface-container": "#edeeef",
+                      "surface-container-high": "#e7e8e9",
+                      "on-tertiary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "lg": "24px",
+                      "sm": "8px",
+                      "xl": "40px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "container-max": "1120px",
+                      "gutter": "16px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter", "Hind Siliguri"],
+                      "label-md": ["Inter", "Hind Siliguri"],
+                      "body-lg": ["Inter", "Hind Siliguri"],
+                      "display-lg": ["Inter", "Hind Siliguri"],
+                      "headline-md": ["Inter", "Hind Siliguri"],
+                      "headline-lg-mobile": ["Inter", "Hind Siliguri"],
+                      "headline-sm": ["Inter", "Hind Siliguri"]
+              },
+              "fontSize": {
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["26px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface flex h-screen overflow-hidden">
+    <!-- Sidebar Navigation -->
+    <aside class="hidden md:flex flex-col h-full w-64 bg-surface-container-low border-r border-outline-variant p-md gap-sm shrink-0">
+        <div class="mb-lg px-xs">
+            <h1 class="font-headline-sm text-headline-sm text-on-surface font-bold">অ্যাডমিন প্যানেল</h1>
+            <p class="font-label-md text-label-md text-on-surface-variant">আউটরিচ টুল</p>
+        </div>
+        <nav class="flex flex-col gap-xs flex-grow">
+            <!-- Active State Navigation -->
+            <a class="flex items-center gap-md p-md bg-primary-container text-on-primary-container font-bold rounded-lg transition-transform duration-100 active:scale-95" href="/admin">
+                <span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+                <span class="font-label-md text-label-md">আবেদনসমূহ</span>
+            </a>
+            <a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-variant rounded-lg transition-colors" href="/admin/settings">
+                <span class="material-symbols-outlined" data-icon="settings_applications">settings_applications</span>
+                <span class="font-label-md text-label-md">ইভেন্ট সেটিংস</span>
+            </a>
+        </nav>
+        <div class="mt-auto pt-md border-t border-outline-variant">
+            <div class="flex items-center gap-md p-xs">
+                <div class="w-8 h-8 rounded-full bg-primary-fixed-dim flex items-center justify-center text-primary font-bold">
+                    A
+                </div>
+                <div class="overflow-hidden">
+                    <p class="font-label-md text-label-md truncate font-bold" id="adminUser">{{ADMIN_USERNAME}}</p>
+                    <p class="text-[10px] text-on-surface-variant truncate">{{ADMIN_WIKI}} (sysop)</p>
+                </div>
+            </div>
+            <a href="/logout" class="block w-full text-center mt-md text-error hover:bg-error-container/20 py-sm rounded-lg font-bold font-label-md transition-colors">লগ আউট</a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-grow flex flex-col min-w-0">
+        <!-- Top Navigation Bar -->
+        <header class="bg-surface border-b border-outline-variant z-10">
+            <div class="flex justify-between items-center w-full px-lg md:px-xl h-16 max-w-container-max mx-auto">
+                <div class="flex items-center gap-md">
+                    <div class="font-headline-sm text-headline-sm text-on-surface font-bold">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</div>
+                </div>
+                <div class="flex items-center gap-lg">
+                    <nav class="hidden md:flex gap-lg items-center">
+                        <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/">হোম</a>
+                        <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়া</a>
+                    </nav>
+                    <div class="h-6 w-px bg-outline-variant hidden md:block"></div>
+                    <a href="/logout" class="font-label-md text-label-md text-error font-bold hover:bg-surface-container-low px-md py-xs rounded-lg transition-colors md:hidden">লগ আউট</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Canvas -->
+        <main class="flex-grow overflow-y-auto custom-scrollbar p-md md:p-lg bg-surface">
+            <div class="max-w-container-max mx-auto space-y-lg">
+                <!-- Page Header -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+                    <div>
+                        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">অ্যাডমিন ড্যাশবোর্ড</h2>
+                        <p class="font-body-md text-body-md text-on-surface-variant">অ্যাকাউন্ট তৈরির আবেদনসমূহ পর্যালোচনা করুন।</p>
+                    </div>
+                    <div class="flex items-center gap-sm flex-wrap">
+                        <span class="inline-flex items-center gap-xs px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold font-label-md">
+                            <span class="material-symbols-outlined text-[18px]">verified_user</span>
+                            অ্যাকাউন্ট তৈরি হবে: {{ADMIN_WIKI}}
+                        </span>
+                        <div class="{{DOWNLOAD_BUTTON_CLASS}}">
+                            <a href="/api/admin/download-log" class="inline-flex items-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm font-bold">
+                                <span class="material-symbols-outlined text-[18px]">download</span>
+                                লগ ডাউনলোড (CSV)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toast Notification Area -->
+                <div id="statusToast" class="hidden w-full p-md rounded-lg border flex items-center gap-md transition-all duration-300">
+                    <span class="material-symbols-outlined" id="toastIcon"></span>
+                    <p class="font-body-lg text-body-lg" id="toastText"></p>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+                    <div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl flex items-center gap-lg">
+                        <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pending_actions</span>
+                        </div>
+                        <div>
+                            <p class="font-label-md text-label-md text-on-surface-variant font-bold">অপেক্ষমান আবেদনসমূহ</p>
+                            <p class="font-headline-sm text-headline-sm font-bold text-on-surface" id="pendingCount">-</p>
+                        </div>
+                    </div>
+                    <div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl flex items-center gap-lg">
+                        <div class="w-12 h-12 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed-variant">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+                        </div>
+                        <div>
+                            <p class="font-label-md text-label-md text-on-surface-variant font-bold">অনুমোদিত আবেদন</p>
+                            <p class="font-headline-sm text-headline-sm font-bold text-on-surface" id="approvedCount">-</p>
+                        </div>
+                    </div>
+                    <div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl flex items-center gap-lg">
+                        <div class="w-12 h-12 rounded-full bg-tertiary-fixed-dim flex items-center justify-center text-on-tertiary-fixed-variant">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">event</span>
+                        </div>
+                        <div>
+                            <p class="font-label-md text-label-md text-on-surface-variant font-bold">চলমান ইভেন্ট</p>
+                            <p class="font-headline-sm text-headline-sm font-bold text-on-surface truncate max-w-[180px]" id="eventName" title="{{EVENT_NAME}}">{{EVENT_NAME}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Data Table Section -->
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+                    <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant flex justify-between items-center flex-wrap gap-sm">
+                        <h3 class="font-headline-sm text-[18px] text-on-surface font-bold">আবেদন তালিকা</h3>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                            <input id="searchInput" class="pl-xl pr-md py-xs bg-surface border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all w-64" placeholder="অনুসন্ধান করুন..." type="text"/>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-surface-container-low border-b border-outline-variant">
+                                    <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold">ব্যবহারকারী নাম</th>
+                                    <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold">ইমেইল</th>
+                                    <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold">আবেদনের সময়</th>
+                                    <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold text-right font-bold">অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant" id="requestsTableBody">
+                                <tr>
+                                    <td colspan="4" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                                        ডাটা লোড হচ্ছে...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around items-center h-16 px-md z-20">
+        <a href="/admin" class="flex flex-col items-center gap-xs text-primary font-bold">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">list_alt</span>
+            <span class="text-[10px]">আবেদন</span>
+        </a>
+        <a href="/admin/settings" class="flex flex-col items-center gap-xs text-on-surface-variant">
+            <span class="material-symbols-outlined">settings_applications</span>
+            <span class="text-[10px]">সেটিংস</span>
+        </a>
+    </nav>
+
+    <script>
+        const tableBody = document.getElementById('requestsTableBody');
+        const searchInput = document.getElementById('searchInput');
+        const pendingCountEl = document.getElementById('pendingCount');
+        const approvedCountEl = document.getElementById('approvedCount');
+        
+        const toastEl = document.getElementById('statusToast');
+        const toastText = document.getElementById('toastText');
+        const toastIcon = document.getElementById('toastIcon');
+
+        let requests = [];
+
+        function showToast(message, type) {
+            toastEl.classList.remove('hidden');
+            toastText.innerText = message;
+            
+            if (type === 'success') {
+                toastEl.className = "w-full p-md rounded-lg border border-secondary bg-secondary-container/20 text-on-secondary-container flex items-center gap-md mb-md";
+                toastIcon.className = "material-symbols-outlined text-secondary";
+                toastIcon.innerText = "check_circle";
+            } else {
+                toastEl.className = "w-full p-md rounded-lg border border-error bg-error-container/20 text-on-error-container flex items-center gap-md mb-md";
+                toastIcon.className = "material-symbols-outlined text-error";
+                toastIcon.innerText = "error";
+            }
+            // Auto hide after 8 seconds
+            setTimeout(() => {
+                toastEl.classList.add('hidden');
+            }, 8000);
+        }
+
+        function loadRequests() {
+            fetch('/api/requests')
+                .then(res => res.json())
+                .then(data => {
+                    requests = data.requests || [];
+                    const stats = data.stats || { pending: 0, approved: 0 };
+                    pendingCountEl.innerText = stats.pending + " টি";
+                    approvedCountEl.innerText = stats.approved + " জন";
+                    
+                    renderTable();
+                })
+                .catch(err => {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-lg py-xl text-center text-error font-body-md font-bold">
+                                ডাটা লোড করতে ব্যর্থ হয়েছে। দয়া করে রিলোড দিন।
+                            </td>
+                        </tr>
+                    `;
+                });
+        }
+
+        function renderTable(filterTerm = '') {
+            const pendingRequests = requests.filter(r => r.status === 'pending');
+            const filtered = pendingRequests.filter(r => {
+                const term = filterTerm.toLowerCase();
+                return r.username.toLowerCase().includes(term) || r.email.toLowerCase().includes(term);
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                            ${filterTerm ? 'কোনো মিল পাওয়া যায়নি।' : 'কোনো অপেক্ষমাণ আবেদন নেই।'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map(req => {
+                const date = new Date(req.requested_at).toLocaleString('bn-BD', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                const letter = req.username ? req.username.trim().charAt(0).toUpperCase() : 'U';
+
+                return `
+                    <tr id="req-row-${req.id}" class="hover:bg-surface-container transition-colors group">
+                        <td class="px-lg py-md">
+                            <div class="flex items-center gap-sm">
+                                <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold">
+                                    ${letter}
+                                </div>
+                                <span class="font-body-md text-body-md font-medium text-on-surface font-bold">${req.username}</span>
+                            </div>
+                        </td>
+                        <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${req.email}</td>
+                        <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${date}</td>
+                        <td class="px-lg py-md text-right">
+                            <div class="flex justify-end gap-sm">
+                                <button id="approve-btn-${req.id}" onclick="approveRequest(${req.id})" class="px-md py-xs bg-primary text-on-primary rounded-lg font-label-md text-label-md font-bold hover:bg-primary-container hover:text-on-primary-container transition-all active:scale-95">তৈরি করুন</button>
+                                <button id="decline-btn-${req.id}" onclick="declineRequest(${req.id})" class="px-md py-xs border border-error text-error rounded-lg font-label-md text-label-md font-medium hover:bg-error-container hover:text-on-error-container transition-all active:scale-95">বাতিল করুন</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function approveRequest(id) {
+            const approveBtn = document.getElementById(`approve-btn-${id}`);
+            const declineBtn = document.getElementById(`decline-btn-${id}`);
+            
+            approveBtn.innerText = "তৈরি হচ্ছে...";
+            approveBtn.disabled = true;
+            declineBtn.disabled = true;
+            approveBtn.style.opacity = "0.7";
+
+            fetch(`/api/requests/${id}/approve`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`অ্যাকাউন্ট "${data.username}" সফলভাবে তৈরি করা হয়েছে!`, 'success');
+                    
+                    const row = document.getElementById(`req-row-${id}`);
+                    row.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        loadRequests();
+                    }, 500);
+                } else {
+                    showToast(`অ্যাকাউন্ট তৈরি করতে সমস্যা: ${data.error}`, 'error');
+                    approveBtn.innerText = "তৈরি করুন";
+                    approveBtn.disabled = false;
+                    declineBtn.disabled = false;
+                    approveBtn.style.opacity = "1";
+                }
+            })
+            .catch(err => {
+                showToast("সার্ভারের সাথে যোগাযোগ করতে সমস্যা হয়েছে।", "error");
+                approveBtn.innerText = "তৈরি করুন";
+                approveBtn.disabled = false;
+                declineBtn.disabled = false;
+                approveBtn.style.opacity = "1";
+            });
+        }
+
+        function declineRequest(id) {
+            const approveBtn = document.getElementById(`approve-btn-${id}`);
+            const declineBtn = document.getElementById(`decline-btn-${id}`);
+            
+            declineBtn.innerText = "বাতিল হচ্ছে...";
+            approveBtn.disabled = true;
+            declineBtn.disabled = true;
+            declineBtn.style.opacity = "0.7";
+
+            fetch(`/api/requests/${id}/decline`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`আবেদনটি সফলভাবে বাতিল করা হয়েছে।`, 'success');
+                    
+                    const row = document.getElementById(`req-row-${id}`);
+                    row.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-20px)';
+                    setTimeout(() => {
+                        loadRequests();
+                    }, 500);
+                } else {
+                    showToast(`আবেদন বাতিল করতে সমস্যা: ${data.error}`, 'error');
+                    declineBtn.innerText = "বাতিল করুন";
+                    approveBtn.disabled = false;
+                    declineBtn.disabled = false;
+                    declineBtn.style.opacity = "1";
+                }
+            })
+            .catch(err => {
+                showToast("সার্ভারের সাথে যোগাযোগ করতে সমস্যা হয়েছে।", "error");
+                declineBtn.innerText = "বাতিল করুন";
+                approveBtn.disabled = false;
+                declineBtn.disabled = false;
+                declineBtn.style.opacity = "1";
+            });
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            renderTable(e.target.value);
+        });
+
+        // Initialize table
+        document.addEventListener('DOMContentLoaded', loadRequests);
+    </script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html class="light" lang="bn">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>অ্যাকাউন্ট তৈরির আবেদন - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Inter', 'Hind Siliguri', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        input:focus {
+            border-width: 2px !important;
+            border-color: #0066CC !important;
+            outline: none;
+        }
+    </style>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#005231",
+                    "on-surface": "#191c1d",
+                    "on-error-container": "#93000a",
+                    "tertiary-container": "#c6292b",
+                    "outline": "#727784",
+                    "surface-tint": "#005cba",
+                    "tertiary-fixed-dim": "#ffb3ad",
+                    "surface-dim": "#d9dadb",
+                    "on-secondary-container": "#007346",
+                    "on-primary-fixed": "#001b3e",
+                    "primary": "#004e9f",
+                    "background": "#f8f9fa",
+                    "on-error": "#ffffff",
+                    "tertiary": "#a30716",
+                    "on-tertiary-fixed-variant": "#930011",
+                    "on-surface-variant": "#414753",
+                    "on-background": "#191c1d",
+                    "on-secondary-fixed": "#002111",
+                    "surface-variant": "#e1e3e4",
+                    "primary-fixed-dim": "#aac7ff",
+                    "on-tertiary-container": "#ffe1de",
+                    "secondary-fixed": "#93f7bc",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#f3f4f5",
+                    "on-primary-container": "#dfe8ff",
+                    "secondary-fixed-dim": "#77daa1",
+                    "on-primary-fixed-variant": "#00458e",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-primary": "#ffffff",
+                    "surface": "#f8f9fa",
+                    "inverse-surface": "#2e3132",
+                    "secondary-container": "#93f7bc",
+                    "primary-container": "#0066cc",
+                    "secondary": "#006d42",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#aac7ff",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c1c6d5",
+                    "on-tertiary-fixed": "#410003",
+                    "surface-bright": "#f8f9fa",
+                    "primary-fixed": "#d7e3ff",
+                    "tertiary-fixed": "#ffdad6",
+                    "surface-container": "#edeeef",
+                    "surface-container-high": "#e7e8e9",
+                    "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "sm": "8px",
+                    "xl": "40px",
+                    "xs": "4px",
+                    "md": "16px",
+                    "container-max": "1120px",
+                    "gutter": "16px",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter", "Hind Siliguri"],
+                    "label-md": ["Inter", "Hind Siliguri"],
+                    "body-lg": ["Inter", "Hind Siliguri"],
+                    "display-lg": ["Inter", "Hind Siliguri"],
+                    "headline-md": ["Inter", "Hind Siliguri"],
+                    "headline-sm": ["Inter", "Hind Siliguri"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+    <!-- TopAppBar -->
+    <header class="bg-surface border-b border-outline-variant w-full sticky top-0 z-50">
+        <div class="flex justify-between items-center w-full px-lg md:px-xl max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-md">
+                <a href="/" class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-bold">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</a>
+            </div>
+            <nav class="hidden md:flex items-center gap-lg">
+                <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="/">হোম</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়ায় ফেরত যান</a>
+            </nav>
+            <div class="flex items-center gap-md">
+                <!-- NAV_AUTH -->
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center py-xl px-md">
+        <!-- Registration Form Card -->
+        <div class="form-container w-full bg-white border border-outline-variant p-xl shadow-sm rounded-lg">
+            <div class="text-center mb-xl">
+                <h1 class="font-headline-md text-headline-md text-on-surface mb-xs">অ্যাকাউন্ট তৈরির আবেদন</h1>
+                <p class="font-body-md text-body-md text-primary font-semibold">ইভেন্ট: <a href="{{WORKSHOP_URL}}" target="_blank" class="hover:underline">{{EVENT_NAME}}</a></p>
+                <div class="h-1 w-16 bg-primary mx-auto mt-sm rounded-full"></div>
+            </div>
+
+            <!-- Global Error Notification -->
+            <div id="formError" class="hidden mb-md p-md rounded-lg border border-error bg-error-container/20 flex items-start gap-sm">
+                <span class="material-symbols-outlined text-error text-[20px] mt-0.5">error</span>
+                <p id="formErrorText" class="font-body-md text-body-md text-on-error-container"></p>
+            </div>
+
+            <form class="space-y-lg" id="registrationForm">
+                <!-- Email Field -->
+                <div class="space-y-xs">
+                    <label class="font-label-md text-label-md text-on-surface-variant block" for="email">ইমেইল ঠিকানা</label>
+                    <input class="w-full h-12 px-md border border-outline rounded bg-surface-container-lowest focus:ring-0 transition-all font-body-md text-body-md" id="email" name="email" placeholder="example@email.com" required="" type="email"/>
+                </div>
+                <!-- Username Field -->
+                <div class="space-y-xs">
+                    <label class="font-label-md text-label-md text-on-surface-variant block" for="username">পছন্দসই ব্যবহারকারী নাম</label>
+                    <input class="w-full h-12 px-md border border-outline rounded bg-surface-container-lowest focus:ring-0 transition-all font-body-md text-body-md" id="username" name="username" placeholder="আপনার পছন্দসই নাম লিখুন" required="" type="text"/>
+                    <p class="font-label-md text-label-md text-on-surface-variant">ব্যবহারকারী নাম আগে থেকে আছে কি না এবং কোনো সংঘাত আছে কি না তা পরীক্ষা করা হবে।</p>
+                </div>
+                <!-- Feedback Area -->
+                <div class="hidden p-md rounded-lg border flex items-start gap-sm transition-all duration-300" id="usernameFeedback">
+                    <span class="material-symbols-outlined text-[20px] mt-0.5" id="feedbackIcon"></span>
+                    <p class="font-body-md text-body-md" id="feedbackText"></p>
+                </div>
+                <!-- Submit Button -->
+                <button id="submitBtn" class="w-full bg-primary text-on-primary h-12 rounded font-bold font-body-lg text-body-lg hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-[0.98]" type="submit">
+                    আবেদন জমা দিন
+                </button>
+            </form>
+        </div>
+
+        <!-- Username Policy Section -->
+        <div class="max-w-container-max w-full mt-xl">
+            <div class="p-lg border border-outline-variant rounded-xl bg-white shadow-sm text-left space-y-md">
+                <h3 class="font-headline-sm text-headline-sm mb-sm flex items-center gap-sm font-bold text-on-surface">
+                    <span class="material-symbols-outlined text-primary text-[28px]">policy</span>
+                    উইকিপিডিয়া ব্যবহারকারী নামের নীতিমালা
+                </h3>
+                <p class="font-body-md text-body-md text-on-surface-variant">
+                    উইকিপিডিয়ায় আপনার অ্যাকাউন্ট তৈরির পূর্বে নিচের ব্যবহারকারী নামের নীতিমালার সারসংক্ষেপটি অনুগ্রহ করে খেয়াল করুন:
+                </p>
+                <ul class="list-disc pl-lg space-y-sm font-body-md text-body-md text-on-surface-variant">
+                    <li><strong>বিভ্রান্তিকর নাম নয়:</strong> কোনো জীবিত ব্যক্তি, সুপরিচিত পাবলিক ব্যক্তিত্ব বা উইকিপিডিয়ার অফিশিয়াল কর্মকর্তা/প্রশাসকদের নামের সাথে মিল রেখে বিভ্রান্তিকর নাম নেওয়া যাবে না।</li>
+                    <li><strong>বিজ্ঞাপন বা প্রাতিষ্ঠানিক নাম নয়:</strong> কোনো কোম্পানি, ব্র্যান্ড, দল, বা প্রতিষ্ঠানের নাম ব্যবহারকারী নাম হিসেবে ব্যবহার করা নিষিদ্ধ। নাম ব্যক্তিগত হওয়া আবশ্যক।</li>
+                    <li><strong>আক্রমণাত্মক বা অবমাননাকর নাম নয়:</strong> কাউকে হেয় প্রতিপন্ন করে এমন, অশালীন বা উস্কানিমূলক নাম ব্যবহার করা যাবে না।</li>
+                    <li><strong>বিশেষ ক্যারেক্টার বর্জন করুন:</strong> নামে অতিরিক্ত ফাঁকা স্থান, অবাঞ্ছিত প্রতীক বা বিশেষ কোনো ইউনিকোড ক্যারেক্টার থাকা যাবে না।</li>
+                </ul>
+                
+                {{ADDITIONAL_INSTRUCTIONS}}
+
+                <div class="pt-sm border-t border-outline-variant text-center md:text-left mt-md">
+                    <p class="font-body-md text-body-md text-on-surface-variant">
+                        যেকোনো কারিগরি সহায়তার জন্য যোগাযোগ করুন: <a href="mailto:yahya@wikimedia.org.bd" class="text-primary font-bold hover:underline">yahya@wikimedia.org.bd</a>।
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-outline-variant mt-xl">
+        <div class="w-full py-lg px-lg max-w-container-max mx-auto text-center flex flex-col items-center gap-md">
+            <div class="flex items-center gap-sm">
+                <img alt="WMBG Logo" class="h-10 w-auto" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Wikimedia_Bangladesh_logo.svg/320px-Wikimedia_Bangladesh_logo.svg.png"/>
+            </div>
+            <div class="flex flex-wrap justify-center gap-md">
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org/wiki/Privacy_policy" target="_blank">গোপনীয়তা নীতি</a>
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org" target="_blank">উইকিমিডিয়া বাংলাদেশ সম্পর্কে</a>
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org/wiki/Disclaimer" target="_blank">দাবিত্যাগ</a>
+            </div>
+            <p class="text-on-surface-variant font-body-md text-body-md max-w-2xl">
+                © উইকিমিডিয়া বাংলাদেশ। এই সাইটের বিষয়বস্তু সিসি বাই-এসএ ৪.০ লাইসেন্সের অধীনে উপলব্ধ।
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        const usernameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
+        const feedbackArea = document.getElementById('usernameFeedback');
+        const feedbackText = document.getElementById('feedbackText');
+        const feedbackIcon = document.getElementById('feedbackIcon');
+        const submitBtn = document.getElementById('submitBtn');
+        const formError = document.getElementById('formError');
+        const formErrorText = document.getElementById('formErrorText');
+
+        let debounceTimer;
+
+        usernameInput.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            formError.classList.add('hidden');
+            
+            if (value.length === 0) {
+                feedbackArea.classList.add('hidden');
+                submitBtn.disabled = false;
+                return;
+            }
+
+            feedbackArea.classList.remove('hidden');
+            showLoading("ব্যবহারকারী নাম পরীক্ষা করা হচ্ছে...");
+            submitBtn.disabled = true;
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (value.length < 3) {
+                    showError("ব্যবহারকারী নাম কমপক্ষে ৩ অক্ষরের হতে হবে।");
+                    return;
+                }
+
+                fetch(`/api/check-username?username=${encodeURIComponent(value)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.valid) {
+                            showSuccess("ব্যবহারকারী নাম ব্যবহার করা যাবে!");
+                            submitBtn.disabled = false;
+                        } else {
+                            showError(data.reason);
+                        }
+                    })
+                    .catch(err => {
+                        showError("নামটি যাচাই করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+                    });
+            }, 500);
+        });
+
+        function showLoading(msg) {
+            feedbackArea.className = "p-md rounded-lg border border-outline-variant bg-surface-container-low flex items-start gap-sm transition-all duration-300";
+            feedbackText.className = "font-body-md text-body-md text-on-surface-variant";
+            feedbackIcon.className = "material-symbols-outlined text-[20px] mt-0.5 text-on-surface-variant animate-spin";
+            feedbackIcon.innerText = "sync";
+            feedbackText.innerText = msg;
+        }
+
+        function showSuccess(msg) {
+            feedbackArea.className = "p-md rounded-lg border border-secondary bg-secondary-container/20 flex items-start gap-sm transition-all duration-300";
+            feedbackText.className = "font-body-md text-body-md text-on-secondary-container";
+            feedbackIcon.className = "material-symbols-outlined text-[20px] mt-0.5 text-secondary";
+            feedbackIcon.innerText = "check_circle";
+            feedbackText.innerText = msg;
+        }
+
+        function showError(msg) {
+            feedbackArea.className = "p-md rounded-lg border border-error bg-error-container/20 flex items-start gap-sm transition-all duration-300";
+            feedbackText.className = "font-body-md text-body-md text-on-error-container";
+            feedbackIcon.className = "material-symbols-outlined text-[20px] mt-0.5 text-error";
+            feedbackIcon.innerText = "error";
+            feedbackText.innerText = msg;
+        }
+
+        // Handle form submission
+        document.getElementById('registrationForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            formError.classList.add('hidden');
+            
+            submitBtn.innerText = "প্রক্রিয়াকরণ করা হচ্ছে...";
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = "0.7";
+
+            const email = emailInput.value.trim();
+            const username = usernameInput.value.trim();
+
+            fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, username })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/success';
+                } else {
+                    formErrorText.innerText = data.error || 'আবেদন জমা দিতে সমস্যা হয়েছে।';
+                    formError.classList.remove('hidden');
+                    submitBtn.innerText = "আবেদন জমা দিন";
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = "1";
+                }
+            })
+            .catch(err => {
+                formErrorText.innerText = 'সার্ভারের সাথে যোগাযোগ করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।';
+                formError.classList.remove('hidden');
+                submitBtn.innerText = "আবেদন জমা দিন";
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = "1";
+            });
+        });
+    </script>
+</body>
+</html>
