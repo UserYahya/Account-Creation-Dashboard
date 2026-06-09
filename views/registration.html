@@ -186,7 +186,7 @@
                     <li><strong>বিশেষ ক্যারেক্টার বর্জন করুন:</strong> নামে অতিরিক্ত ফাঁকা স্থান, অবাঞ্ছিত প্রতীক বা বিশেষ কোনো ইউনিকোড ক্যারেক্টার থাকা যাবে না।</li>
                 </ul>
                 
-                {{ADDITIONAL_INSTRUCTIONS}}
+                {{ADDITIONAL_INSTRUCTIONS_HTML}}
 
                 <div class="pt-sm border-t border-outline-variant text-center md:text-left mt-md">
                     <p class="font-body-md text-body-md text-on-surface-variant">
@@ -215,6 +215,12 @@
     </footer>
 
     <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
         const usernameInput = document.getElementById('username');
         const emailInput = document.getElementById('email');
         const feedbackArea = document.getElementById('usernameFeedback');
@@ -302,7 +308,8 @@
             fetch('/api/register', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
                 },
                 body: JSON.stringify({ email, username })
             })

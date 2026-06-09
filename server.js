@@ -3,6 +3,7 @@ const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const crypto = require('crypto');
 const { getDatabase } = require('./db');
 
 // Load environment variables
@@ -10,17 +11,108 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Enforce strong session secret in production
+const sessionSecret = process.env.SESSION_SECRET;
+if (isProduction && (!sessionSecret || sessionSecret === 'some_random_session_secret_string')) {
+  console.error("CRITICAL: SESSION_SECRET is not securely configured in production.");
+  process.exit(1);
+}
+
 // Setup session
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'wmbdedu_secret_session_key_2026',
+  secret: sessionSecret || 'wmbdedu_secret_session_key_2026',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax'
+  }
 }));
+
+// Basic Security Headers Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
+// CSRF Generation and Cookie Setup Middleware
+app.use((req, res, next) => {
+  if (!req.session) return next();
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  res.cookie('XSRF-TOKEN', req.session.csrfToken, {
+    httpOnly: false, // Must be readable by client JS to attach as header
+    secure: isProduction,
+    sameSite: 'lax'
+  });
+  next();
+});
+
+// CSRF Verification Middleware
+function csrfVerify(req, res, next) {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    const clientToken = req.headers['x-xsrf-token'] || (req.body && req.body._csrf);
+    if (!clientToken || clientToken !== req.session.csrfToken) {
+      return res.status(403).json({ success: false, error: 'CSRF verification failed.' });
+    }
+  }
+  next();
+}
+app.use(csrfVerify);
+
+// Custom In-Memory IP Rate Limiter
+const rateLimitMap = new Map();
+function ipRateLimiter(limit, windowMs) {
+  return (req, res, next) => {
+    if (isProduction) {
+      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      const now = Date.now();
+      if (!rateLimitMap.has(ip)) {
+        rateLimitMap.set(ip, []);
+      }
+      const timestamps = rateLimitMap.get(ip);
+      const activeTimestamps = timestamps.filter(t => now - t < windowMs);
+      if (activeTimestamps.length >= limit) {
+        return res.status(429).json({ success: false, error: 'অতিরিক্ত রিকোয়েস্ট করা হয়েছে। অনুগ্রহ করে কিছু সময় পর আবার চেষ্টা করুন।' });
+      }
+      activeTimestamps.push(now);
+      rateLimitMap.set(ip, activeTimestamps);
+    }
+    next();
+  };
+}
+
+// URL Validation Helper
+function isValidHttpUrl(string) {
+  let url;
+  try {
+    url = new URL(string);
+  } catch (_) {
+    return false;  
+  }
+  return url.protocol === "http:" || url.protocol === "https:";
+}
+
+// HTML Escaping Helper
+function escapeHTML(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 // Serve static elements if any
 // (Our app has server-rendered views but Tailwind is fetched from CDN)
@@ -137,7 +229,11 @@ function renderView(viewName, replacements = {}, req = null) {
 
   // Replace custom variables passed in
   Object.keys(replacements).forEach(key => {
-    html = html.replaceAll(`{{${key}}}`, replacements[key]);
+    let value = replacements[key];
+    if (typeof value === 'string' && !key.endsWith('_HTML')) {
+      value = escapeHTML(value);
+    }
+    html = html.replaceAll(`{{${key}}}`, value);
   });
 
   // Render navigation auth section
@@ -173,7 +269,7 @@ app.get('/', async (req, res) => {
   if (addInstructions && addInstructions.value.trim()) {
     const listItems = addInstructions.value.trim().split('\n').map(item => {
       const trimmed = item.trim();
-      return trimmed ? `<li>${trimmed}</li>` : '';
+      return trimmed ? `<li>${escapeHTML(trimmed)}</li>` : '';
     }).filter(Boolean).join('');
     
     if (listItems) {
@@ -192,7 +288,7 @@ app.get('/', async (req, res) => {
     res.send(renderView('registration.html', { 
       EVENT_NAME: eventName.value, 
       WORKSHOP_URL: wUrl,
-      ADDITIONAL_INSTRUCTIONS: instructionsHtml
+      ADDITIONAL_INSTRUCTIONS_HTML: instructionsHtml
     }, req));
   } else {
     res.send(renderView('registration_stopped.html', { WORKSHOP_URL: wUrl }, req));
@@ -208,7 +304,7 @@ app.get('/success', async (req, res) => {
 });
 
 // Real-time username availability check endpoint
-app.get('/api/check-username', async (req, res) => {
+app.get('/api/check-username', ipRateLimiter(30, 60 * 1000), async (req, res) => {
   const username = req.query.username;
   if (!username || username.trim().length < 3) {
     return res.status(400).json({ valid: false, reason: 'নামটি কমপক্ষে ৩ অক্ষরের হতে হবে।' });
@@ -223,7 +319,7 @@ app.get('/api/check-username', async (req, res) => {
 });
 
 // Submit registration requests
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', ipRateLimiter(5, 15 * 60 * 1000), async (req, res) => {
   const { email, username } = req.body;
   if (!email || !username) {
     return res.status(400).json({ success: false, error: 'সবগুলো ঘর পূরণ করা আবশ্যক।' });
@@ -273,6 +369,10 @@ app.get('/login', (req, res) => {
   
   // MOCK LOGIN MODE (if credentials are placeholders or not set)
   if (!clientID || clientID === 'your_client_id_here') {
+    if (isProduction) {
+      console.error("CRITICAL: WIKIMEDIA_CLIENT_ID is not configured in production mode.");
+      return res.status(500).send("Critical Configuration Error: Wikimedia OAuth client credentials are not configured.");
+    }
     console.log("Wikimedia OAuth credentials not configured. Entering Mock OAuth Mode.");
     
     // Support mock super-admin login: /login?user=Yahya
@@ -483,7 +583,17 @@ app.get('/api/requests', isAdmin, async (req, res) => {
       approved: requests.filter(r => r.status === 'approved').length
     };
 
-    res.json({ requests, stats });
+    // Sanitize email address for non-super-admins
+    const isSuperAdmin = !!req.session.isSuperAdmin;
+    const sanitizedRequests = requests.map(r => {
+      const sanitized = { ...r };
+      if (!isSuperAdmin) {
+        sanitized.email = '';
+      }
+      return sanitized;
+    });
+
+    res.json({ requests: sanitizedRequests, stats });
   } catch (err) {
     res.status(500).json({ error: 'ডাটাবেজ থেকে তথ্য আনা যায়নি।' });
   }
@@ -494,6 +604,9 @@ app.post('/api/settings', isAdmin, async (req, res) => {
   const { event_name, registration_active, workshop_url, additional_instructions, welcome_message } = req.body;
   if (!event_name) {
     return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
+  }
+  if (workshop_url && !isValidHttpUrl(workshop_url)) {
+    return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
   }
 
   try {
@@ -557,6 +670,9 @@ app.post('/api/events', isAdmin, async (req, res) => {
   }
 
   const wUrl = workshop_url ? workshop_url.trim() : 'https://bn.wikipedia.org';
+  if (wUrl && !isValidHttpUrl(wUrl)) {
+    return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
+  }
 
   try {
     const db = await getDatabase();
@@ -660,6 +776,9 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
 
     // MOCK MODE CREATION (if session has no valid access token)
     if (!req.session.accessToken) {
+      if (isProduction) {
+        return res.status(400).json({ success: false, error: 'সেশন টোকেন পাওয়া যায়নি। অনুগ্রহ করে আবার লগ ইন করুন।' });
+      }
       console.log(`[MOCK MODE] Account "${request.username}" successfully created on "${targetWiki}"!`);
       
       // Update database status
