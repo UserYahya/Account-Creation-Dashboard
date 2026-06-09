@@ -714,7 +714,7 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
     try {
       creationData = await postWikiAPI(targetWiki, {
         action: 'createaccount',
-        name: request.username,
+        username: request.username,
         email: request.email,
         mailpassword: 'true',
         reason: summaryReason,

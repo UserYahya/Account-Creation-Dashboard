@@ -256,6 +256,34 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- Previous Decisions Table Section -->
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+                    <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant">
+                        <h3 class="font-headline-sm text-[18px] text-on-surface font-bold">পূর্ববর্তী সিদ্ধান্তসমূহ (চলমান ইভেন্ট)</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-bold">
+                                    <th class="px-lg py-md font-label-md text-label-md">ব্যবহারকারী নাম</th>
+                                    <th class="px-lg py-md font-label-md text-label-md">ইমেইল</th>
+                                    <th class="px-lg py-md font-label-md text-label-md w-28 text-center">স্ট্যাটাস</th>
+                                    <th class="px-lg py-md font-label-md text-label-md w-36">আবেদনের সময়</th>
+                                    <th class="px-lg py-md font-label-md text-label-md w-32">সিদ্ধান্ত নিয়েছে</th>
+                                    <th class="px-lg py-md font-label-md text-label-md w-32">সিদ্ধান্তের সময়</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant font-body-md text-body-md text-on-surface-variant" id="historyTableBody">
+                                <tr>
+                                    <td colspan="6" class="px-lg py-xl text-center text-on-surface-variant">
+                                        ডাটা লোড হচ্ছে...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -299,6 +327,7 @@
 
     <script>
         const tableBody = document.getElementById('requestsTableBody');
+        const historyTableBody = document.getElementById('historyTableBody');
         const searchInput = document.getElementById('searchInput');
         const pendingCountEl = document.getElementById('pendingCount');
         const approvedCountEl = document.getElementById('approvedCount');
@@ -338,12 +367,20 @@
                     approvedCountEl.innerText = stats.approved + " জন";
                     
                     renderTable();
+                    renderHistoryTable();
                 })
                 .catch(err => {
                     tableBody.innerHTML = `
                         <tr>
                             <td colspan="4" class="px-lg py-xl text-center text-error font-body-md font-bold">
                                 ডাটা লোড করতে ব্যর্থ হয়েছে। দয়া করে রিলোড দিন।
+                            </td>
+                        </tr>
+                    `;
+                    historyTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="px-lg py-xl text-center text-error font-body-md font-bold">
+                                ডাটা লোড করতে ব্যর্থ হয়েছে।
                             </td>
                         </tr>
                     `;
@@ -411,6 +448,82 @@
                                 <button id="decline-btn-${req.id}" onclick="openReasonModal(${req.id}, 'decline')" class="px-md py-xs border border-error text-error rounded-lg font-label-md text-label-md font-medium hover:bg-error-container hover:text-on-error-container transition-all active:scale-95">বাতিল করুন</button>
                             </div>
                         </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderHistoryTable() {
+            const currentEventName = document.getElementById('eventName').title.trim();
+            const historyRequests = requests.filter(r => r.event_name === currentEventName && r.status !== 'pending');
+
+            if (historyRequests.length === 0) {
+                historyTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                            এই ইভেন্টের অধীনে কোনো পূর্ববর্তী সিদ্ধান্ত নেওয়া হয়নি।
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            historyTableBody.innerHTML = historyRequests.map(req => {
+                const dateReq = new Date(req.requested_at).toLocaleString('bn-BD', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                let dateDec = '-';
+                if (req.decided_at) {
+                    dateDec = new Date(req.decided_at).toLocaleString('bn-BD', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                }
+
+                const letter = req.username ? req.username.trim().charAt(0).toUpperCase() : 'U';
+
+                let statusBadge = '';
+                if (req.status === 'approved') {
+                    statusBadge = `<span class="bg-secondary/20 text-secondary text-xs px-sm py-xs rounded font-bold">অনুমোদিত</span>`;
+                } else {
+                    statusBadge = `<span class="bg-error/20 text-error text-xs px-sm py-xs rounded font-bold">বাতিল</span>`;
+                }
+
+                let userSubText = '';
+                if (req.decision_reason) {
+                    userSubText = `<div class="text-[11px] text-on-surface-variant font-normal mt-xs bg-surface-container-low p-xs rounded border border-outline-variant max-w-[200px] break-words">মন্তব্য: ${escapeHTML(req.decision_reason)}</div>`;
+                } else if (req.error_message) {
+                    userSubText = `<div class="text-[11px] text-error font-normal mt-xs bg-error-container/20 p-xs rounded border border-error max-w-[200px] break-words">ত্রুটি: ${escapeHTML(req.error_message)}</div>`;
+                }
+
+                return `
+                    <tr class="hover:bg-surface-container transition-colors group">
+                        <td class="px-lg py-md">
+                            <div class="flex items-center gap-sm">
+                                <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold shrink-0">
+                                    ${letter}
+                                </div>
+                                <div>
+                                    <span class="font-medium text-on-surface font-bold block">${req.username}</span>
+                                    ${userSubText}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-lg py-md font-mono text-sm">${escapeHTML(req.email) || '-'}</td>
+                        <td class="px-lg py-md text-center">${statusBadge}</td>
+                        <td class="px-lg py-md text-sm">${dateReq}</td>
+                        <td class="px-lg py-md">${escapeHTML(req.decided_by) || '-'}</td>
+                        <td class="px-lg py-md text-sm">${dateDec}</td>
                     </tr>
                 `;
             }).join('');
