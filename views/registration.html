@@ -131,69 +131,47 @@
         </div>
     </header>
 
-    <main class="flex-grow flex flex-col items-center py-xl px-md max-w-5xl mx-auto w-full">
-        <!-- Two-column grid container -->
-        <div class="w-full grid grid-cols-1 md:grid-cols-12 gap-lg items-start">
-            <!-- Left Column: Registration Form Card -->
-            <div class="md:col-span-7 bg-white border border-outline-variant p-xl shadow-sm rounded-xl w-full">
-                <div class="text-center mb-xl">
-                    <h1 class="font-headline-md text-headline-md text-on-surface mb-xs">অ্যাকাউন্ট তৈরির আবেদন</h1>
-                    <p class="font-body-md text-body-md text-primary font-semibold">ইভেন্ট: <a href="{{WORKSHOP_URL}}" target="_blank" class="hover:underline">{{EVENT_NAME}}</a></p>
-                    <div class="h-1 w-16 bg-primary mx-auto mt-sm rounded-full"></div>
-                </div>
-
-                <!-- Global Error Notification -->
-                <div id="formError" class="hidden mb-md p-md rounded-lg border border-error bg-error-container/20 flex items-start gap-sm">
-                    <span class="material-symbols-outlined text-error text-[20px] mt-0.5">error</span>
-                    <p id="formErrorText" class="font-body-md text-body-md text-on-error-container"></p>
-                </div>
-
-                <form class="space-y-lg" id="registrationForm">
-                    <!-- Email Field -->
-                    <div class="space-y-xs">
-                        <label class="font-label-md text-label-md text-on-surface-variant block" for="email">ইমেইল ঠিকানা</label>
-                        <input class="w-full h-12 px-md border border-outline rounded bg-surface-container-lowest focus:ring-0 transition-all font-body-md text-body-md" id="email" name="email" placeholder="example@email.com" required="" type="email"/>
-                    </div>
-                    <!-- Username Field -->
-                    <div class="space-y-xs">
-                        <label class="font-label-md text-label-md text-on-surface-variant block" for="username">পছন্দসই ব্যবহারকারী নাম</label>
-                        <input class="w-full h-12 px-md border border-outline rounded bg-surface-container-lowest focus:ring-0 transition-all font-body-md text-body-md" id="username" name="username" placeholder="আপনার পছন্দসই নাম লিখুন" required="" type="text"/>
-                        <p class="font-label-md text-label-md text-on-surface-variant">ব্যবহারকারী নাম আগে থেকে আছে কি না এবং কোনো সংঘাত আছে কি না তা পরীক্ষা করা হবে।</p>
-                    </div>
-                    <!-- Feedback Area -->
-                    <div class="hidden p-md rounded-lg border flex items-start gap-sm transition-all duration-300" id="usernameFeedback">
-                        <span class="material-symbols-outlined text-[20px] mt-0.5" id="feedbackIcon"></span>
-                        <p class="font-body-md text-body-md" id="feedbackText"></p>
-                    </div>
-                    <!-- Submit Button -->
-                    <button id="submitBtn" class="w-full bg-primary text-on-primary h-12 rounded font-bold font-body-lg text-body-lg hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-[0.98]" type="submit">
-                        আবেদন জমা দিন
-                    </button>
-                </form>
+    <main class="flex-grow flex flex-col items-center py-xl px-md max-w-2xl mx-auto w-full space-y-xl">
+        <!-- Registration Form Card -->
+        <div class="form-container w-full bg-white border border-outline-variant p-xl shadow-sm rounded-xl">
+            <div class="text-center mb-xl">
+                <h1 class="font-headline-md text-headline-md text-on-surface mb-xs">অ্যাকাউন্ট তৈরির আবেদন</h1>
+                <p class="font-body-md text-body-md text-primary font-semibold">ইভেন্ট: <a href="{{WORKSHOP_URL}}" target="_blank" class="hover:underline">{{EVENT_NAME}}</a></p>
+                <div class="h-1 w-16 bg-primary mx-auto mt-sm rounded-full"></div>
             </div>
 
-            <!-- Right Column: QR Code Card -->
-            <div class="md:col-span-5 bg-white border border-outline-variant p-xl shadow-sm rounded-xl text-center space-y-md w-full">
-                <div class="flex items-center justify-center gap-xs text-primary">
-                    <span class="material-symbols-outlined text-[26px]">qr_code_2</span>
-                    <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">সহজে শেয়ার করুন</h2>
-                </div>
-                <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-                    কর্মশালা বা এডিটাথনে বড় স্ক্রিন বা প্রজেক্টরে এই কিউআর (QR) কোডটি প্রদর্শন করুন, যাতে অংশগ্রহণকারীরা সহজেই তাদের মোবাইল বা ডিভাইস থেকে স্ক্যান করে ড্যাশবোর্ডে প্রবেশ করতে পারেন।
-                </p>
-                <div class="p-md rounded-xl bg-surface-container-lowest border border-outline-variant inline-block">
-                    <img src="/qr.png" alt="QR Code" class="w-48 h-48 mx-auto object-contain bg-white rounded p-xs shadow-sm hover:scale-105 transition-transform duration-300" />
-                </div>
-                <div class="pt-sm">
-                    <span class="inline-flex items-center gap-xs bg-primary/10 text-primary px-md py-1 rounded-full font-label-md text-label-md font-bold tracking-wide">
-                        acd.toolforge.org
-                    </span>
-                </div>
+            <!-- Global Error Notification -->
+            <div id="formError" class="hidden mb-md p-md rounded-lg border border-error bg-error-container/20 flex items-start gap-sm">
+                <span class="material-symbols-outlined text-error text-[20px] mt-0.5">error</span>
+                <p id="formErrorText" class="font-body-md text-body-md text-on-error-container"></p>
             </div>
+
+            <form class="space-y-lg" id="registrationForm">
+                <!-- Email Field -->
+                <div class="space-y-xs">
+                    <label class="font-label-md text-label-md text-on-surface-variant block" for="email">ইমেইল ঠিকানা</label>
+                    <input class="w-full h-12 px-md border border-outline rounded bg-surface-container-lowest focus:ring-0 transition-all font-body-md text-body-md" id="email" name="email" placeholder="example@email.com" required="" type="email"/>
+                </div>
+                <!-- Username Field -->
+                <div class="space-y-xs">
+                    <label class="font-label-md text-label-md text-on-surface-variant block" for="username">পছন্দসই ব্যবহারকারী নাম</label>
+                    <input class="w-full h-12 px-md border border-outline rounded bg-surface-container-lowest focus:ring-0 transition-all font-body-md text-body-md" id="username" name="username" placeholder="আপনার পছন্দসই নাম লিখুন" required="" type="text"/>
+                    <p class="font-label-md text-label-md text-on-surface-variant">ব্যবহারকারী নাম আগে থেকে আছে কি না এবং কোনো সংঘাত আছে কি না তা পরীক্ষা করা হবে।</p>
+                </div>
+                <!-- Feedback Area -->
+                <div class="hidden p-md rounded-lg border flex items-start gap-sm transition-all duration-300" id="usernameFeedback">
+                    <span class="material-symbols-outlined text-[20px] mt-0.5" id="feedbackIcon"></span>
+                    <p class="font-body-md text-body-md" id="feedbackText"></p>
+                </div>
+                <!-- Submit Button -->
+                <button id="submitBtn" class="w-full bg-primary text-on-primary h-12 rounded font-bold font-body-lg text-body-lg hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-[0.98]" type="submit">
+                    আবেদন জমা দিন
+                </button>
+            </form>
         </div>
 
         <!-- Username Policy Section -->
-        <div class="max-w-container-max w-full mt-xl">
+        <div class="w-full">
             <div class="p-lg border border-outline-variant rounded-xl bg-white shadow-sm text-left space-y-md">
                 <h3 class="font-headline-sm text-headline-sm mb-sm flex items-center gap-sm font-bold text-on-surface">
                     <span class="material-symbols-outlined text-primary text-[28px]">policy</span>
@@ -216,6 +194,23 @@
                         যেকোনো কারিগরি সহায়তার জন্য যোগাযোগ করুন: <a href="mailto:yahya@wikimedia.org.bd" class="text-primary font-bold hover:underline">yahya@wikimedia.org.bd</a>।
                     </p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Large Centered QR Code Card -->
+        <div class="w-full bg-white border border-outline-variant p-xl shadow-sm rounded-xl text-center space-y-md">
+            <div class="flex items-center justify-center gap-xs text-primary">
+                <span class="material-symbols-outlined text-[28px]">qr_code_2</span>
+                <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">মোবাইল থেকে অংশ নিতে স্ক্যান করুন</h2>
+            </div>
+            <div class="p-lg rounded-xl bg-surface-container-lowest border border-outline-variant inline-block">
+                <!-- Large QR Code for easy scanning from the back of the room -->
+                <img src="/qr.png" alt="QR Code" class="w-64 h-64 mx-auto object-contain bg-white rounded p-xs shadow-sm hover:scale-105 transition-transform duration-300" />
+            </div>
+            <div class="pt-sm">
+                <span class="inline-flex items-center gap-xs bg-primary/10 text-primary px-lg py-2 rounded-full font-headline-sm text-[16px] font-bold tracking-wide">
+                    acd.toolforge.org
+                </span>
             </div>
         </div>
     </main>
