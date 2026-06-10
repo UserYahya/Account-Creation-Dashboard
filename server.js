@@ -303,6 +303,12 @@ app.get('/success', async (req, res) => {
   res.send(renderView('success.html', { WORKSHOP_URL: wUrl }, req));
 });
 
+// About Page
+app.get('/about', async (req, res) => {
+  res.send(renderView('about.html', {}, req));
+});
+
+
 // Real-time username availability check endpoint
 app.get('/api/check-username', ipRateLimiter(30, 60 * 1000), async (req, res) => {
   const username = req.query.username;
