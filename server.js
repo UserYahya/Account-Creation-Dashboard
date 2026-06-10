@@ -713,10 +713,47 @@ app.post('/api/events', isAdmin, async (req, res) => {
   }
 });
 
-// Download login history logs (Developer Yahya only)
+// Download previous events request log containing email addresses (Developer Yahya only)
 app.get('/api/admin/download-log', isAdmin, async (req, res) => {
   if (!req.session.isDeveloper) {
     return res.status(403).send('দুঃখিত, এই ফাইলটি ডাউনলোড করার অনুমতি শুধুমাত্র ডেভেলপার Yahya-এর আছে।');
+  }
+
+  try {
+    const db = await getDatabase();
+    const requests = await db.all('SELECT * FROM requests ORDER BY requested_at DESC');
+    
+    // Create CSV header (UTF-8 signature BOM first to preserve Bengali characters in Excel)
+    let csvContent = '\uFEFFID,Username,Email,Status,Event Name,Requested At,Decided By,Decided At,Error Message,Decision Reason\n';
+    
+    // Helper to escape CSV values
+    const escapeCSV = (val) => {
+      if (val === null || val === undefined) return '';
+      const str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return `"${str.replaceAll('"', '""')}"`;
+      }
+      return str;
+    };
+
+    // Populate rows
+    requests.forEach(r => {
+      csvContent += `${r.id},${escapeCSV(r.username)},${escapeCSV(r.email)},${escapeCSV(r.status)},${escapeCSV(r.event_name)},${escapeCSV(r.requested_at)},${escapeCSV(r.decided_by)},${escapeCSV(r.decided_at)},${escapeCSV(r.error_message)},${escapeCSV(r.decision_reason)}\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=wikimedia_outreach_requests_log.csv');
+    res.send(Buffer.from(csvContent, 'utf-8'));
+  } catch (err) {
+    console.error("Download requests log error:", err);
+    res.status(500).send('লগ ডাউনলোড করতে ব্যর্থ হয়েছে।');
+  }
+});
+
+// Download login history logs (Developer Yahya only)
+app.get('/api/admin/download-login-log', isAdmin, async (req, res) => {
+  if (!req.session.isDeveloper) {
+    return res.status(403).send('দুঃখিত, এই লগ ডাউনলোড করার অনুমতি শুধুমাত্র ডেভেলপার Yahya-এর আছে।');
   }
 
   try {
@@ -741,15 +778,15 @@ app.get('/api/admin/download-log', isAdmin, async (req, res) => {
       csvContent += `${l.id},${escapeCSV(l.username)},${escapeCSV(l.wiki)},${escapeCSV(l.logged_at)}\n`;
     });
 
-
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename=wikimedia_outreach_requests_log.csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=developer_login_history_log.csv');
     res.send(Buffer.from(csvContent, 'utf-8'));
   } catch (err) {
-    console.error("Download log error:", err);
+    console.error("Download login log error:", err);
     res.status(500).send('লগ ডাউনলোড করতে ব্যর্থ হয়েছে।');
   }
 });
+
 
 // Decline request
 app.post('/api/requests/:id/decline', isAdmin, async (req, res) => {

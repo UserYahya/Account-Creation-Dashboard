@@ -182,10 +182,14 @@
                             <span class="material-symbols-outlined text-[18px]">verified_user</span>
                             অ্যাকাউন্ট তৈরি হবে: {{ADMIN_WIKI}}
                         </span>
-                        <div class="{{DOWNLOAD_BUTTON_CLASS}}">
-                            <a href="/api/admin/download-log" class="inline-flex items-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm font-bold">
+                        <div class="{{DOWNLOAD_BUTTON_CLASS}} flex gap-sm">
+                            <a href="/api/admin/download-log" class="inline-flex items-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm font-bold" title="পূর্ববর্তী সকল আবেদনসমূহ এবং বিবরণ ডাউনলোড করুন">
                                 <span class="material-symbols-outlined text-[18px]">download</span>
-                                লগ ডাউনলোড (CSV)
+                                আবেদন লগ ডাউনলোড (CSV)
+                            </a>
+                            <a href="/api/admin/download-login-log" class="inline-flex items-center gap-xs px-md py-sm bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm font-bold" title="ডেভেলপার এবং অ্যাডমিনদের লগইন ইতিহাস ডাউনলোড করুন">
+                                <span class="material-symbols-outlined text-[18px]">history</span>
+                                লগইন ইতিহাস ডাউনলোড (CSV)
                             </a>
                         </div>
                     </div>
