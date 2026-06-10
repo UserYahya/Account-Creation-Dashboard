@@ -308,6 +308,11 @@ app.get('/about', async (req, res) => {
   res.send(renderView('about.html', {}, req));
 });
 
+// Serve QR Code Image
+app.get('/qr.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'qr.png'));
+});
+
 
 // Real-time username availability check endpoint
 app.get('/api/check-username', ipRateLimiter(30, 60 * 1000), async (req, res) => {
