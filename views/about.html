@@ -191,7 +191,7 @@
                         <span class="material-symbols-outlined font-bold">mail</span>
                     </div>
                     <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">ইমেইলের মাধ্যমে পাসওয়ার্ড প্রেরণ (নিরাপদ)</h3>
-                    <p class="font-body-md text-body-md text-on-surface-variant">অ্যাকাউন্ট তৈরির সময় পাসওয়ার্ড হিসেবে সরাসরি ব্যবহারকারীর ইমেইলে একটি টেম্পোরারি পাসওয়ার্ড লিংক চলে যায়। ফলে অ্যাডমিনদেরকে পাসওয়ার্ড দেখতে বা নিজের থেকে তৈরি করতে হয় না, যা ব্যবহারকারীর অ্যাকাউন্টকে সম্পূর্ণ নিরাপদ রাখে।</p>
+                    <p class="font-body-md text-body-md text-on-surface-variant">অ্যাকাউন্ট তৈরির সময় পাসওয়ার্ড হিসেবে সরাসরি ব্যবহারকারীর ইমেইলে একটি স্বয়ংক্রিয় সাময়িক পাসওয়ার্ড চলে যায়। ফলে অ্যাডমিনদেরকে পাসওয়ার্ড দেখতে বা নিজের থেকে তৈরি করতে হয় না, যা ব্যবহারকারীর অ্যাকাউন্টকে সম্পূর্ণ নিরাপদ রাখে।</p>
                 </div>
 
                 <!-- Feature 4 -->
@@ -234,7 +234,7 @@
                         </li>
                         <li class="flex items-start gap-xs">
                             <span class="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5">arrow_right</span>
-                            <span>প্রশাসক অনুমোদন দিলে আপনার ইমেইলে একটি স্বয়ংক্রিয় পাসওয়ার্ড লিংক চলে যাবে। লিংকে ক্লিক করে নতুন পাসওয়ার্ড সেট করে উইকিপিডিয়ায় প্রবেশ করুন।</span>
+                            <span>প্রশাসক অনুমোদন দিলে আপনার ইমেইলে উইকিপিডিয়া থেকে একটি স্বয়ংক্রিয় সাময়িক পাসওয়ার্ড চলে যাবে। সেটি ব্যবহার করে আপনি উইকিপিডিয়ায় প্রবেশ করতে পারবেন।</span>
                         </li>
                     </ul>
                 </div>
@@ -274,9 +274,27 @@
 
     <!-- Footer -->
     <footer class="bg-surface-container border-t border-outline-variant py-md mt-auto">
-        <div class="max-w-container-max mx-auto text-center font-label-md text-label-md text-on-surface-variant space-y-xs">
-            <p>অ্যাকাউন্ট তৈরির ড্যাশবোর্ড — acd.toolforge.org</p>
-            <p class="text-[11px]">উইকিমিডিয়া বাংলাদেশ Outreach টিম দ্বারা পরিচালিত ও কারিগরি সহায়তায় তৈরি</p>
+        <div class="max-w-container-max mx-auto text-center flex flex-col items-center gap-xs">
+            <div class="flex items-center justify-center mb-xs">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" class="h-10 w-auto">
+                    <g transform="translate(40, 40) scale(0.06)">
+                        <defs>
+                            <clipPath id="wmlogo-clip-about">
+                                <path d="M47.5-87.5v425h-95v-425l-552-552v1250h1199v-1250z"/>
+                            </clipPath>
+                        </defs>
+                        <g clip-path="url(#wmlogo-clip-about)">
+                            <circle r="336.5" fill="#339966"/>
+                            <circle r="480.25" fill="none" stroke="#006699" stroke-width="135.5"/>
+                        </g>
+                        <circle cy="-379.5" r="184.5" fill="#990000"/>
+                    </g>
+                    <text x="85" y="38" font-family="'Inter', 'Hind Siliguri', sans-serif" font-size="20" font-weight="700" fill="#202122">উইকিমিডিয়া</text>
+                    <text x="85" y="60" font-family="'Inter', 'Hind Siliguri', sans-serif" font-size="16" font-weight="500" fill="#54595d">বাংলাদেশ</text>
+                </svg>
+            </div>
+            <p class="font-label-md text-label-md text-on-surface-variant">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড — acd.toolforge.org</p>
+            <p class="text-[11px] text-on-surface-variant">উইকিমিডিয়া বাংলাদেশের তৈরি</p>
         </div>
     </footer>
 </body>

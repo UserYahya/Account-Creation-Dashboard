@@ -161,14 +161,29 @@
 
     <!-- Footer -->
     <footer class="bg-surface border-t border-outline-variant mt-xl">
-        <div class="w-full py-lg px-lg max-w-container-max mx-auto text-center space-y-md">
-            <div class="flex flex-wrap justify-center gap-lg mb-md">
+        <div class="w-full py-lg px-lg max-w-container-max mx-auto text-center flex flex-col items-center gap-md">
+            <div class="flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" class="h-10 w-auto">
+                    <g transform="translate(40, 40) scale(0.06)">
+                        <defs>
+                            <clipPath id="wmlogo-clip-stopped">
+                                <path d="M47.5-87.5v425h-95v-425l-552-552v1250h1199v-1250z"/>
+                            </clipPath>
+                        </defs>
+                        <g clip-path="url(#wmlogo-clip-stopped)">
+                            <circle r="336.5" fill="#339966"/>
+                            <circle r="480.25" fill="none" stroke="#006699" stroke-width="135.5"/>
+                        </g>
+                        <circle cy="-379.5" r="184.5" fill="#990000"/>
+                    </g>
+                    <text x="85" y="38" font-family="'Inter', 'Hind Siliguri', sans-serif" font-size="20" font-weight="700" fill="#202122">উইকিমিডিয়া</text>
+                    <text x="85" y="60" font-family="'Inter', 'Hind Siliguri', sans-serif" font-size="16" font-weight="500" fill="#54595d">বাংলাদেশ</text>
+                </svg>
+            </div>
+            <div class="flex flex-wrap justify-center gap-md">
                 <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org/wiki/Privacy_policy" target="_blank">গোপনীয়তা নীতি</a>
                 <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org" target="_blank">উইকিমিডিয়া বাংলাদেশ সম্পর্কে</a>
                 <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org/wiki/Disclaimer" target="_blank">দাবিত্যাগ</a>
-            </div>
-            <div class="flex justify-center items-center gap-sm mb-sm">
-                <span class="text-on-surface font-bold font-body-md">উইকিমিডিয়া বাংলাদেশ</span>
             </div>
             <p class="text-on-surface-variant font-body-md text-body-md max-w-3xl mx-auto">
                 © উইকিমিডিয়া বাংলাদেশ। এই সাইটের বিষয়বস্তু সিসি বাই-এসএ ৪.০ লাইসেন্সের অধীনে উপলব্ধ।
