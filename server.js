@@ -375,7 +375,7 @@ app.post('/api/register', ipRateLimiter(5, 15 * 60 * 1000), async (req, res) => 
 // --- OAUTH AUTHENTICATION ROUTES ---
 
 // Login route (initiates OAuth)
-app.get('/login', (req, res) => {
+app.get('/login', async (req, res) => {
   const clientID = process.env.WIKIMEDIA_CLIENT_ID;
   
   // MOCK LOGIN MODE (if credentials are placeholders or not set)
@@ -386,15 +386,23 @@ app.get('/login', (req, res) => {
     }
     console.log("Wikimedia OAuth credentials not configured. Entering Mock OAuth Mode.");
     
-    // Support mock super-admin login: /login?user=Yahya
+    // Support mock developer login: /login?user=Yahya
     const mockUser = req.query.user === 'Yahya' ? 'Yahya' : 'উইকি_অ্যাডমিন';
     req.session.username = mockUser;
     req.session.isAdmin = true;
-    req.session.isSuperAdmin = mockUser === 'Yahya';
+    req.session.isDeveloper = mockUser === 'Yahya';
     
     // Allow query parameter override for testing different targets: ?wiki=bd
     const targetWiki = req.query.wiki === 'bd' ? 'bd.wikimedia.org' : 'bn.wikipedia.org';
     req.session.adminWiki = targetWiki;
+
+    // Log mock login in database
+    try {
+      const db = await getDatabase();
+      await db.run('INSERT INTO login_logs (username, wiki) VALUES (?, ?)', mockUser, targetWiki);
+    } catch (dbErr) {
+      console.error("Failed to log mock login:", dbErr);
+    }
     
     return res.redirect('/admin');
   }
@@ -496,18 +504,23 @@ app.get('/auth/callback', async (req, res) => {
       req.session.isAdmin = true;
       req.session.accessToken = accessToken;
       
-      // If username is Yahya, grant Super Admin rights
+      // If username is Yahya, grant Developer rights
       if (username.toLowerCase() === 'yahya') {
-        req.session.isSuperAdmin = true;
+        req.session.isDeveloper = true;
       } else {
-        req.session.isSuperAdmin = false;
+        req.session.isDeveloper = false;
       }
 
       // If sysop on bnwiki, create account there; else on bd.wikimedia.org
-      if (isBnAdmin) {
-        req.session.adminWiki = 'bn.wikipedia.org';
-      } else {
-        req.session.adminWiki = 'bd.wikimedia.org';
+      const targetWiki = isBnAdmin ? 'bn.wikipedia.org' : 'bd.wikimedia.org';
+      req.session.adminWiki = targetWiki;
+
+      // Log successful login in database
+      try {
+        const db = await getDatabase();
+        await db.run('INSERT INTO login_logs (username, wiki) VALUES (?, ?)', username, targetWiki);
+      } catch (dbErr) {
+        console.error("Failed to log OAuth login:", dbErr);
       }
 
       res.redirect('/admin');
@@ -541,14 +554,14 @@ app.get('/admin', isAdmin, async (req, res) => {
   const db = await getDatabase();
   const eventName = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
   
-  const isSuperAdmin = req.session.isSuperAdmin ? 'true' : 'false';
-  const showDownloadClass = req.session.isSuperAdmin ? '' : 'hidden';
+  const isDeveloper = req.session.isDeveloper ? 'true' : 'false';
+  const showDownloadClass = req.session.isDeveloper ? '' : 'hidden';
 
   res.send(renderView('admin_dashboard.html', {
     ADMIN_USERNAME: req.session.username,
     ADMIN_WIKI: req.session.adminWiki,
     EVENT_NAME: eventName ? eventName.value : '',
-    IS_SUPER_ADMIN: isSuperAdmin,
+    IS_DEVELOPER: isDeveloper,
     DOWNLOAD_BUTTON_CLASS: showDownloadClass
   }, req));
 });
@@ -594,11 +607,11 @@ app.get('/api/requests', isAdmin, async (req, res) => {
       approved: requests.filter(r => r.status === 'approved').length
     };
 
-    // Sanitize email address for non-super-admins
-    const isSuperAdmin = !!req.session.isSuperAdmin;
+    // Sanitize email address for non-developers
+    const isDeveloper = !!req.session.isDeveloper;
     const sanitizedRequests = requests.map(r => {
       const sanitized = { ...r };
-      if (!isSuperAdmin) {
+      if (!isDeveloper) {
         sanitized.email = '';
       }
       return sanitized;
@@ -645,7 +658,7 @@ app.get('/api/events', isAdmin, async (req, res) => {
   }
 });
 
-// Fetch requests for a specific event (only super-admin can see emails)
+// Fetch requests for a specific event (only developer can see emails)
 app.get('/api/events/:eventName/requests', isAdmin, async (req, res) => {
   try {
     const eventName = req.params.eventName;
@@ -657,16 +670,16 @@ app.get('/api/events/:eventName/requests', isAdmin, async (req, res) => {
       eventName
     );
     
-    const isSuperAdmin = !!req.session.isSuperAdmin;
+    const isDeveloper = !!req.session.isDeveloper;
     const sanitizedRequests = requests.map(r => {
       const sanitized = { ...r };
-      if (!isSuperAdmin) {
+      if (!isDeveloper) {
         delete sanitized.email;
       }
       return sanitized;
     });
     
-    res.json({ requests: sanitizedRequests, showEmail: isSuperAdmin });
+    res.json({ requests: sanitizedRequests, showEmail: isDeveloper });
   } catch (err) {
     console.error("Error fetching event requests:", err);
     res.status(500).json({ error: 'ইভেন্টের আবেদন ইতিহাস লোড করা যায়নি।' });
@@ -700,18 +713,18 @@ app.post('/api/events', isAdmin, async (req, res) => {
   }
 });
 
-// Download previous events log containing email addresses (Super-admin Yahya only)
+// Download login history logs (Developer Yahya only)
 app.get('/api/admin/download-log', isAdmin, async (req, res) => {
-  if (!req.session.isSuperAdmin) {
-    return res.status(403).send('দুঃখিত, এই ফাইলটি ডাউনলোড করার অনুমতি শুধুমাত্র সুপার অ্যাডমিন Yahya-এর আছে।');
+  if (!req.session.isDeveloper) {
+    return res.status(403).send('দুঃখিত, এই ফাইলটি ডাউনলোড করার অনুমতি শুধুমাত্র ডেভেলপার Yahya-এর আছে।');
   }
 
   try {
     const db = await getDatabase();
-    const requests = await db.all('SELECT * FROM requests ORDER BY requested_at DESC');
+    const logs = await db.all('SELECT * FROM login_logs ORDER BY logged_at DESC');
     
     // Create CSV header (UTF-8 signature BOM first to preserve Bengali characters in Excel)
-    let csvContent = '\uFEFFID,Username,Email,Status,Event Name,Requested At,Decided By,Decided At,Error Message,Decision Reason\n';
+    let csvContent = '\uFEFFID,Username,Wiki,Logged At\n';
     
     // Helper to escape CSV values
     const escapeCSV = (val) => {
@@ -724,8 +737,8 @@ app.get('/api/admin/download-log', isAdmin, async (req, res) => {
     };
 
     // Populate rows
-    requests.forEach(r => {
-      csvContent += `${r.id},${escapeCSV(r.username)},${escapeCSV(r.email)},${escapeCSV(r.status)},${escapeCSV(r.event_name)},${escapeCSV(r.requested_at)},${escapeCSV(r.decided_by)},${escapeCSV(r.decided_at)},${escapeCSV(r.error_message)},${escapeCSV(r.decision_reason)}\n`;
+    logs.forEach(l => {
+      csvContent += `${l.id},${escapeCSV(l.username)},${escapeCSV(l.wiki)},${escapeCSV(l.logged_at)}\n`;
     });
 
 

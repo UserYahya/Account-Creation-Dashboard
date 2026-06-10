@@ -39,6 +39,13 @@ async function getDatabase() {
       workshop_url TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS login_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT,
+      wiki TEXT,
+      logged_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   // Try to alter table to add decision_reason if migrating existing database
