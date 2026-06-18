@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>অ্যাডমিন ড্যাশবোর্ড - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <title>অ্যাডমিন ড্যাশবোর্ড - ইভেন্ট ড্যাশবোর্ড</title>
     <link rel="icon" type="image/png" href="/favicon.png"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
@@ -155,12 +155,26 @@
         <header class="bg-surface border-b border-outline-variant z-10">
             <div class="flex justify-between items-center w-full px-lg md:px-xl h-16 max-w-container-max mx-auto">
                 <div class="flex items-center gap-md">
-                    <div class="font-headline-sm text-headline-sm text-on-surface font-bold">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</div>
+                    <div class="font-headline-sm text-headline-sm text-on-surface font-bold">ইভেন্ট ড্যাশবোর্ড</div>
                 </div>
                 <div class="flex items-center gap-lg">
                     <nav class="hidden md:flex gap-lg items-center">
                         <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/">হোম</a>
                         <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/about">ড্যাশবোর্ড পরিচিতি</a>
+                        <div class="relative inline-block text-left" id="desktopEventsDropdown">
+                            <button type="button" class="inline-flex items-center gap-xs text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md font-medium focus:outline-none" id="desktopEventsDropdownBtn">
+                                <span>চলমান ইভেন্টসমূহ</span>
+                                <span class="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
+                            </button>
+                            <div class="hidden absolute right-0 mt-2 w-64 origin-top-right rounded-lg bg-white border border-outline-variant shadow-lg ring-1 ring-black/5 focus:outline-none z-50 p-sm" id="desktopEventsDropdownMenu">
+                                <div class="py-xs flex flex-col gap-xs" id="desktopMenuEventsList">
+                                    <div class="text-xs text-on-surface-variant px-sm py-xs">লোড হচ্ছে...</div>
+                                </div>
+                                <div class="border-t border-outline-variant/50 pt-xs mt-xs">
+                                    <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-[12px] px-sm py-xs block" href="/stats?archive=true">আর্কাইভ ইভেন্টসমূহ</a>
+                                </div>
+                            </div>
+                        </div>
                         <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/stats">পরিসংখ্যান</a>
                         <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়া</a>
                     </nav>
@@ -249,13 +263,14 @@
                                 <tr class="bg-surface-container-low border-b border-outline-variant">
                                     <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold">ব্যবহারকারী নাম</th>
                                     <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold">ইমেইল</th>
+                                    <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold">ইভেন্ট</th>
                                     <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold">আবেদনের সময়</th>
                                     <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-bold text-right font-bold">অ্যাকশন</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-outline-variant" id="requestsTableBody">
                                 <tr>
-                                    <td colspan="4" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                                    <td colspan="5" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
                                         ডাটা লোড হচ্ছে...
                                     </td>
                                 </tr>
@@ -266,8 +281,14 @@
 
                 <!-- Previous Decisions Table Section -->
                 <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-                    <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant">
-                        <h3 class="font-headline-sm text-[18px] text-on-surface font-bold">পূর্ববর্তী সিদ্ধান্তসমূহ (চলমান ইভেন্ট)</h3>
+                    <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md">
+                        <h3 class="font-headline-sm text-[18px] text-on-surface font-bold">পূর্ববর্তী সিদ্ধান্তসমূহ</h3>
+                        <div class="flex items-center gap-sm">
+                            <label class="font-label-md text-label-md text-on-surface-variant shrink-0 font-bold" for="historyEventFilter">ইভেন্ট ফিল্টার:</label>
+                            <select id="historyEventFilter" class="bg-surface border border-outline-variant rounded-lg px-md py-1 font-body-md text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all min-w-[150px]">
+                                <option value="all">সকল ইভেন্ট</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -275,6 +296,7 @@
                                 <tr class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-bold">
                                     <th class="px-lg py-md font-label-md text-label-md">ব্যবহারকারী নাম</th>
                                     <th class="px-lg py-md font-label-md text-label-md">ইমেইল</th>
+                                    <th class="px-lg py-md font-label-md text-label-md w-36">ইভেন্ট</th>
                                     <th class="px-lg py-md font-label-md text-label-md w-28 text-center">স্ট্যাটাস</th>
                                     <th class="px-lg py-md font-label-md text-label-md w-36">আবেদনের সময়</th>
                                     <th class="px-lg py-md font-label-md text-label-md w-32">সিদ্ধান্ত নিয়েছে</th>
@@ -283,7 +305,7 @@
                             </thead>
                             <tbody class="divide-y divide-outline-variant font-body-md text-body-md text-on-surface-variant" id="historyTableBody">
                                 <tr>
-                                    <td colspan="6" class="px-lg py-xl text-center text-on-surface-variant">
+                                    <td colspan="7" class="px-lg py-xl text-center text-on-surface-variant">
                                         ডাটা লোড হচ্ছে...
                                     </td>
                                 </tr>
@@ -345,6 +367,13 @@
         const pendingCountEl = document.getElementById('pendingCount');
         const approvedCountEl = document.getElementById('approvedCount');
         
+        const filterSelect = document.getElementById('historyEventFilter');
+        if (filterSelect) {
+            filterSelect.addEventListener('change', () => {
+                renderHistoryTable();
+            });
+        }
+        
         const toastEl = document.getElementById('statusToast');
         const toastText = document.getElementById('toastText');
         const toastIcon = document.getElementById('toastIcon');
@@ -370,6 +399,26 @@
             }, 8000);
         }
 
+        function populateHistoryFilter() {
+            if (!filterSelect) return;
+            const currentValue = filterSelect.value;
+            filterSelect.innerHTML = '<option value="all">সকল ইভেন্ট</option>';
+            
+            // Get unique event names from requests
+            const uniqueEvents = [...new Set(requests.map(r => r.event_name).filter(Boolean))];
+            uniqueEvents.sort().forEach(evt => {
+                const opt = document.createElement('option');
+                opt.value = evt;
+                opt.textContent = evt;
+                filterSelect.appendChild(opt);
+            });
+            
+            // Restore selection if still exists
+            if ([...filterSelect.options].some(o => o.value === currentValue)) {
+                filterSelect.value = currentValue;
+            }
+        }
+
         function loadRequests() {
             fetch('/api/requests')
                 .then(res => res.json())
@@ -379,6 +428,7 @@
                     pendingCountEl.innerText = stats.pending + " টি";
                     approvedCountEl.innerText = stats.approved + " জন";
                     
+                    populateHistoryFilter();
                     renderTable();
                     renderHistoryTable();
                 })
@@ -410,7 +460,7 @@
             if (filtered.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="4" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                        <td colspan="5" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
                             ${filterTerm ? 'কোনো মিল পাওয়া যায়নি।' : 'কোনো অপেক্ষমাণ আবেদন নেই।'}
                         </td>
                     </tr>
@@ -454,6 +504,7 @@
                             </div>
                         </td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${req.email || '-'}</td>
+                        <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant max-w-[150px] truncate" title="${escapeHTML(req.event_name) || '-'}">${escapeHTML(req.event_name) || '-'}</td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${date}</td>
                         <td class="px-lg py-md text-right">
                             <div class="flex justify-end gap-sm">
@@ -467,14 +518,18 @@
         }
 
         function renderHistoryTable() {
-            const currentEventName = document.getElementById('eventName').title.trim();
-            const historyRequests = requests.filter(r => r.event_name === currentEventName && r.status !== 'pending');
+            const filterValue = filterSelect ? filterSelect.value : 'all';
+            const historyRequests = requests.filter(r => {
+                if (r.status === 'pending') return false;
+                if (filterValue !== 'all' && r.event_name !== filterValue) return false;
+                return true;
+            });
 
             if (historyRequests.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
-                            এই ইভেন্টের অধীনে কোনো পূর্ববর্তী সিদ্ধান্ত নেওয়া হয়নি।
+                        <td colspan="7" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                            ${filterValue === 'all' ? 'কোনো পূর্ববর্তী সিদ্ধান্ত নেওয়া হয়নি।' : 'এই ইভেন্টের অধীনে কোনো পূর্ববর্তী সিদ্ধান্ত নেওয়া হয়নি।'}
                         </td>
                     </tr>
                 `;
@@ -533,6 +588,7 @@
                             </div>
                         </td>
                         <td class="px-lg py-md font-mono text-sm">${escapeHTML(req.email) || '-'}</td>
+                        <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant max-w-[150px] truncate" title="${escapeHTML(req.event_name) || '-'}">${escapeHTML(req.event_name) || '-'}</td>
                         <td class="px-lg py-md text-center">${statusBadge}</td>
                         <td class="px-lg py-md text-sm">${dateReq}</td>
                         <td class="px-lg py-md">${escapeHTML(req.decided_by) || '-'}</td>
@@ -710,8 +766,69 @@
             renderTable(e.target.value);
         });
 
-        // Initialize table
-        document.addEventListener('DOMContentLoaded', loadRequests);
+        function loadDesktopDropdownEvents() {
+            const desktopMenuEventsList = document.getElementById('desktopMenuEventsList');
+            
+            // Desktop dropdown toggle
+            const dropdownBtn = document.getElementById('desktopEventsDropdownBtn');
+            const dropdownMenu = document.getElementById('desktopEventsDropdownMenu');
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', () => {
+                    dropdownMenu.classList.add('hidden');
+                });
+                dropdownMenu.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+
+            if (!desktopMenuEventsList) return;
+            
+            fetch('/api/public/events')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.events) {
+                        const now = new Date();
+                        const activeEvents = data.events.filter(e => {
+                            let endTimeStr = e.end_time;
+                            if (endTimeStr && !endTimeStr.includes('+') && !endTimeStr.endsWith('Z')) {
+                                endTimeStr += '+06:00';
+                            }
+                            const end = new Date(endTimeStr);
+                            return now < end;
+                        });
+                        
+                        // Populate Desktop Menu
+                        if (activeEvents.length === 0) {
+                            desktopMenuEventsList.innerHTML = `
+                                <div class="text-xs text-on-surface-variant px-sm py-xs">বর্তমানে কোনো চলমান ইভেন্ট নেই।</div>
+                            `;
+                        } else {
+                            let html = '';
+                            activeEvents.forEach(e => {
+                                html += `
+                                    <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${e.name}">
+                                        ${e.name}
+                                    </a>
+                                `;
+                            });
+                            desktopMenuEventsList.innerHTML = html;
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to load active events for menu:", err);
+                });
+        }
+
+        // Initialize table and dropdown
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRequests();
+            loadDesktopDropdownEvents();
+        });
     </script>
 </body>
 </html>

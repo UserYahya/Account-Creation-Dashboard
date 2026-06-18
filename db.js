@@ -83,6 +83,9 @@ async function getDatabase() {
   try {
     await db.exec('ALTER TABLE events ADD COLUMN target_namespaces TEXT');
   } catch (e) {}
+  try {
+    await db.exec('ALTER TABLE events ADD COLUMN registration_active INTEGER DEFAULT 1');
+  } catch (e) {}
 
   // Insert default settings if they don't exist
   const eventName = await db.get('SELECT value FROM settings WHERE key = ?', 'event_name');

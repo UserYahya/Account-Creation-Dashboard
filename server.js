@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const crypto = require('crypto');
+const QRCode = require('qrcode');
 const { getDatabase } = require('./db');
 
 // Load environment variables
@@ -112,6 +113,15 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// Timezone Helper: Parse date strings in Bangladesh timezone (+06:00 offset)
+function parseBangladeshTime(dateStr) {
+  if (!dateStr) return null;
+  if (dateStr.includes('+') || dateStr.endsWith('Z')) {
+    return new Date(dateStr);
+  }
+  return new Date(dateStr + '+06:00');
 }
 
 // Serve static elements if any
@@ -227,6 +237,297 @@ function renderView(viewName, replacements = {}, req = null) {
   const viewPath = path.join(__dirname, 'views', viewName);
   let html = fs.readFileSync(viewPath, 'utf8');
 
+  // Render admin edit action button and modal if user is admin
+  let editActionHtml = '';
+  let editModalHtml = '';
+  if (req && req.session && req.session.isAdmin) {
+    if (viewName === 'registration.html') {
+      editActionHtml = `
+        <button id="adminEditEventBtn" class="inline-flex items-center gap-xs px-md py-1.5 bg-secondary/10 text-secondary hover:bg-secondary/20 rounded-full font-bold font-label-md transition-colors text-xs shadow-sm">
+            <span class="material-symbols-outlined text-[16px]">edit</span>
+            <span>ইভেন্ট এডিট করুন</span>
+        </button>
+      `;
+    } else if (viewName === 'registration_stopped.html') {
+      editActionHtml = `
+        <button id="adminEditEventBtn" class="inline-flex items-center gap-sm bg-secondary text-on-secondary px-lg py-md rounded-xl font-label-md text-label-md hover:bg-secondary/95 transition-colors shadow-sm group">
+            <span class="material-symbols-outlined group-hover:scale-110 transition-transform">edit</span>
+            ইভেন্ট এডিট করুন
+        </button>
+      `;
+    }
+
+    editModalHtml = `
+    <!-- Event Edit Modal (Admin Only) -->
+    <div id="adminEditEventModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-md bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl overflow-hidden transform scale-95 transition-all duration-300" id="adminEditModalContainer">
+            <!-- Modal Header -->
+            <div class="p-lg border-b border-outline-variant bg-surface-container-low flex justify-between items-center text-left">
+                <div>
+                    <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">ইভেন্ট এডিট করুন</h3>
+                    <p class="font-label-md text-label-md text-on-surface-variant">এই ইভেন্টের বিবরণ, টার্গেট উইকি এবং অবস্থা পরিবর্তন করুন।</p>
+                </div>
+                <button onclick="closeEventEditModal()" class="text-on-surface-variant hover:text-error hover:bg-error-container/20 p-xs rounded-lg transition-colors flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[24px]">close</span>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-lg overflow-y-auto flex-1 space-y-lg text-left">
+                <div id="editEventError" class="hidden p-md rounded-lg border border-error bg-error-container/20 text-on-error-container font-body-md text-body-md"></div>
+                
+                <!-- Event Name Field -->
+                <div>
+                    <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="edit_event_name">ইভেন্টের নাম</label>
+                    <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="edit_event_name" type="text" value="{{EVENT_NAME}}"/>
+                </div>
+                
+                <!-- Workshop URL Field -->
+                <div>
+                    <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="edit_workshop_url">কর্মশালার (Workshop) ইউআরএল</label>
+                    <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="edit_workshop_url" type="url" value="{{WORKSHOP_URL}}"/>
+                </div>
+                
+                <!-- Times -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                    <div>
+                        <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="edit_event_start">ইভেন্ট শুরুর সময়</label>
+                        <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="edit_event_start" type="datetime-local" value="{{EVENT_START}}"/>
+                    </div>
+                    <div>
+                        <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="edit_event_end">ইভেন্ট শেষের সময়</label>
+                        <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="edit_event_end" type="datetime-local" value="{{EVENT_END}}"/>
+                    </div>
+                </div>
+                
+                <!-- Target Wikis -->
+                <div>
+                    <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="edit_event_wikis">টার্গেট উইকি সমূহ (কমা দিয়ে আলাদা করুন)</label>
+                    <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="edit_event_wikis" type="text" value="{{EVENT_WIKIS}}"/>
+                </div>
+                
+                <!-- Target Namespaces Selection -->
+                <div>
+                    <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs">টার্গেট নেমস্পেস সমূহ</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-sm p-md border border-outline-variant rounded-lg bg-surface">
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" id="edit_ns_all" value="all" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>সকল (All)</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="0" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>নিবন্ধ (Main - 0)</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="1" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>আলাপ (Talk - 1)</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="2" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>ব্যবহারকারী (User - 2)</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="4" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>Proj - 4</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="6" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>চিত্র (File - 6)</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="10" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>Temp - 10</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="14" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>Cat - 14</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="118" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>খসড়া (Draft - 118)</span>
+                        </label>
+                        <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
+                            <input type="checkbox" name="edit_ns_choice" value="828" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
+                            <span>Mod - 828</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Registration Toggle -->
+                <div class="flex items-center justify-between py-md border-t border-outline-variant">
+                    <div>
+                        <h4 class="font-body-lg text-body-lg text-on-surface font-bold">রেজিস্ট্রেশন চালু/বন্ধ করুন</h4>
+                        <p class="font-label-md text-label-md text-on-surface-variant">এটি বন্ধ করলে কোনো নতুন ব্যবহারকারী এই ইভেন্টে আবেদন করতে পারবেন না।</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input class="sr-only peer custom-toggle" id="editRegToggle" type="checkbox"/>
+                        <div class="w-14 h-8 bg-surface-variant rounded-full peer-checked:bg-secondary transition-colors duration-300"></div>
+                        <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 peer-checked:translate-x-6 shadow-sm flex items-center justify-center">
+                            <span id="editToggleCheckIcon" class="material-symbols-outlined text-[16px] text-on-surface-variant font-bold">check</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-lg bg-surface-container-low flex justify-end gap-md border-t border-outline-variant">
+                <button onclick="closeEventEditModal()" class="px-lg py-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-variant transition-colors border border-outline-variant flex items-center">বাতিল</button>
+                <button id="saveEditEventBtn" class="px-lg py-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary font-bold hover:opacity-90 transition-opacity active:scale-95">সংরক্ষণ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const editModal = document.getElementById('adminEditEventModal');
+        const editModalContainer = document.getElementById('adminEditModalContainer');
+        const openEditBtn = document.getElementById('adminEditEventBtn');
+        const saveEditBtn = document.getElementById('saveEditEventBtn');
+        const editError = document.getElementById('editEventError');
+        
+        const initialNamespacesStr = "{{EVENT_NAMESPACES}}";
+        const initialRegActive = "{{EVENT_REG_ACTIVE}}" === "1";
+        
+        function setEditNamespaceCheckboxes(namespacesString) {
+            const allCheckbox = document.getElementById('edit_ns_all');
+            const choices = document.getElementsByName('edit_ns_choice');
+            
+            if (namespacesString === 'all' || !namespacesString) {
+                allCheckbox.checked = true;
+                choices.forEach(cb => {
+                    cb.checked = false;
+                    cb.disabled = true;
+                });
+            } else {
+                allCheckbox.checked = false;
+                const nsArray = namespacesString.split(',').map(n => n.trim());
+                choices.forEach(cb => {
+                    cb.checked = nsArray.includes(cb.value);
+                    cb.disabled = false;
+                });
+            }
+        }
+        
+        function setupEditNamespaceListeners() {
+            const allCheckbox = document.getElementById('edit_ns_all');
+            const choices = document.getElementsByName('edit_ns_choice');
+            
+            allCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    choices.forEach(cb => {
+                        cb.checked = false;
+                        cb.disabled = true;
+                    });
+                } else {
+                    choices.forEach(cb => {
+                        cb.disabled = false;
+                    });
+                }
+            });
+        }
+        
+        function getEditSelectedNamespaces() {
+            const allCheckbox = document.getElementById('edit_ns_all');
+            if (allCheckbox.checked) {
+                return 'all';
+            }
+            const choices = document.getElementsByName('edit_ns_choice');
+            const selected = [];
+            choices.forEach(cb => {
+                if (cb.checked) {
+                    selected.push(cb.value);
+                }
+            });
+            return selected.length > 0 ? selected.join(',') : 'all';
+        }
+        
+        if (openEditBtn && editModal) {
+            openEditBtn.addEventListener('click', () => {
+                editModal.classList.remove('hidden');
+                editModal.classList.add('flex');
+                setTimeout(() => {
+                    editModalContainer.classList.remove('scale-95');
+                    editModalContainer.classList.add('scale-100');
+                }, 10);
+                
+                setEditNamespaceCheckboxes(initialNamespacesStr);
+                document.getElementById('editRegToggle').checked = initialRegActive;
+            });
+            
+            editModal.addEventListener('click', (e) => {
+                if (e.target === editModal) {
+                    closeEventEditModal();
+                }
+            });
+            
+            setupEditNamespaceListeners();
+        }
+        
+        function closeEventEditModal() {
+            if (!editModal) return;
+            editModalContainer.classList.remove('scale-100');
+            editModalContainer.classList.add('scale-95');
+            setTimeout(() => {
+                editModal.classList.add('hidden');
+                editModal.classList.remove('flex');
+            }, 200);
+        }
+        
+        if (saveEditBtn) {
+            saveEditBtn.addEventListener('click', () => {
+                const name = document.getElementById('edit_event_name').value.trim();
+                const workshop_url = document.getElementById('edit_workshop_url').value.trim();
+                const start_time = document.getElementById('edit_event_start').value;
+                const end_time = document.getElementById('edit_event_end').value;
+                const target_wikis = document.getElementById('edit_event_wikis').value.trim();
+                const target_namespaces = getEditSelectedNamespaces();
+                const registration_active = document.getElementById('editRegToggle').checked ? 1 : 0;
+                const id = "{{EVENT_ID}}";
+                
+                editError.classList.add('hidden');
+                
+                if (!name) {
+                    editError.innerText = "ইভেন্টের নাম আবশ্যক।";
+                    editError.classList.remove('hidden');
+                    return;
+                }
+                
+                saveEditBtn.innerText = "সংরক্ষণ করা হচ্ছে...";
+                saveEditBtn.disabled = true;
+                
+                fetch('/api/admin/events/edit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
+                    },
+                    body: JSON.stringify({ id, name, workshop_url, start_time, end_time, target_wikis, target_namespaces, registration_active })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    saveEditBtn.innerText = "সংরক্ষণ করুন";
+                    saveEditBtn.disabled = false;
+                    if (data.success) {
+                        closeEventEditModal();
+                        window.location.reload();
+                    } else {
+                        editError.innerText = data.error || "পরিবর্তনগুলো সংরক্ষণ করতে ব্যর্থ হয়েছে।";
+                        editError.classList.remove('hidden');
+                    }
+                })
+                .catch(err => {
+                    saveEditBtn.innerText = "সংরক্ষণ করুন";
+                    saveEditBtn.disabled = false;
+                    editError.innerText = "সার্ভারের সাথে যোগাযোগ করতে সমস্যা হয়েছে।";
+                    editError.classList.remove('hidden');
+                });
+            });
+        }
+    </script>
+    `;
+  }
+  html = html.replace('<!-- ADMIN_EDIT_ACTION -->', editActionHtml);
+  html = html.replace('<!-- ADMIN_EDIT_MODAL -->', editModalHtml);
+
   // Replace custom variables passed in
   Object.keys(replacements).forEach(key => {
     let value = replacements[key];
@@ -257,50 +558,182 @@ function renderView(viewName, replacements = {}, req = null) {
 
 // Homepage
 app.get('/', async (req, res) => {
-  const db = await getDatabase();
-  const regActive = await db.get("SELECT value FROM settings WHERE key = 'registration_active'");
-  const eventName = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
-  const workshopUrl = await db.get("SELECT value FROM settings WHERE key = 'workshop_url'");
-  const addInstructions = await db.get("SELECT value FROM settings WHERE key = 'additional_instructions'");
-  
-  const wUrl = workshopUrl ? workshopUrl.value : 'https://bn.wikipedia.org';
-  
-  let instructionsHtml = '';
-  if (addInstructions && addInstructions.value.trim()) {
-    const listItems = addInstructions.value.trim().split('\n').map(item => {
-      const trimmed = item.trim();
-      return trimmed ? `<li>${escapeHTML(trimmed)}</li>` : '';
-    }).filter(Boolean).join('');
+  try {
+    const db = await getDatabase();
+    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    const eventName = eventNameSetting ? eventNameSetting.value : '';
     
-    if (listItems) {
-      instructionsHtml = `
-        <div class="mt-md pt-md border-t border-outline-variant">
-            <h4 class="font-body-lg text-body-lg font-bold text-primary mb-sm">আয়োজকদের অতিরিক্ত নির্দেশনা:</h4>
-            <ul class="list-disc pl-lg space-y-sm font-body-md text-body-md text-on-surface-variant">
-                ${listItems}
-            </ul>
-        </div>
-      `;
+    let event = null;
+    if (eventName) {
+      event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
     }
-  }
+    if (!event) {
+      event = await db.get("SELECT * FROM events ORDER BY id DESC LIMIT 1");
+    }
+    
+    if (!event) {
+      return res.status(404).send('কোনো সক্রিয় ইভেন্ট পাওয়া যায়নি।');
+    }
+    
+    const now = new Date();
+    const start = parseBangladeshTime(event.start_time);
+    const end = parseBangladeshTime(event.end_time);
+    const isDurationActive = (start && end && now >= start && now <= end);
+    const regActive = (isDurationActive && event.registration_active === 1) ? '1' : '0';
+    
+    const addInstructions = await db.get("SELECT value FROM settings WHERE key = 'additional_instructions'");
+    let instructionsHtml = '';
+    if (addInstructions && addInstructions.value.trim()) {
+      const listItems = addInstructions.value.trim().split('\n').map(item => {
+        const trimmed = item.trim();
+        return trimmed ? `<li>${escapeHTML(trimmed)}</li>` : '';
+      }).filter(Boolean).join('');
+      
+      if (listItems) {
+        instructionsHtml = `
+          <div class="mt-md pt-md border-t border-outline-variant">
+              <h4 class="font-body-lg text-body-lg font-bold text-primary mb-sm">আয়োজকদের অতিরিক্ত নির্দেশনা:</h4>
+              <ul class="list-disc pl-lg space-y-sm font-body-md text-body-md text-on-surface-variant">
+                  ${listItems}
+              </ul>
+          </div>
+        `;
+      }
+    }
 
-  if (regActive && regActive.value === '1') {
-    res.send(renderView('registration.html', { 
-      EVENT_NAME: eventName.value, 
-      WORKSHOP_URL: wUrl,
-      ADDITIONAL_INSTRUCTIONS_HTML: instructionsHtml
-    }, req));
-  } else {
-    res.send(renderView('registration_stopped.html', { WORKSHOP_URL: wUrl }, req));
+    const replacements = {
+      EVENT_ID: event.id.toString(),
+      EVENT_NAME: event.name,
+      WORKSHOP_URL: event.workshop_url || 'https://bn.wikipedia.org',
+      EVENT_START: event.start_time || '',
+      EVENT_END: event.end_time || '',
+      EVENT_WIKIS: event.target_wikis || '',
+      EVENT_NAMESPACES: event.target_namespaces || 'all',
+      EVENT_REG_ACTIVE: event.registration_active.toString(),
+      ADDITIONAL_INSTRUCTIONS_HTML: instructionsHtml,
+      QR_CODE_URL: '/qr.png',
+      STATS_URL: `/event/${event.id}/stats`
+    };
+
+    if (regActive === '1') {
+      res.send(renderView('registration.html', replacements, req));
+    } else {
+      res.send(renderView('registration_stopped.html', replacements, req));
+    }
+  } catch (err) {
+    console.error("Error loading homepage registration page:", err);
+    res.status(500).send("সার্ভার ত্রুটি।");
   }
+});
+
+// Specific Event Registration Page
+app.get('/event/:id', async (req, res) => {
+  const eventId = req.params.id;
+  try {
+    const db = await getDatabase();
+    const event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
+    if (!event) {
+      return res.status(404).send('ইভেন্টটি পাওয়া যায়নি।');
+    }
+    
+    const now = new Date();
+    const start = parseBangladeshTime(event.start_time);
+    const end = parseBangladeshTime(event.end_time);
+    const isDurationActive = (start && end && now >= start && now <= end);
+    const regActive = (isDurationActive && event.registration_active === 1) ? '1' : '0';
+    
+    const addInstructions = await db.get("SELECT value FROM settings WHERE key = 'additional_instructions'");
+    let instructionsHtml = '';
+    if (addInstructions && addInstructions.value.trim()) {
+      const listItems = addInstructions.value.trim().split('\n').map(item => {
+        const trimmed = item.trim();
+        return trimmed ? `<li>${escapeHTML(trimmed)}</li>` : '';
+      }).filter(Boolean).join('');
+      
+      if (listItems) {
+        instructionsHtml = `
+          <div class="mt-md pt-md border-t border-outline-variant">
+              <h4 class="font-body-lg text-body-lg font-bold text-primary mb-sm">আয়োজকদের অতিরিক্ত নির্দেশনা:</h4>
+              <ul class="list-disc pl-lg space-y-sm font-body-md text-body-md text-on-surface-variant">
+                  ${listItems}
+              </ul>
+          </div>
+        `;
+      }
+    }
+    
+    const replacements = {
+      EVENT_ID: event.id.toString(),
+      EVENT_NAME: event.name,
+      WORKSHOP_URL: event.workshop_url || 'https://bn.wikipedia.org',
+      EVENT_START: event.start_time || '',
+      EVENT_END: event.end_time || '',
+      EVENT_WIKIS: event.target_wikis || '',
+      EVENT_NAMESPACES: event.target_namespaces || 'all',
+      EVENT_REG_ACTIVE: event.registration_active.toString(),
+      ADDITIONAL_INSTRUCTIONS_HTML: instructionsHtml,
+      QR_CODE_URL: `/event/${eventId}/qr.png`,
+      STATS_URL: `/event/${eventId}/stats`
+    };
+    
+    if (regActive === '1') {
+      res.send(renderView('registration.html', replacements, req));
+    } else {
+      res.send(renderView('registration_stopped.html', replacements, req));
+    }
+  } catch (err) {
+    console.error("Error loading event registration page:", err);
+    res.status(500).send("সার্ভার ত্রুটি।");
+  }
+});
+
+// Specific Event Stats Page
+app.get('/event/:id/stats', async (req, res) => {
+  res.send(renderView('stats.html', {}, req));
 });
 
 // Success Page
 app.get('/success', async (req, res) => {
-  const db = await getDatabase();
-  const workshopUrl = await db.get("SELECT value FROM settings WHERE key = 'workshop_url'");
-  const wUrl = workshopUrl ? workshopUrl.value : 'https://bn.wikipedia.org';
-  res.send(renderView('success.html', { WORKSHOP_URL: wUrl }, req));
+  try {
+    const db = await getDatabase();
+    const eventId = req.query.eventId;
+    let event = null;
+    if (eventId) {
+      event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
+    }
+    if (!event) {
+      // Fallback to active event setting or the latest event
+      const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+      const eventName = eventNameSetting ? eventNameSetting.value : '';
+      if (eventName) {
+        event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
+      }
+      if (!event) {
+        event = await db.get("SELECT * FROM events ORDER BY id DESC LIMIT 1");
+      }
+    }
+
+    const eventName = event ? event.name : 'ইভেন্ট';
+    let wUrl = 'https://bn.wikipedia.org';
+    if (event && event.workshop_url) {
+      wUrl = event.workshop_url;
+    } else {
+      const workshopSetting = await db.get("SELECT value FROM settings WHERE key = 'workshop_url'");
+      if (workshopSetting && workshopSetting.value) {
+        wUrl = workshopSetting.value;
+      }
+    }
+    const statsUrl = event ? `/event/${event.id}/stats` : '/stats';
+
+    res.send(renderView('success.html', { 
+      EVENT_NAME: eventName,
+      WORKSHOP_URL: wUrl,
+      STATS_URL: statsUrl
+    }, req));
+  } catch (err) {
+    console.error("Error loading success page:", err);
+    res.status(500).send("সার্ভার ত্রুটি।");
+  }
 });
 
 // About Page
@@ -308,9 +741,35 @@ app.get('/about', async (req, res) => {
   res.send(renderView('about.html', {}, req));
 });
 
-// Serve QR Code Image
-app.get('/qr.png', (req, res) => {
-  res.sendFile(path.join(__dirname, 'qr.png'));
+// Serve QR Code Image (Dynamic)
+app.get('/qr.png', async (req, res) => {
+  try {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const url = `${protocol}://${host}`;
+    const buffer = await QRCode.toBuffer(url, { width: 300, margin: 2 });
+    res.setHeader('Content-Type', 'image/png');
+    res.send(buffer);
+  } catch (err) {
+    console.error('Error generating main QR code:', err);
+    res.status(500).send('Error generating QR code');
+  }
+});
+
+// Serve event-specific QR Code Image (Dynamic)
+app.get('/event/:id/qr.png', async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const url = `${protocol}://${host}/event/${eventId}`;
+    const buffer = await QRCode.toBuffer(url, { width: 300, margin: 2 });
+    res.setHeader('Content-Type', 'image/png');
+    res.send(buffer);
+  } catch (err) {
+    console.error(`Error generating QR code for event ${req.params.id}:`, err);
+    res.status(500).send('Error generating QR code');
+  }
 });
 
 // Serve Favicon
@@ -339,7 +798,7 @@ app.get('/api/check-username', ipRateLimiter(30, 60 * 1000), async (req, res) =>
 
 // Submit registration requests
 app.post('/api/register', ipRateLimiter(5, 15 * 60 * 1000), async (req, res) => {
-  const { email, username } = req.body;
+  const { email, username, eventId } = req.body;
   if (!email || !username) {
     return res.status(400).json({ success: false, error: 'সবগুলো ঘর পূরণ করা আবশ্যক।' });
   }
@@ -347,19 +806,53 @@ app.post('/api/register', ipRateLimiter(5, 15 * 60 * 1000), async (req, res) => 
   try {
     const db = await getDatabase();
     
-    // Check if registration is active
-    const regActive = await db.get("SELECT value FROM settings WHERE key = 'registration_active'");
-    if (!regActive || regActive.value !== '1') {
-      return res.status(403).json({ success: false, error: 'দুঃখিত, বর্তমানে রেজিস্ট্রেশন বন্ধ আছে।' });
-    }
-
     // Backend validation of username to prevent bypass
     const check = await checkUsername(username.trim());
     if (!check.valid) {
       return res.status(400).json({ success: false, error: check.reason });
     }
 
-    const eventName = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    let eventName = '';
+    let event = null;
+    if (eventId) {
+      event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
+      if (!event) {
+        return res.status(404).json({ success: false, error: 'অনুরোধকৃত ইভেন্টটি পাওয়া যায়নি।' });
+      }
+      eventName = event.name;
+      
+      // Check event duration and registration active status
+      const now = new Date();
+      const start = parseBangladeshTime(event.start_time);
+      const end = parseBangladeshTime(event.end_time);
+      const isDurationActive = (start && end && now >= start && now <= end);
+      if (event.registration_active !== 1 || !isDurationActive) {
+        return res.status(403).json({ success: false, error: 'দুঃখিত, এই ইভেন্টের রেজিস্ট্রেশন বর্তমানে বন্ধ বা সময়সীমা অতিক্রম হয়েছে।' });
+      }
+    } else {
+      const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+      eventName = eventNameSetting ? eventNameSetting.value : '';
+      
+      if (eventName) {
+        event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
+      }
+      if (!event) {
+        event = await db.get("SELECT * FROM events ORDER BY id DESC LIMIT 1");
+      }
+      
+      if (!event) {
+        return res.status(404).json({ success: false, error: 'কোনো সক্রিয় ইভেন্ট পাওয়া যায়নি।' });
+      }
+      
+      eventName = event.name;
+      const now = new Date();
+      const start = parseBangladeshTime(event.start_time);
+      const end = parseBangladeshTime(event.end_time);
+      const isDurationActive = (start && end && now >= start && now <= end);
+      if (event.registration_active !== 1 || !isDurationActive) {
+        return res.status(403).json({ success: false, error: 'দুঃখিত, বর্তমানে রেজিস্ট্রেশন বন্ধ আছে।' });
+      }
+    }
 
     // Insert request
     await db.run(
@@ -367,12 +860,12 @@ app.post('/api/register', ipRateLimiter(5, 15 * 60 * 1000), async (req, res) => 
       username.trim(),
       email.trim(),
       'pending',
-      eventName ? eventName.value : ''
+      eventName
     );
 
-    res.json({ success: true });
+    res.json({ success: true, eventId: event.id });
   } catch (err) {
-    if (err.message.includes('UNIQUE constraint failed')) {
+    if (err.message && err.message.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ success: false, error: 'এই ব্যবহারকারী নাম দিয়ে ইতিমধ্যে একটি আবেদন করা হয়েছে।' });
     }
     console.error("Register request error:", err);
@@ -662,15 +1155,23 @@ app.post('/api/settings', isAdmin, async (req, res) => {
     event_namespaces
   } = req.body;
   
-  if (!event_name) {
-    return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
-  }
-  if (workshop_url && !isValidHttpUrl(workshop_url)) {
-    return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
-  }
-
   try {
     const db = await getDatabase();
+    
+    if (!event_name) {
+      if (additional_instructions !== undefined) {
+        await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('additional_instructions', ?)", additional_instructions || '');
+      }
+      if (welcome_message !== undefined) {
+        await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('welcome_message', ?)", welcome_message || '');
+      }
+      return res.json({ success: true });
+    }
+
+    if (workshop_url && !isValidHttpUrl(workshop_url)) {
+      return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
+    }
+
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_name', ?)", event_name);
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('registration_active', ?)", String(registration_active));
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", workshop_url || 'https://bn.wikipedia.org');
@@ -799,6 +1300,83 @@ app.post('/api/events', isAdmin, async (req, res) => {
   } catch (err) {
     console.error("Create event error:", err);
     res.status(500).json({ success: false, error: 'নতুন ইভেন্ট তৈরি করতে ব্যর্থ হয়েছে।' });
+  }
+});
+
+// Edit an existing event (Admin Only)
+app.post('/api/admin/events/edit', isAdmin, async (req, res) => {
+  const { id, name, workshop_url, start_time, end_time, target_wikis, target_namespaces, registration_active } = req.body;
+  
+  if (!id) {
+    return res.status(400).json({ success: false, error: 'ইভেন্ট আইডি আবশ্যক।' });
+  }
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
+  }
+
+  const wUrl = workshop_url ? workshop_url.trim() : 'https://bn.wikipedia.org';
+  if (wUrl && !isValidHttpUrl(wUrl)) {
+    return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
+  }
+
+  const startTimeVal = start_time || new Date().toISOString().slice(0, 16);
+  const endTimeVal = end_time || new Date(new Date(startTimeVal).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+  const targetWikisVal = target_wikis || 'bn.wikipedia.org';
+  const targetNamespacesVal = target_namespaces || 'all';
+  const regActiveVal = registration_active === 1 || registration_active === '1' ? 1 : 0;
+
+  try {
+    const db = await getDatabase();
+    // 1. Get the existing event to find its name before editing
+    const event = await db.get("SELECT * FROM events WHERE id = ?", id);
+    if (!event) {
+      return res.status(404).json({ success: false, error: 'ইভেন্টটি পাওয়া যায়নি।' });
+    }
+
+    const oldName = event.name;
+    const newName = name.trim();
+
+    // 2. Update the event in events table
+    await db.run(
+      `UPDATE events 
+       SET name = ?, workshop_url = ?, start_time = ?, end_time = ?, target_wikis = ?, target_namespaces = ?, registration_active = ?
+       WHERE id = ?`,
+      newName,
+      wUrl,
+      startTimeVal,
+      endTimeVal,
+      targetWikisVal,
+      targetNamespacesVal,
+      regActiveVal,
+      id
+    );
+
+    // 3. If name has changed, rename it in request logs and participant records
+    if (newName !== oldName) {
+      await db.run("UPDATE requests SET event_name = ? WHERE event_name = ?", newName, oldName);
+      await db.run("UPDATE event_participants SET event_name = ? WHERE event_name = ?", newName, oldName);
+    }
+
+    // 4. If this is the active/latest event globally, update the active settings
+    const activeEventSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    if (activeEventSetting && activeEventSetting.value === oldName) {
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_name', ?)", newName);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", wUrl);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", startTimeVal);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", endTimeVal);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", targetWikisVal);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_namespaces', ?)", targetNamespacesVal);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('registration_active', ?)", regActiveVal.toString());
+    }
+
+    if (typeof runStatsPoller === 'function') {
+      runStatsPoller().catch(console.error);
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Edit event error:", err);
+    res.status(500).json({ success: false, error: 'ইভেন্ট এডিট করতে ব্যর্থ হয়েছে।' });
   }
 });
 
@@ -1080,7 +1658,7 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
               action: 'edit',
               title: `User talk:${request.username}`,
               text: welcomeText,
-              summary: 'নতুন ব্যবহারকারীকে স্বাগত জানানো হলো (অ্যাকাউন্ট তৈরির ড্যাশবোর্ড)',
+              summary: 'নতুন ব্যবহারকারীকে স্বাগত জানানো হলো (ইভেন্ট ড্যাশবোর্ড)',
               token: csrfToken,
               format: 'json',
               formatversion: '2'
@@ -1273,7 +1851,7 @@ async function fetchUserStats(wikisList, username, startUTC, endUTC, namespaces)
 
 // Background poller to query Wikimedia APIs and update stats in DB
 let isPolling = false;
-async function runStatsPoller(isManual = false) {
+async function runStatsPoller(isManual = false, targetEventId = null) {
   if (isPolling) {
     console.log("Stats poller already running. Skipping this cycle.");
     return;
@@ -1283,76 +1861,83 @@ async function runStatsPoller(isManual = false) {
   try {
     const db = await getDatabase();
     
-    // Get active event name
-    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
-    if (!eventNameSetting) {
+    let eventsToPoll = [];
+    if (targetEventId) {
+      const event = await db.get("SELECT * FROM events WHERE id = ?", targetEventId);
+      if (event) {
+        eventsToPoll.push(event);
+      }
+    } else if (isManual) {
+      // Manual refresh without specific ID: refresh the active event
+      const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+      if (eventNameSetting && eventNameSetting.value) {
+        const event = await db.get("SELECT * FROM events WHERE name = ?", eventNameSetting.value);
+        if (event) eventsToPoll.push(event);
+      }
+    } else {
+      // Background poll: fetch all ongoing events (where end time + 12 hours buffer has not passed)
+      const allEvents = await db.all("SELECT * FROM events");
+      const now = new Date();
+      eventsToPoll = allEvents.filter(event => {
+        const endTimeDate = new Date(event.end_time + ":00+06:00");
+        const endBufferDate = new Date(endTimeDate.getTime() + 12 * 60 * 60 * 1000);
+        return now <= endBufferDate;
+      });
+    }
+    
+    if (eventsToPoll.length === 0) {
+      console.log("No events to poll stats for.");
       isPolling = false;
       return;
     }
-    const eventName = eventNameSetting.value;
     
-    // Get event details
-    const event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
-    if (!event) {
-      console.log(`Active event "${eventName}" not found in events table.`);
-      isPolling = false;
-      return;
-    }
-    
-    // Check if event has ended (allow 12 hours buffer for edits/corrections after end time)
-    const now = new Date();
-    const endTimeDate = new Date(event.end_time + ":00+06:00");
-    const endBufferDate = new Date(endTimeDate.getTime() + 12 * 60 * 60 * 1000);
-    
-    if (!isManual && now > endBufferDate) {
-      console.log(`Event "${eventName}" has ended (buffer time passed). Polling skipped.`);
-      isPolling = false;
-      return;
-    }
-    
-    // Sync approved account creations to participants table
-    const approvedRequests = await db.all(
-      "SELECT username FROM requests WHERE event_name = ? AND status = 'approved'",
-      eventName
-    );
-    for (const reqUser of approvedRequests) {
-      await db.run(
-        "INSERT OR IGNORE INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 0)",
-        eventName,
-        reqUser.username
-      );
-    }
-    
-    // Fetch all participants
-    const participants = await db.all(
-      "SELECT username FROM event_participants WHERE event_name = ?",
-      eventName
-    );
-    
-    const startUTC = localToUTC(event.start_time);
-    const endUTC = localToUTC(event.end_time);
-    const wikis = (event.target_wikis || 'bn.wikipedia.org')
-      .split(',')
-      .map(w => w.trim())
-      .filter(Boolean);
-    const namespaces = event.target_namespaces || 'all';
+    for (const event of eventsToPoll) {
+      const eventName = event.name;
       
-    console.log(`Polling stats for ${participants.length} participants in event "${eventName}" across: ${wikis.join(', ')} (namespaces: ${namespaces})`);
-    
-    for (const p of participants) {
-      const stats = await fetchUserStats(wikis, p.username, startUTC, endUTC, namespaces);
-      await db.run(
-        `UPDATE event_participants 
-         SET total_edits = ?, file_uploads = ?, bytes_added = ? 
-         WHERE event_name = ? AND username = ?`,
-        stats.totalEdits,
-        stats.fileUploads,
-        stats.bytesAdded,
-        eventName,
-        p.username
+      // Sync approved account creations to participants table
+      const approvedRequests = await db.all(
+        "SELECT username FROM requests WHERE event_name = ? AND status = 'approved'",
+        eventName
       );
-      // Brief delay to prevent overloading target API
-      await new Promise(resolve => setTimeout(resolve, 200));
+      for (const reqUser of approvedRequests) {
+        await db.run(
+          "INSERT OR IGNORE INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 0)",
+          eventName,
+          reqUser.username
+        );
+      }
+      
+      // Fetch all participants
+      const participants = await db.all(
+        "SELECT username FROM event_participants WHERE event_name = ?",
+        eventName
+      );
+      
+      const startUTC = localToUTC(event.start_time);
+      const endUTC = localToUTC(event.end_time);
+      const wikis = (event.target_wikis || 'bn.wikipedia.org')
+        .split(',')
+        .map(w => w.trim())
+        .filter(Boolean);
+      const namespaces = event.target_namespaces || 'all';
+        
+      console.log(`Polling stats for ${participants.length} participants in event "${eventName}" across: ${wikis.join(', ')} (namespaces: ${namespaces})`);
+      
+      for (const p of participants) {
+        const stats = await fetchUserStats(wikis, p.username, startUTC, endUTC, namespaces);
+        await db.run(
+          `UPDATE event_participants 
+           SET total_edits = ?, file_uploads = ?, bytes_added = ? 
+           WHERE event_name = ? AND username = ?`,
+          stats.totalEdits,
+          stats.fileUploads,
+          stats.bytesAdded,
+          eventName,
+          p.username
+        );
+        // Brief delay to prevent overloading target API
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
     }
     
     // Save last updated timestamp
@@ -1538,22 +2123,34 @@ app.delete('/api/admin/events/:id', isAdmin, async (req, res) => {
 });
 
 // PUBLIC API: Fetch statistics & leaderboard
-app.get('/api/stats', async (req, res) => {
+// PUBLIC API: Fetch statistics & leaderboard
+app.get('/api/stats/:id?', async (req, res) => {
   try {
     const db = await getDatabase();
+    const eventId = req.params.id;
     
-    // Get active event name
-    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
-    if (!eventNameSetting) {
-      return res.json({ success: false, error: 'কোনো চলমান ইভেন্ট পাওয়া যায়নি।' });
+    let event;
+    if (eventId) {
+      event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
+      if (!event) {
+        return res.json({ success: false, error: 'অনুরোধকৃত ইভেন্টটি পাওয়া যায়নি।' });
+      }
+    } else {
+      // Get active event name
+      const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+      if (!eventNameSetting || !eventNameSetting.value) {
+        return res.json({ success: false, error: 'কোনো চলমান ইভেন্ট পাওয়া যায়নি।' });
+      }
+      const eventName = eventNameSetting.value;
+      
+      // Get event details
+      event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
+      if (!event) {
+        return res.json({ success: false, error: 'চলমান ইভেন্টের বিস্তারিত পাওয়া যায়নি।' });
+      }
     }
-    const eventName = eventNameSetting.value;
     
-    // Get event details
-    const event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
-    if (!event) {
-      return res.json({ success: false, error: 'চলমান ইভেন্টের বিস্তারিত পাওয়া যায়নি।' });
-    }
+    const eventName = event.name;
     
     // Get participants stats
     const participants = await db.all(
@@ -1590,6 +2187,7 @@ app.get('/api/stats', async (req, res) => {
     res.json({
       success: true,
       event: {
+        id: event.id,
         name: event.name,
         workshop_url: event.workshop_url,
         start_time: event.start_time,
@@ -1612,9 +2210,22 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+// PUBLIC API: Fetch all events (For archive list and mobile navigation menu)
+app.get('/api/public/events', async (req, res) => {
+  try {
+    const db = await getDatabase();
+    const events = await db.all("SELECT id, name, workshop_url, start_time, end_time, target_wikis, target_namespaces, registration_active FROM events ORDER BY start_time DESC");
+    res.json({ success: true, events });
+  } catch (err) {
+    console.error("Error fetching public events list:", err);
+    res.status(500).json({ success: false, error: 'ইভেন্ট তালিকা লোড করতে সমস্যা হয়েছে।' });
+  }
+});
+
 // PUBLIC API: Trigger stats refresh (Rate limited to once per minute)
 let lastManualRefreshTime = 0;
-app.post('/api/stats/refresh', async (req, res) => {
+app.post('/api/stats/refresh/:id?', async (req, res) => {
+  const targetId = req.params.id;
   const now = Date.now();
   if (now - lastManualRefreshTime < 60 * 1000) {
     return res.status(429).json({ 
@@ -1625,8 +2236,8 @@ app.post('/api/stats/refresh', async (req, res) => {
   
   lastManualRefreshTime = now;
   
-  // Run poller asynchronously with manual flag enabled
-  runStatsPoller(true).catch(console.error);
+  // Run poller asynchronously with manual flag and optional target event ID
+  runStatsPoller(true, targetId).catch(console.error);
   
   res.json({ success: true, message: 'পরিসংখ্যান আপডেট করার কাজ শুরু হয়েছে।' });
 });
@@ -1638,5 +2249,5 @@ app.get('/stats', async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Account Creation Dashboard is running on http://localhost:${PORT}`);
+  console.log(`Event Dashboard is running on http://localhost:${PORT}`);
 });

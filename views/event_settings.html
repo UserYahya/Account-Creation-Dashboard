@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>ইভেন্ট সেটিংস - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <title>ইভেন্ট সেটিংস - ইভেন্ট ড্যাশবোর্ড</title>
     <link rel="icon" type="image/png" href="/favicon.png"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
@@ -123,7 +123,7 @@
     <header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
         <div class="flex justify-between items-center w-full px-lg md:px-xl max-w-container-max mx-auto h-16">
             <div class="flex items-center gap-md">
-                <a href="/" class="font-headline-sm text-headline-sm text-on-surface font-bold">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</a>
+                <a href="/" class="font-headline-sm text-headline-sm text-on-surface font-bold">ইভেন্ট ড্যাশবোর্ড</a>
             </div>
             <nav class="hidden md:flex items-center gap-lg">
                 <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/">হোম</a>
@@ -179,42 +179,24 @@
                     <p class="font-body-lg text-body-lg" id="toastText"></p>
                 </div>
 
-                <!-- Status Card -->
-                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg flex items-center justify-between flex-wrap gap-md">
-                    <div>
-                        <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold mb-xs">বর্তমান অবস্থা</h3>
-                        <div class="flex items-center gap-sm">
-                            <span class="relative flex h-3 w-3">
-                                <span id="statusIndicatorPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-                                <span id="statusIndicatorDot" class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
-                            </span>
-                            <span class="font-label-md text-label-md text-secondary font-bold" id="statusText">বর্তমানে রেজিস্ট্রেশন চলছে</span>
-                        </div>
+                <!-- Ongoing Events List Card -->
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+                    <div class="p-lg border-b border-outline-variant bg-surface-container-low">
+                        <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">চলমান ইভেন্টসমূহ (রেজিস্ট্রেশন পেইজে এডিট বাটন পাওয়া যাবে)</h3>
                     </div>
-                    <div class="flex items-center gap-md bg-surface-container p-sm rounded-full">
-                        <button class="px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant" id="stopBtn">বন্ধ করুন</button>
-                        <button class="px-md py-sm rounded-full font-label-md text-label-md transition-all bg-secondary text-on-secondary shadow-sm font-bold animate-pulse" id="startBtn">শুরু করুন</button>
+                    <div class="p-lg">
+                        <div class="divide-y divide-outline-variant" id="ongoingEventsList">
+                            <div class="text-center text-on-surface-variant py-md">চলমান ইভেন্ট তালিকা লোড হচ্ছে...</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Settings Form -->
+                <!-- Global message settings Form -->
                 <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
                     <div class="p-lg border-b border-outline-variant bg-surface-container-low">
-                        <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">ইভেন্ট কনফিগারেশন</h3>
+                        <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">বৈশ্বিক বার্তা সেটিংস</h3>
                     </div>
                     <div class="p-lg space-y-lg">
-                        <!-- Event Name Field -->
-                        <div>
-                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="event_name">ইভেন্টের নাম</label>
-                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_name" placeholder="ইভেন্টের নাম লিখুন" type="text" value="{{EVENT_NAME}}"/>
-                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">এই নামটি নতুন অ্যাকাউন্ট তৈরির সারসংক্ষেপে ব্যবহার করা হবে।</p>
-                        </div>
-                        <!-- Workshop URL Field -->
-                        <div>
-                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="workshop_url">কর্মশালার (Workshop) ইউআরএল</label>
-                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="workshop_url" placeholder="যেমন: https://bn.wikipedia.org/wiki/Wikipedia:Workshop" type="url" value="{{WORKSHOP_URL}}"/>
-                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">নিবন্ধনকারীরা ইভেন্ট পাতায় ফিরে যাওয়ার জন্য এই লিংকটি ব্যবহার করতে পারবেন।</p>
-                        </div>
                         <!-- Additional Instructions Field -->
                         <div>
                             <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="additional_instructions">অতিরিক্ত নির্দেশনা (উইকিপিডিয়া ব্যবহারকারী নামের নীতিমালা কার্ডে যুক্ত হবে)</label>
@@ -226,84 +208,6 @@
                             <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="welcome_message">স্বাগত বার্তা (অ্যাকাউন্ট তৈরির পর আলাপ পাতায় পোস্ট করা হবে)</label>
                             <textarea class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" id="welcome_message" rows="4" placeholder="যেমন: == উইকিপিডিয়ায় স্বাগত ==\nপ্রিয় {{username}}, স্বাগতম! -- ~~~~">{{WELCOME_MESSAGE}}</textarea>
                             <p class="mt-xs font-label-md text-label-md text-on-surface-variant">নিবন্ধনকারী ব্যবহারকারীর নাম বোঝাতে <code>{{username}}</code> ব্যবহার করুন। এটি স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে।</p>
-                        </div>
-                        <!-- Event Start Time -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
-                            <div>
-                                <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="event_start">ইভেন্ট শুরুর সময়</label>
-                                <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_start" type="datetime-local" value="{{EVENT_START}}"/>
-                            </div>
-                            <div>
-                                <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="event_end">ইভেন্ট শেষের সময়</label>
-                                <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_end" type="datetime-local" value="{{EVENT_END}}"/>
-                            </div>
-                        </div>
-                        <!-- Event Target Wikis -->
-                        <div>
-                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="event_wikis">টার্গেট উইকি সমূহ (কমা দিয়ে আলাদা করুন)</label>
-                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_wikis" placeholder="যেমন: bn.wikipedia.org, commons.wikimedia.org" type="text" value="{{EVENT_WIKIS}}"/>
-                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">এই উইকিগুলোর অবদান লাইভ লিডারবোর্ডে প্রদর্শন করা হবে।</p>
-                        </div>
-                        <!-- Target Namespaces Selection -->
-                        <div>
-                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs">টার্গেট নেমস্পেস সমূহ</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-sm p-md border border-outline-variant rounded-lg bg-surface">
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" id="ns_all" value="all" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>সকল (All)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="0" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>নিবন্ধ (Main - 0)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="1" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>আলাপ (Talk - 1)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="2" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>ব্যবহারকারী (User - 2)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="4" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>উইকিপিডিয়া (Proj - 4)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="6" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>চিত্র (File - 6)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="10" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>টেমপ্লেট (Temp - 10)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="14" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>বিষয়শ্রেণী (Cat - 14)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="118" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>খসড়া (Draft - 118)</span>
-                                </label>
-                                <label class="flex items-center gap-sm font-body-md text-body-md cursor-pointer select-none">
-                                    <input type="checkbox" name="ns_choice" value="828" class="rounded border-outline-variant text-primary focus:ring-primary/20" />
-                                    <span>মডিউল (Mod - 828)</span>
-                                </label>
-                            </div>
-                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">শুধুমাত্র নির্বাচিত নেমস্পেসের সম্পাদনাগুলোই লিডারবোর্ডে গণনা করা হবে।</p>
-                        </div>
-                        <!-- Registration Toggle -->
-                        <div class="flex items-center justify-between py-md border-t border-outline-variant">
-                            <div>
-                                <h4 class="font-body-lg text-body-lg text-on-surface font-bold">রেজিস্ট্রেশন শুরু/বন্ধ করুন</h4>
-                                <p class="font-label-md text-label-md text-on-surface-variant">এটি বন্ধ করলে কোনো নতুন ব্যবহারকারী আবেদন করতে পারবেন না।</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input checked="" class="sr-only peer custom-toggle" id="regToggle" type="checkbox"/>
-                                <div class="w-14 h-8 bg-surface-variant rounded-full peer-checked:bg-secondary transition-colors duration-300"></div>
-                                <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 peer-checked:translate-x-6 shadow-sm flex items-center justify-center">
-                                    <span id="toggleCheckIcon" class="material-symbols-outlined text-[16px] text-on-surface-variant">check</span>
-                                </div>
-                            </label>
                         </div>
                     </div>
                     <div class="p-lg bg-surface-container-low flex justify-end gap-md border-t border-outline-variant">
@@ -533,13 +437,6 @@
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
 
-        const regToggle = document.getElementById('regToggle');
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const statusText = document.getElementById('statusText');
-        const pingIndicator = document.getElementById('statusIndicatorPing');
-        const dotIndicator = document.getElementById('statusIndicatorDot');
-        const eventNameInput = document.getElementById('event_name');
         const additionalInstructionsInput = document.getElementById('additional_instructions');
         const welcomeMessageInput = document.getElementById('welcome_message');
         const saveBtn = document.getElementById('saveBtn');
@@ -553,9 +450,7 @@
         const newWorkshopUrlInput = document.getElementById('new_workshop_url');
         const createEventError = document.getElementById('createEventError');
 
-        let isRegisteredActive = {{REG_ACTIVE_VAL}}; // Initial state: true or false
         const isSuperAdmin = {{IS_DEVELOPER}};
-        const initialNamespaces = "{{EVENT_NAMESPACES}}";
 
         function setNamespaceCheckboxes(namespacesString, isNewEvent = false) {
             const allCheckbox = document.getElementById(isNewEvent ? 'new_ns_all' : 'ns_all');
@@ -626,13 +521,6 @@
                         showToast(`"${eventName}" ইভেন্টটি সফলভাবে মুছে ফেলা হয়েছে।`, 'success');
                         loadEventHistory();
                         if (data.isActiveReset) {
-                            eventNameInput.value = '';
-                            document.getElementById('workshop_url').value = '';
-                            document.getElementById('event_start').value = '';
-                            document.getElementById('event_end').value = '';
-                            document.getElementById('event_wikis').value = '';
-                            setNamespaceCheckboxes('all', false);
-                            updateUIStatus(false);
                             loadParticipants();
                         }
                     } else {
@@ -720,51 +608,9 @@
             }, 6000);
         }
 
-        function updateUIStatus(isActive) {
-            isRegisteredActive = isActive;
-            if (isActive) {
-                statusText.innerText = 'বর্তমানে রেজিস্ট্রেশন চলছে';
-                statusText.className = 'font-label-md text-label-md text-secondary font-bold';
-                
-                pingIndicator.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75';
-                dotIndicator.className = 'relative inline-flex rounded-full h-3 w-3 bg-secondary';
-                
-                startBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all bg-secondary text-on-secondary shadow-sm font-bold';
-                stopBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant';
-                regToggle.checked = true;
-            } else {
-                statusText.innerText = 'বর্তমানে রেজিস্ট্রেশন বন্ধ আছে';
-                statusText.className = 'font-label-md text-label-md text-error font-bold';
-
-                pingIndicator.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75';
-                dotIndicator.className = 'relative inline-flex rounded-full h-3 w-3 bg-error';
-
-                stopBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all bg-error text-on-error shadow-sm font-bold';
-                startBtn.className = 'px-md py-sm rounded-full font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant';
-                regToggle.checked = false;
-            }
-        }
-
-        regToggle.addEventListener('change', (e) => updateUIStatus(e.target.checked));
-        startBtn.addEventListener('click', () => updateUIStatus(true));
-        stopBtn.addEventListener('click', () => updateUIStatus(false));
-
         saveBtn.addEventListener('click', () => {
-            const eventName = eventNameInput.value.trim();
-            const workshopUrlInput = document.getElementById('workshop_url');
-            const workshopUrl = workshopUrlInput.value.trim();
             const additionalInstructions = additionalInstructionsInput.value.trim();
             const welcomeMessage = welcomeMessageInput.value.trim();
-            
-            const eventStart = document.getElementById('event_start').value;
-            const eventEnd = document.getElementById('event_end').value;
-            const eventWikis = document.getElementById('event_wikis').value.trim();
-            const eventNamespaces = getSelectedNamespaces(false);
-            
-            if (!eventName) {
-                showToast("ইভেন্টের নাম খালি রাখা যাবে না।", "error");
-                return;
-            }
 
             saveBtn.innerText = "সংরক্ষণ করা হচ্ছে...";
             saveBtn.disabled = true;
@@ -776,15 +622,8 @@
                     'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
                 },
                 body: JSON.stringify({
-                    event_name: eventName,
-                    registration_active: isRegisteredActive ? 1 : 0,
-                    workshop_url: workshopUrl,
                     additional_instructions: additionalInstructions,
-                    welcome_message: welcomeMessage,
-                    event_start: eventStart,
-                    event_end: eventEnd,
-                    event_wikis: eventWikis,
-                    event_namespaces: eventNamespaces
+                    welcome_message: welcomeMessage
                 })
             })
             .then(res => res.json())
@@ -847,14 +686,6 @@
                     document.getElementById('new_event_end').value = '';
                     document.getElementById('new_event_wikis').value = 'bn.wikipedia.org';
                     setNamespaceCheckboxes('all', true);
-                    
-                    // Update active event name, workshop URL inputs, and other values with the new event
-                    eventNameInput.value = name;
-                    document.getElementById('workshop_url').value = workshop_url || 'https://bn.wikipedia.org';
-                    document.getElementById('event_start').value = start_time;
-                    document.getElementById('event_end').value = end_time;
-                    document.getElementById('event_wikis').value = target_wikis;
-                    setNamespaceCheckboxes(target_namespaces, false);
                     
                     showToast("নতুন ইভেন্ট সফলভাবে তৈরি এবং সক্রিয় করা হয়েছে!", "success");
                     loadEventHistory();
@@ -1187,16 +1018,59 @@
             });
         };
 
+        function loadOngoingEvents() {
+            fetch('/api/public/events')
+                .then(res => res.json())
+                .then(data => {
+                    const listEl = document.getElementById('ongoingEventsList');
+                    if (!data.success || !data.events || data.events.length === 0) {
+                        listEl.innerHTML = '<div class="text-center text-on-surface-variant py-md">বর্তমানে কোনো চলমান ইভেন্ট নেই।</div>';
+                        return;
+                    }
+                    
+                    const now = new Date();
+                    const activeEvents = data.events.filter(e => {
+                        let endTimeStr = e.end_time;
+                        if (endTimeStr && !endTimeStr.includes('+') && !endTimeStr.endsWith('Z')) {
+                            endTimeStr += '+06:00';
+                        }
+                        const end = new Date(endTimeStr);
+                        return now < end;
+                    });
+
+                    if (activeEvents.length === 0) {
+                        listEl.innerHTML = '<div class="text-center text-on-surface-variant py-md">বর্তমানে কোনো চলমান/সক্রিয় ইভেন্ট নেই।</div>';
+                        return;
+                    }
+
+                    listEl.innerHTML = activeEvents.map(e => `
+                        <div class="py-md flex justify-between items-center gap-md">
+                            <div>
+                                <h4 class="font-bold text-on-surface text-sm">${escapeHTML(e.name)}</h4>
+                                <p class="text-xs text-on-surface-variant mt-xs">আইডি: ${e.id} | উইকি: ${escapeHTML(e.target_wikis || '')}</p>
+                            </div>
+                            <div class="flex items-center gap-sm">
+                                <a href="/event/${e.id}" class="px-md py-xs bg-secondary-container text-on-secondary-container hover:opacity-90 rounded-lg text-xs font-bold transition-all flex items-center gap-xs">
+                                    <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                                    রেজিস্ট্রেশন পৃষ্ঠা
+                                </a>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(err => {
+                    document.getElementById('ongoingEventsList').innerHTML = '<div class="text-center text-error py-md">চলমান ইভেন্ট তালিকা লোড করতে সমস্যা হয়েছে।</div>';
+                });
+        }
+
         // Initialize UI status
         document.addEventListener('DOMContentLoaded', () => {
-            updateUIStatus(isRegisteredActive);
+            loadOngoingEvents();
             loadEventHistory();
             loadParticipants();
             
             // Set up namespaces UI
-            setNamespaceCheckboxes(initialNamespaces, false);
             setNamespaceCheckboxes('all', true);
-            setupNamespaceListeners(false);
             setupNamespaceListeners(true);
 
             // Click outside to close modal

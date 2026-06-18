@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>অ্যাকাউন্ট তৈরির আবেদন - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <title>অ্যাকাউন্ট তৈরির আবেদন - ইভেন্ট ড্যাশবোর্ড</title>
     <link rel="icon" type="image/png" href="/favicon.png"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
@@ -119,16 +119,34 @@
     <header class="bg-surface border-b border-outline-variant w-full sticky top-0 z-50">
         <div class="flex justify-between items-center w-full px-lg md:px-xl max-w-container-max mx-auto h-16">
             <div class="flex items-center gap-md">
-                <a href="/" class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-bold">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</a>
+                <a href="/" class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-bold">ইভেন্ট ড্যাশবোর্ড</a>
             </div>
             <nav class="hidden md:flex items-center gap-lg">
                 <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="/">হোম</a>
                 <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/about">ড্যাশবোর্ড পরিচিতি</a>
-                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/stats">পরিসংখ্যান</a>
+                <div class="relative inline-block text-left" id="desktopEventsDropdown">
+                    <button type="button" class="inline-flex items-center gap-xs text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md font-medium focus:outline-none" id="desktopEventsDropdownBtn">
+                        <span>চলমান ইভেন্টসমূহ</span>
+                        <span class="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
+                    </button>
+                    <div class="hidden absolute right-0 mt-2 w-64 origin-top-right rounded-lg bg-white border border-outline-variant shadow-lg ring-1 ring-black/5 focus:outline-none z-50 p-sm" id="desktopEventsDropdownMenu">
+                        <div class="py-xs flex flex-col gap-xs" id="desktopMenuEventsList">
+                            <div class="text-xs text-on-surface-variant px-sm py-xs">লোড হচ্ছে...</div>
+                        </div>
+                        <div class="border-t border-outline-variant/50 pt-xs mt-xs">
+                            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-[12px] px-sm py-xs block" href="/stats?archive=true">আর্কাইভ ইভেন্টসমূহ</a>
+                        </div>
+                    </div>
+                </div>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="{{STATS_URL}}">পরিসংখ্যান</a>
                 <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়ায় ফেরত যান</a>
             </nav>
             <div class="flex items-center gap-md">
                 <!-- NAV_AUTH -->
+                <a class="md:hidden flex items-center gap-xs px-md py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-full font-bold transition-colors text-xs" href="{{STATS_URL}}">
+                    <span class="material-symbols-outlined text-[16px]">leaderboard</span>
+                    <span>পরিসংখ্যান</span>
+                </a>
                 <button id="mobileMenuBtn" class="md:hidden flex items-center justify-center p-sm text-on-surface hover:bg-surface-container-low rounded-lg transition-colors active:scale-95" aria-label="মেইন মেনু">
                     <span class="material-symbols-outlined text-[24px]" id="mobileMenuIcon">menu</span>
                 </button>
@@ -138,10 +156,18 @@
 
     <!-- Mobile Navigation Drawer -->
     <div id="mobileMenu" class="hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0">
-        <div class="fixed top-16 left-0 right-0 bg-surface border-b border-outline-variant p-lg flex flex-col gap-md shadow-lg transform -translate-y-full transition-transform duration-300 ease-in-out" id="mobileMenuContainer">
+        <div class="fixed top-16 left-0 right-0 bg-surface border-b border-outline-variant p-lg flex flex-col gap-md shadow-lg transform -translate-y-full transition-transform duration-300 ease-in-out max-h-[85vh] overflow-y-auto" id="mobileMenuContainer">
             <a class="text-primary font-bold transition-colors font-medium text-body-lg py-sm border-b border-outline-variant/50" href="/">হোম</a>
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-body-lg py-sm border-b border-outline-variant/50" href="/about">ড্যাশবোর্ড পরিচিতি</a>
-            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-body-lg py-sm border-b border-outline-variant/50" href="/stats">পরিসংখ্যান</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-body-lg py-sm border-b border-outline-variant/50" href="{{STATS_URL}}">পরিসংখ্যান</a>
+            
+            <!-- Current Events List in Menu -->
+            <div class="py-xs flex flex-col gap-xs border-b border-outline-variant/50" id="mobileMenuEventsList">
+                <span class="text-[11px] font-bold text-on-surface-variant tracking-wider uppercase">চলমান ইভেন্টসমূহ</span>
+                <div class="text-xs text-on-surface-variant py-xs">লোড হচ্ছে...</div>
+            </div>
+            
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-body-lg py-sm border-b border-outline-variant/50" href="/stats?archive=true">আর্কাইভ ইভেন্টসমূহ</a>
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-body-lg py-sm" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়ায় ফেরত যান</a>
         </div>
     </div>
@@ -153,6 +179,13 @@
                 <h1 class="font-headline-md text-headline-md text-on-surface mb-xs">অ্যাকাউন্ট তৈরির আবেদন</h1>
                 <p class="font-body-md text-body-md text-primary font-semibold">ইভেন্ট: <a href="{{WORKSHOP_URL}}" target="_blank" class="hover:underline">{{EVENT_NAME}}</a></p>
                 <div class="h-1 w-16 bg-primary mx-auto mt-sm rounded-full"></div>
+                <div class="mt-md flex flex-wrap justify-center gap-sm">
+                    <a href="{{STATS_URL}}" class="inline-flex items-center gap-xs px-md py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-full font-bold font-label-md transition-colors text-xs shadow-sm">
+                        <span class="material-symbols-outlined text-[16px]">leaderboard</span>
+                        <span>ইভেন্টের লাইভ পরিসংখ্যান দেখুন</span>
+                    </a>
+                    <!-- ADMIN_EDIT_ACTION -->
+                </div>
             </div>
 
             <!-- Global Error Notification -->
@@ -228,12 +261,23 @@
             </div>
             <div class="p-lg rounded-xl bg-surface-container-lowest border border-outline-variant inline-block">
                 <!-- Large QR Code for easy scanning from the back of the room -->
-                <img src="/qr.png" alt="QR Code" class="w-64 h-64 mx-auto object-contain bg-white rounded p-xs shadow-sm hover:scale-105 transition-transform duration-300" />
+                <img src="{{QR_CODE_URL}}" alt="QR Code" class="w-64 h-64 mx-auto object-contain bg-white rounded p-xs shadow-sm hover:scale-105 transition-transform duration-300" />
             </div>
             <div class="pt-sm">
                 <span class="inline-flex items-center gap-xs bg-primary/10 text-primary px-lg py-2 rounded-full font-headline-sm text-[16px] font-bold tracking-wide">
                     acd.toolforge.org
                 </span>
+            </div>
+        </div>
+
+        <!-- Ongoing Events Card (Visible on homepage/event registration pages) -->
+        <div id="homepageOngoingEventsCard" class="hidden w-full bg-white border border-outline-variant p-xl shadow-sm rounded-xl text-center space-y-md">
+            <div class="flex items-center justify-center gap-xs text-primary">
+                <span class="material-symbols-outlined text-[28px]">event_upcoming</span>
+                <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">অন্যান্য চলমান ইভেন্টসমূহ</h2>
+            </div>
+            <div class="divide-y divide-outline-variant text-left text-body-md" id="homepageOngoingEventsList">
+                <!-- Populated dynamically via JS -->
             </div>
         </div>
     </main>
@@ -360,6 +404,12 @@
 
             const email = emailInput.value.trim();
             const username = usernameInput.value.trim();
+            const EVENT_ID = '{{EVENT_ID}}';
+
+            const reqBody = { email, username };
+            if (EVENT_ID && !EVENT_ID.startsWith('{{')) {
+                reqBody.eventId = EVENT_ID;
+            }
 
             fetch('/api/register', {
                 method: 'POST',
@@ -367,12 +417,13 @@
                     'Content-Type': 'application/json',
                     'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
                 },
-                body: JSON.stringify({ email, username })
+                body: JSON.stringify(reqBody)
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '/success';
+                    const redirectUrl = data.eventId ? `/success?eventId=${data.eventId}` : '/success';
+                    window.location.href = redirectUrl;
                 } else {
                     formErrorText.innerText = data.error || 'আবেদন জমা দিতে সমস্যা হয়েছে।';
                     formError.classList.remove('hidden');
@@ -426,6 +477,126 @@
                 mobileMenu.classList.add('hidden');
             }, 300);
         }
+
+        // Populate active events in menus
+        function loadMobileMenuEvents() {
+            const menuEventsList = document.getElementById('mobileMenuEventsList');
+            const desktopMenuEventsList = document.getElementById('desktopMenuEventsList');
+            const homepageEventsList = document.getElementById('homepageOngoingEventsList');
+            const homepageEventsCard = document.getElementById('homepageOngoingEventsCard');
+            
+            // Desktop dropdown toggle
+            const dropdownBtn = document.getElementById('desktopEventsDropdownBtn');
+            const dropdownMenu = document.getElementById('desktopEventsDropdownMenu');
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', () => {
+                    dropdownMenu.classList.add('hidden');
+                });
+                dropdownMenu.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+
+            if (!menuEventsList && !desktopMenuEventsList && !homepageEventsList) return;
+            
+            fetch('/api/public/events')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.events) {
+                        const now = new Date();
+                        const activeEvents = data.events.filter(e => {
+                            let endTimeStr = e.end_time;
+                            if (endTimeStr && !endTimeStr.includes('+') && !endTimeStr.endsWith('Z')) {
+                                endTimeStr += '+06:00';
+                            }
+                            const end = new Date(endTimeStr);
+                            return now < end;
+                        });
+                        
+                        // Populate Mobile Menu
+                        if (menuEventsList) {
+                            if (activeEvents.length === 0) {
+                                menuEventsList.innerHTML = `
+                                    <span class="text-[11px] font-bold text-on-surface-variant tracking-wider uppercase">চলমান ইভেন্টসমূহ</span>
+                                    <div class="text-xs text-on-surface-variant py-xs">বর্তমানে কোনো চলমান ইভেন্ট নেই।</div>
+                                `;
+                            } else {
+                                let html = `<span class="text-[11px] font-bold text-on-surface-variant tracking-wider uppercase">চলমান ইভেন্টসমূহ</span>`;
+                                activeEvents.forEach(e => {
+                                    html += `
+                                        <a class="text-primary hover:underline font-medium text-sm py-xs block" href="/event/${e.id}">
+                                            ${e.name}
+                                        </a>
+                                    `;
+                                });
+                                menuEventsList.innerHTML = html;
+                            }
+                        }
+
+                        // Populate Desktop Menu
+                        if (desktopMenuEventsList) {
+                            if (activeEvents.length === 0) {
+                                desktopMenuEventsList.innerHTML = `
+                                    <div class="text-xs text-on-surface-variant px-sm py-xs">বর্তমানে কোনো চলমান ইভেন্ট নেই।</div>
+                                `;
+                            } else {
+                                let html = '';
+                                activeEvents.forEach(e => {
+                                    html += `
+                                        <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${e.name}">
+                                            ${e.name}
+                                        </a>
+                                    `;
+                                });
+                                desktopMenuEventsList.innerHTML = html;
+                            }
+                        }
+
+                        // Populate Homepage/Event page list
+                        if (homepageEventsList && homepageEventsCard) {
+                            const currentIdStr = typeof EVENT_ID !== 'undefined' ? EVENT_ID : '';
+                            const otherEvents = activeEvents.filter(e => e.id.toString() !== currentIdStr);
+                            
+                            if (otherEvents.length > 0) {
+                                homepageEventsCard.classList.remove('hidden');
+                                let html = '';
+                                otherEvents.forEach(e => {
+                                    html += `
+                                        <a class="text-primary hover:underline font-bold py-md block flex justify-between items-center border-b border-outline-variant/30" href="/event/${e.id}">
+                                            <span class="truncate pr-sm">${e.name}</span>
+                                            <span class="material-symbols-outlined text-[18px] shrink-0">arrow_forward</span>
+                                        </a>
+                                    `;
+                                });
+                                homepageEventsList.innerHTML = html;
+                            } else {
+                                homepageEventsCard.classList.add('hidden');
+                            }
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to load active events for menu:", err);
+                    if (menuEventsList) {
+                        menuEventsList.innerHTML = `
+                            <span class="text-[11px] font-bold text-on-surface-variant tracking-wider uppercase">চলমান ইভেন্টসমূহ</span>
+                            <div class="text-xs text-error py-xs">লোড করতে ব্যর্থ হয়েছে।</div>
+                        `;
+                    }
+                    if (desktopMenuEventsList) {
+                        desktopMenuEventsList.innerHTML = `
+                            <div class="text-xs text-error px-sm py-xs">লোড করতে ব্যর্থ হয়েছে।</div>
+                        `;
+                    }
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadMobileMenuEvents);
     </script>
+    <!-- ADMIN_EDIT_MODAL -->
 </body>
 </html>
