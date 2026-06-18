@@ -116,6 +116,7 @@
             <nav class="hidden md:flex items-center gap-lg">
                 <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/">হোম</a>
                 <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="/about">ড্যাশবোর্ড পরিচিতি</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/stats">পরিসংখ্যান</a>
                 <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়ায় ফেরত যান</a>
             </nav>
             <div class="flex items-center gap-md">
@@ -202,6 +203,24 @@
                     <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">স্বয়ংক্রিয় স্বাগত বার্তা ও সিদ্ধান্ত সামারি</h3>
                     <p class="font-body-md text-body-md text-on-surface-variant">অ্যাকাউন্ট তৈরি হওয়ার সাথে সাথেই প্রশাসকের পক্ষে নতুন ব্যবহারকারীর আলাপ পাতায় (Talk Page) একটি স্বাগত বার্তা চলে যায়। একই সাথে অনুমোদন/বাতিল করার সময় প্রশাসকরা ঐচ্ছিক মন্তব্য লিখতে পারেন যা উইকির লগেও যুক্ত হয়।</p>
                 </div>
+
+                <!-- Feature 5 -->
+                <div class="bg-white border border-outline-variant p-md rounded-xl space-y-sm shadow-sm hover:border-primary transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                        <span class="material-symbols-outlined font-bold">leaderboard</span>
+                    </div>
+                    <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">লাইভ এডিটর লিডারবোর্ড ও পরিসংখ্যান</h3>
+                    <p class="font-body-md text-body-md text-on-surface-variant">ইভেন্টের অংশগ্রহণকারীদের করা মোট সম্পাদনা (Edit Count), যোগকৃত ডেটা (Bytes), এবং আপলোডকৃত মিডিয়া ফাইল (Uploads) রিয়েল-টাইমে ট্র্যাক করে একটি লাইভ পরিসংখ্যান ও লিডারবোর্ড ড্যাশবোর্ড প্রদর্শন করে।</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="bg-white border border-outline-variant p-md rounded-xl space-y-sm shadow-sm hover:border-primary transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                        <span class="material-symbols-outlined font-bold">settings_applications</span>
+                    </div>
+                    <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">ডাইনামিক উইকি টার্গেট ও অংশগ্রহণকারী নিয়ন্ত্রণ</h3>
+                    <p class="font-body-md text-body-md text-on-surface-variant">নতুন তৈরিকৃত অ্যাকাউন্টগুলো স্বয়ংক্রিয়ভাবে ইভেন্ট লিডারবোর্ডে যুক্ত হয়। এছাড়াও অ্যাডমিন নির্দিষ্ট সময়সীমা, অবদান ট্র্যাকিং উইকি তালিকা নির্ধারণ এবং যেকোনো উইকিপিডিয়া ব্যবহারকারীকে ম্যানুয়ালি তালিকায় যোগ/বিয়োগ করতে পারেন।</p>
+                </div>
             </div>
         </section>
 
@@ -264,7 +283,15 @@
                         </li>
                         <li class="flex items-start gap-xs">
                             <span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">arrow_right</span>
-                            <span><strong>"ইভেন্ট সেটিংস"</strong> থেকে নতুন ইভেন্ট যুক্ত করতে পারেন, রেজিস্ট্রেশন সাময়িকভাবে বন্ধ করতে পারেন এবং ব্যবহারকারীর আলাপ পাতার স্বাগত বার্তা কাস্টমাইজ করতে পারেন।</span>
+                            <span><strong>"ইভেন্ট সেটিংস"</strong> থেকে নতুন ইভেন্ট তৈরি করা, রেজিস্ট্রেশন সাময়িকভাবে বন্ধ/চালু করা এবং ব্যবহারকারীর আলাপ পাতার স্বাগত বার্তা কাস্টমাইজ করা যায়। এছাড়া ইভেন্টের শুরু ও শেষের সময়সীমা এবং অবদান ট্র্যাকিং করার নির্দিষ্ট উইকি তালিকা নির্ধারণ করা যায়।</span>
+                        </li>
+                        <li class="flex items-start gap-xs">
+                            <span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">arrow_right</span>
+                            <span><strong>"অংশগ্রহণকারী ব্যবস্থাপনা"</strong> প্যানেল থেকে যেকোনো বিদ্যমান উইকিপিডিয়া ব্যবহারকারীর নাম লিখে সরাসরি ইভেন্টে যুক্ত করতে পারেন অথবা তালিকা থেকে বাদ দিতে পারেন।</span>
+                        </li>
+                        <li class="flex items-start gap-xs">
+                            <span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">arrow_right</span>
+                            <span><strong>"পরিসংখ্যান"</strong> পেজ থেকে যেকোনো ভিজিটর চলমান ইভেন্টের লাইভ লিডারবোর্ড দেখতে পারবেন। অ্যাডমিনগণ এই পেজে প্রতি ১ মিনিট পর পর ম্যানুয়ালি লাইভ ডেটা রিফ্রেশ করতে পারেন।</span>
                         </li>
                     </ul>
                 </div>
