@@ -226,6 +226,23 @@
                             <textarea class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" id="welcome_message" rows="4" placeholder="যেমন: == উইকিপিডিয়ায় স্বাগত ==\nপ্রিয় {{username}}, স্বাগতম! -- ~~~~">{{WELCOME_MESSAGE}}</textarea>
                             <p class="mt-xs font-label-md text-label-md text-on-surface-variant">নিবন্ধনকারী ব্যবহারকারীর নাম বোঝাতে <code>{{username}}</code> ব্যবহার করুন। এটি স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে।</p>
                         </div>
+                        <!-- Event Start Time -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            <div>
+                                <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="event_start">ইভেন্ট শুরুর সময়</label>
+                                <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_start" type="datetime-local" value="{{EVENT_START}}"/>
+                            </div>
+                            <div>
+                                <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="event_end">ইভেন্ট শেষের সময়</label>
+                                <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_end" type="datetime-local" value="{{EVENT_END}}"/>
+                            </div>
+                        </div>
+                        <!-- Event Target Wikis -->
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="event_wikis">টার্গেট উইকি সমূহ (কমা দিয়ে আলাদা করুন)</label>
+                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="event_wikis" placeholder="যেমন: bn.wikipedia.org, commons.wikimedia.org" type="text" value="{{EVENT_WIKIS}}"/>
+                            <p class="mt-xs font-label-md text-label-md text-on-surface-variant">এই উইকিগুলোর অবদান লাইভ লিডারবোর্ডে প্রদর্শন করা হবে।</p>
+                        </div>
                         <!-- Registration Toggle -->
                         <div class="flex items-center justify-between py-md border-t border-outline-variant">
                             <div>
@@ -247,6 +264,29 @@
                     </div>
                 </div>
 
+                <!-- Participant Management Card -->
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+                    <div class="p-lg border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                        <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">ইভেন্ট অংশগ্রহণকারীগণ (লিডারবোর্ড)</h3>
+                        <span class="bg-primary-container text-on-primary-container text-[10px] px-sm py-xs rounded font-bold" id="participantCount">০ জন</span>
+                    </div>
+                    <div class="p-lg space-y-md">
+                        <!-- Add Participant Input -->
+                        <div class="flex gap-sm">
+                            <input class="flex-grow bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="newParticipantUsername" placeholder="উইকিপিডিয়া ব্যবহারকারী নাম লিখুন (যেমন: MdsShakil)" type="text"/>
+                            <button id="addParticipantBtn" class="px-lg py-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary font-bold hover:opacity-90 transition-all active:scale-95 shrink-0">যুক্ত করুন</button>
+                        </div>
+                        <div id="participantError" class="hidden p-sm rounded-lg border border-error bg-error-container/20 text-on-error-container font-body-md text-xs font-bold"></div>
+                        
+                        <!-- List of participants -->
+                        <div class="border border-outline-variant rounded-lg max-h-64 overflow-y-auto custom-scrollbar bg-white">
+                            <ul id="participantsList" class="divide-y divide-outline-variant font-body-md text-body-md text-on-surface">
+                                <li class="p-md text-center text-on-surface-variant">কোনো অংশগ্রহণকারী পাওয়া যায়নি।</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Create New Event Form Card -->
                 <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
                     <div class="p-lg border-b border-outline-variant bg-surface-container-low">
@@ -264,6 +304,22 @@
                         <div>
                             <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="new_workshop_url">কর্মশালার (Workshop) ইউআরএল</label>
                             <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="new_workshop_url" placeholder="যেমন: https://bn.wikipedia.org/wiki/Wikipedia:Workshop" type="url"/>
+                        </div>
+                        <!-- New Event Start and End times -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            <div>
+                                <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="new_event_start">শুরুর সময়</label>
+                                <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="new_event_start" type="datetime-local"/>
+                            </div>
+                            <div>
+                                <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="new_event_end">শেষের সময়</label>
+                                <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="new_event_end" type="datetime-local"/>
+                            </div>
+                        </div>
+                        <!-- New Event Target Wikis -->
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface font-bold mb-xs" for="new_event_wikis">টার্গেট উইকি সমূহ (কমা দিয়ে আলাদা করুন)</label>
+                            <input class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="new_event_wikis" placeholder="যেমন: bn.wikipedia.org, commons.wikimedia.org" type="text" value="bn.wikipedia.org"/>
                         </div>
                     </div>
                     <div class="p-lg bg-surface-container-low flex justify-end gap-md border-t border-outline-variant">
@@ -438,6 +494,10 @@
             const additionalInstructions = additionalInstructionsInput.value.trim();
             const welcomeMessage = welcomeMessageInput.value.trim();
             
+            const eventStart = document.getElementById('event_start').value;
+            const eventEnd = document.getElementById('event_end').value;
+            const eventWikis = document.getElementById('event_wikis').value.trim();
+            
             if (!eventName) {
                 showToast("ইভেন্টের নাম খালি রাখা যাবে না।", "error");
                 return;
@@ -457,7 +517,10 @@
                     registration_active: isRegisteredActive ? 1 : 0,
                     workshop_url: workshopUrl,
                     additional_instructions: additionalInstructions,
-                    welcome_message: welcomeMessage
+                    welcome_message: welcomeMessage,
+                    event_start: eventStart,
+                    event_end: eventEnd,
+                    event_wikis: eventWikis
                 })
             })
             .then(res => res.json())
@@ -482,6 +545,11 @@
         createEventBtn.addEventListener('click', () => {
             const name = newEventNameInput.value.trim();
             const workshop_url = newWorkshopUrlInput.value.trim();
+            
+            const start_time = document.getElementById('new_event_start').value;
+            const end_time = document.getElementById('new_event_end').value;
+            const target_wikis = document.getElementById('new_event_wikis').value.trim();
+            
             createEventError.classList.add('hidden');
 
             if (!name) {
@@ -499,7 +567,7 @@
                     'Content-Type': 'application/json',
                     'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
                 },
-                body: JSON.stringify({ name, workshop_url })
+                body: JSON.stringify({ name, workshop_url, start_time, end_time, target_wikis })
             })
             .then(res => res.json())
             .then(data => {
@@ -510,13 +578,20 @@
                     // Reset inputs
                     newEventNameInput.value = '';
                     newWorkshopUrlInput.value = '';
+                    document.getElementById('new_event_start').value = '';
+                    document.getElementById('new_event_end').value = '';
+                    document.getElementById('new_event_wikis').value = 'bn.wikipedia.org';
                     
-                    // Update active event name and workshop URL inputs with the new event
+                    // Update active event name, workshop URL inputs, and other values with the new event
                     eventNameInput.value = name;
                     document.getElementById('workshop_url').value = workshop_url || 'https://bn.wikipedia.org';
+                    document.getElementById('event_start').value = start_time;
+                    document.getElementById('event_end').value = end_time;
+                    document.getElementById('event_wikis').value = target_wikis;
                     
                     showToast("নতুন ইভেন্ট সফলভাবে তৈরি এবং সক্রিয় করা হয়েছে!", "success");
                     loadEventHistory();
+                    loadParticipants();
                 } else {
                     createEventError.innerText = data.error || "নতুন ইভেন্ট তৈরি করতে ব্যর্থ হয়েছে।";
                     createEventError.classList.remove('hidden');
@@ -725,10 +800,121 @@
             }, 200);
         }
 
+        // Load, add, delete participants
+        const participantsList = document.getElementById('participantsList');
+        const participantCountEl = document.getElementById('participantCount');
+        const newParticipantUsername = document.getElementById('newParticipantUsername');
+        const addParticipantBtn = document.getElementById('addParticipantBtn');
+        const participantError = document.getElementById('participantError');
+
+        function loadParticipants() {
+            fetch('/api/admin/participants')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) return;
+                    
+                    const list = data.participants || [];
+                    participantCountEl.innerText = `${list.length} জন`;
+                    
+                    if (list.length === 0) {
+                        participantsList.innerHTML = '<li class="p-md text-center text-on-surface-variant">কোনো অংশগ্রহণকারী পাওয়া যায়নি।</li>';
+                        return;
+                    }
+                    
+                    participantsList.innerHTML = list.map(p => {
+                        const typeLabel = p.is_custom === 1 
+                            ? '<span class="bg-primary/10 text-primary text-[10px] px-xs py-0.5 rounded font-bold ml-sm">ম্যানুয়াল</span>'
+                            : '<span class="bg-secondary/10 text-secondary text-[10px] px-xs py-0.5 rounded font-bold ml-sm">স্বয়ংক্রিয়</span>';
+                            
+                        return `
+                            <li class="p-md flex justify-between items-center hover:bg-surface-container/50 transition-colors">
+                                <div class="flex items-center">
+                                    <span class="font-semibold font-body-md">${escapeHTML(p.username)}</span>
+                                    ${typeLabel}
+                                </div>
+                                <button onclick="deleteParticipant(${p.id}, '${escapeHTML(p.username)}')" class="text-error hover:bg-error-container/20 p-xs rounded transition-colors flex items-center justify-center" title="বাদ দিন">
+                                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                            </li>
+                        `;
+                    }).join('');
+                })
+                .catch(err => {
+                    console.error("Error loading participants:", err);
+                });
+        }
+
+        addParticipantBtn.addEventListener('click', () => {
+            const username = newParticipantUsername.value.trim();
+            participantError.classList.add('hidden');
+            
+            if (!username) {
+                participantError.innerText = 'ব্যবহারকারী নাম লিখুন।';
+                participantError.classList.remove('hidden');
+                return;
+            }
+            
+            addParticipantBtn.innerText = 'যুক্ত হচ্ছে...';
+            addParticipantBtn.disabled = true;
+            
+            fetch('/api/admin/participants', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
+                },
+                body: JSON.stringify({ username })
+            })
+            .then(res => res.json())
+            .then(data => {
+                addParticipantBtn.innerText = 'যুক্ত করুন';
+                addParticipantBtn.disabled = false;
+                
+                if (data.success) {
+                    newParticipantUsername.value = '';
+                    loadParticipants();
+                    showToast(`"${username}" সফলভাবে অংশগ্রহণকারী হিসেবে যুক্ত করা হয়েছে।`, 'success');
+                } else {
+                    participantError.innerText = data.error || 'যুক্ত করা সম্ভব হয়নি।';
+                    participantError.classList.remove('hidden');
+                }
+            })
+            .catch(err => {
+                addParticipantBtn.innerText = 'যুক্ত করুন';
+                addParticipantBtn.disabled = false;
+                participantError.innerText = 'সার্ভারের সাথে যোগাযোগ করতে ব্যর্থ।';
+                participantError.classList.remove('hidden');
+            });
+        });
+
+        window.deleteParticipant = function(id, username) {
+            if (!confirm(`আপনি কি নিশ্চিতভাবে "${username}"-কে লিডারবোর্ড থেকে বাদ দিতে চান?`)) return;
+            
+            fetch(`/api/admin/participants/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadParticipants();
+                    showToast(`"${username}"-কে সফলভাবে বাদ দেওয়া হয়েছে।`, 'success');
+                } else {
+                    showToast(`বাদ দিতে সমস্যা: ${data.error}`, 'error');
+                }
+            })
+            .catch(err => {
+                showToast('সার্ভারের সাথে যোগাযোগ করতে ব্যর্থ।', 'error');
+            });
+        };
+
         // Initialize UI status
         document.addEventListener('DOMContentLoaded', () => {
             updateUIStatus(isRegisteredActive);
             loadEventHistory();
+            loadParticipants();
 
             // Click outside to close modal
             document.getElementById('eventHistoryModal').addEventListener('click', (e) => {

@@ -35,9 +35,24 @@ async function getDatabase() {
 
     CREATE TABLE IF NOT EXISTS events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
+      name TEXT UNIQUE,
       workshop_url TEXT,
+      start_time DATETIME,
+      end_time DATETIME,
+      target_wikis TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS event_participants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_name TEXT,
+      username TEXT,
+      total_edits INTEGER DEFAULT 0,
+      file_uploads INTEGER DEFAULT 0,
+      bytes_added INTEGER DEFAULT 0,
+      is_custom INTEGER DEFAULT 0,
+      added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(event_name, username)
     );
 
     CREATE TABLE IF NOT EXISTS login_logs (
@@ -55,6 +70,16 @@ async function getDatabase() {
     // Column already exists, safe to ignore
   }
 
+  // Alter events table to add stats settings
+  try {
+    await db.exec('ALTER TABLE events ADD COLUMN start_time DATETIME');
+  } catch (e) {}
+  try {
+    await db.exec('ALTER TABLE events ADD COLUMN end_time DATETIME');
+  } catch (e) {}
+  try {
+    await db.exec('ALTER TABLE events ADD COLUMN target_wikis TEXT');
+  } catch (e) {}
 
   // Insert default settings if they don't exist
   const eventName = await db.get('SELECT value FROM settings WHERE key = ?', 'event_name');
@@ -82,17 +107,44 @@ async function getDatabase() {
     await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', 'welcome_message', '== উইকিপিডিয়ায় আপনাকে স্বাগত! ==\nপ্রিয় {{username}}, উইকিপিডিয়ায় আপনাকে স্বাগত। আপনার উইকিপিডিয়া যাত্রা শুভ হোক! -- ~~~~');
   }
 
+  const eventStart = await db.get('SELECT value FROM settings WHERE key = ?', 'event_start');
+  if (!eventStart) {
+    await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', 'event_start', '2026-06-18T00:00');
+  }
+
+  const eventEnd = await db.get('SELECT value FROM settings WHERE key = ?', 'event_end');
+  if (!eventEnd) {
+    await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', 'event_end', '2026-06-25T23:59');
+  }
+
+  const eventWikis = await db.get('SELECT value FROM settings WHERE key = ?', 'event_wikis');
+  if (!eventWikis) {
+    await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', 'event_wikis', 'bn.wikipedia.org');
+  }
+
   // Migrate active event to events table if empty
   const eventsCount = await db.get('SELECT COUNT(*) as count FROM events');
   if (eventsCount.count === 0) {
     const curName = await db.get('SELECT value FROM settings WHERE key = ?', 'event_name');
     const curUrl = await db.get('SELECT value FROM settings WHERE key = ?', 'workshop_url');
+    const curStart = await db.get('SELECT value FROM settings WHERE key = ?', 'event_start');
+    const curEnd = await db.get('SELECT value FROM settings WHERE key = ?', 'event_end');
+    const curWikis = await db.get('SELECT value FROM settings WHERE key = ?', 'event_wikis');
+    
     await db.run(
-      'INSERT INTO events (name, workshop_url) VALUES (?, ?)',
+      'INSERT INTO events (name, workshop_url, start_time, end_time, target_wikis) VALUES (?, ?, ?, ?, ?)',
       curName ? curName.value : 'অমর একুশে উইকিপিডিয়া নিবন্ধ প্রতিযোগিতা ২০২৪',
-      curUrl ? curUrl.value : 'https://bn.wikipedia.org'
+      curUrl ? curUrl.value : 'https://bn.wikipedia.org',
+      curStart ? curStart.value : '2026-06-18T00:00',
+      curEnd ? curEnd.value : '2026-06-25T23:59',
+      curWikis ? curWikis.value : 'bn.wikipedia.org'
     );
   }
+
+  // Update existing event rows if they have null values
+  await db.run("UPDATE events SET start_time = '2026-06-18T00:00' WHERE start_time IS NULL");
+  await db.run("UPDATE events SET end_time = '2026-06-25T23:59' WHERE end_time IS NULL");
+  await db.run("UPDATE events SET target_wikis = 'bn.wikipedia.org' WHERE target_wikis IS NULL");
 
   return db;
 }

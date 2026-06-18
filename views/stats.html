@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html class="light" lang="bn">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ইভেন্ট পরিসংখ্যান - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Inter', 'Hind Siliguri', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c6d5;
+            border-radius: 10px;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed-variant": "#005231",
+                      "on-surface": "#191c1d",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#c6292b",
+                      "outline": "#727784",
+                      "surface-tint": "#005cba",
+                      "tertiary-fixed-dim": "#ffb3ad",
+                      "surface-dim": "#d9dadb",
+                      "on-secondary-container": "#007346",
+                      "on-primary-fixed": "#001b3e",
+                      "primary": "#004e9f",
+                      "background": "#f8f9fa",
+                      "on-error": "#ffffff",
+                      "tertiary": "#a30716",
+                      "on-tertiary-fixed-variant": "#930011",
+                      "on-surface-variant": "#414753",
+                      "on-background": "#191c1d",
+                      "on-secondary-fixed": "#002111",
+                      "surface-variant": "#e1e3e4",
+                      "primary-fixed-dim": "#aac7ff",
+                      "on-tertiary-container": "#ffe1de",
+                      "secondary-fixed": "#93f7bc",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f3f4f5",
+                      "on-primary-container": "#dfe8ff",
+                      "secondary-fixed-dim": "#77daa1",
+                      "on-primary-fixed-variant": "#00458e",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-primary": "#ffffff",
+                      "surface": "#f8f9fa",
+                      "inverse-surface": "#2e3132",
+                      "secondary-container": "#93f7bc",
+                      "primary-container": "#0066cc",
+                      "secondary": "#006d42",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary": "#ffffff",
+                      "inverse-primary": "#aac7ff",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#c1c6d5",
+                      "on-tertiary-fixed": "#410003",
+                      "surface-bright": "#f8f9fa",
+                      "primary-fixed": "#d7e3ff",
+                      "tertiary-fixed": "#ffdad6",
+                      "surface-container": "#edeeef",
+                      "surface-container-high": "#e7e8e9",
+                      "on-tertiary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "lg": "24px",
+                      "sm": "8px",
+                      "xl": "40px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "container-max": "1120px",
+                      "gutter": "16px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter", "Hind Siliguri"],
+                      "label-md": ["Inter", "Hind Siliguri"],
+                      "body-lg": ["Inter", "Hind Siliguri"],
+                      "display-lg": ["Inter", "Hind Siliguri"],
+                      "headline-md": ["Inter", "Hind Siliguri"],
+                      "headline-lg-mobile": ["Inter", "Hind Siliguri"],
+                      "headline-sm": ["Inter", "Hind Siliguri"]
+              },
+              "fontSize": {
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["26px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+    <!-- TopAppBar -->
+    <header class="bg-surface border-b border-outline-variant w-full sticky top-0 z-50">
+        <div class="flex justify-between items-center w-full px-lg md:px-xl max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-md">
+                <a href="/" class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-bold">অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</a>
+            </div>
+            <nav class="hidden md:flex items-center gap-lg">
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/">হোম</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/about">ড্যাশবোর্ড পরিচিতি</a>
+                <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="/stats">পরিসংখ্যান</a>
+            </nav>
+            <div class="flex items-center gap-md">
+                <!-- NAV_AUTH -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-container-max w-full mx-auto px-md py-lg md:py-xl space-y-lg">
+        
+        <!-- Header & Info Panel -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-md bg-surface-container-lowest border border-outline-variant p-lg rounded-xl shadow-sm">
+            <div class="space-y-sm">
+                <div class="flex items-center gap-sm flex-wrap">
+                    <span id="eventStatusBadge" class="bg-surface-container text-on-surface-variant text-xs px-sm py-xs rounded-full font-bold">লোড হচ্ছে...</span>
+                    <h1 class="font-headline-md text-headline-md text-on-surface font-bold" id="eventName">ইভেন্ট লাইভ লিডারবোর্ড</h1>
+                </div>
+                <p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+                    <span id="eventDuration">ইভেন্ট সময়কাল: লোড হচ্ছে...</span>
+                </p>
+                <p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-[18px]">language</span>
+                    <span>টার্গেট উইকি:</span>
+                    <span id="eventWikis" class="font-bold text-primary">লোড হচ্ছে...</span>
+                </p>
+            </div>
+            <div class="flex items-center gap-sm self-stretch lg:self-auto justify-between lg:justify-start">
+                <span class="text-xs text-on-surface-variant font-label-md" id="lastUpdatedText">সর্বশেষ আপডেট: কখনো নয়</span>
+                <button id="refreshBtn" class="inline-flex items-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-bold font-label-md hover:bg-primary/90 transition-colors shadow-sm active:scale-95">
+                    <span class="material-symbols-outlined text-[18px]" id="refreshIcon">sync</span>
+                    <span id="refreshBtnText">রিফ্রেশ করুন</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Global Toast Alert -->
+        <div id="statsAlert" class="hidden w-full p-md rounded-lg border flex items-center gap-md transition-all duration-300">
+            <span class="material-symbols-outlined" id="alertIcon"></span>
+            <p class="font-body-lg text-body-lg" id="alertText"></p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-sm md:gap-lg">
+            <!-- Participants Card -->
+            <div class="bg-surface-container-lowest border border-outline-variant p-md md:p-lg rounded-xl flex items-center gap-md shadow-sm">
+                <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary-fixed/20 flex items-center justify-center text-primary shrink-0">
+                    <span class="material-symbols-outlined text-[20px] md:text-[24px]">group</span>
+                </div>
+                <div>
+                    <p class="text-[10px] md:text-xs text-on-surface-variant font-bold">মোট অংশগ্রহণকারী</p>
+                    <p class="text-lg md:text-headline-sm font-bold text-on-surface" id="totalParticipants">-</p>
+                </div>
+            </div>
+            <!-- Edits Card -->
+            <div class="bg-surface-container-lowest border border-outline-variant p-md md:p-lg rounded-xl flex items-center gap-md shadow-sm">
+                <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary-container/20 flex items-center justify-center text-on-secondary-container shrink-0">
+                    <span class="material-symbols-outlined text-[20px] md:text-[24px]">edit_note</span>
+                </div>
+                <div>
+                    <p class="text-[10px] md:text-xs text-on-surface-variant font-bold">মোট সম্পাদনা</p>
+                    <p class="text-lg md:text-headline-sm font-bold text-on-surface" id="totalEdits">-</p>
+                </div>
+            </div>
+            <!-- Uploads Card -->
+            <div class="bg-surface-container-lowest border border-outline-variant p-md md:p-lg rounded-xl flex items-center gap-md shadow-sm">
+                <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-tertiary-fixed/20 fill-current flex items-center justify-center text-tertiary shrink-0">
+                    <span class="material-symbols-outlined text-[20px] md:text-[24px]">cloud_upload</span>
+                </div>
+                <div>
+                    <p class="text-[10px] md:text-xs text-on-surface-variant font-bold">ফাইল আপলোড</p>
+                    <p class="text-lg md:text-headline-sm font-bold text-on-surface" id="totalUploads">-</p>
+                </div>
+            </div>
+            <!-- Bytes Card -->
+            <div class="bg-surface-container-lowest border border-outline-variant p-md md:p-lg rounded-xl flex items-center gap-md shadow-sm">
+                <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-outline-variant/20 flex items-center justify-center text-on-surface-variant shrink-0">
+                    <span class="material-symbols-outlined text-[20px] md:text-[24px]">database</span>
+                </div>
+                <div>
+                    <p class="text-[10px] md:text-xs text-on-surface-variant font-bold">যুক্ত করা ডাটা</p>
+                    <p class="text-lg md:text-headline-sm font-bold text-on-surface" id="totalBytes">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Table Section -->
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+            <div class="px-lg py-md bg-surface-container-low border-b border-outline-variant flex justify-between items-center flex-wrap gap-sm">
+                <h3 class="font-headline-sm text-[18px] text-on-surface font-bold">লিডারবোর্ড র‌্যাঙ্কিং</h3>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                    <input id="searchInput" class="pl-xl pr-md py-xs bg-surface border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all w-60" placeholder="অংশগ্রহণকারী খুঁজুন..." type="text"/>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-bold text-sm">
+                            <th class="px-lg py-md text-center w-20">অবস্থান (Rank)</th>
+                            <th class="px-lg py-md">ব্যবহারকারী নাম</th>
+                            <th class="px-lg py-md text-center w-36">মোট সম্পাদনা (Edits)</th>
+                            <th class="px-lg py-md text-center w-36">ফাইল আপলোড (Uploads)</th>
+                            <th class="px-lg py-md text-right w-44">যুক্ত করা ডাটা (Bytes Added)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant font-body-md text-body-md text-on-surface-variant" id="leaderboardBody">
+                        <tr>
+                            <td colspan="5" class="px-lg py-xl text-center text-on-surface-variant">
+                                লিডারবোর্ড লোড হচ্ছে...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-outline-variant mt-xl">
+        <div class="w-full py-lg px-lg max-w-container-max mx-auto text-center flex flex-col items-center gap-md">
+            <div class="flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" class="h-10 w-auto">
+                    <g transform="translate(40, 40) scale(0.06)">
+                        <defs>
+                            <clipPath id="wmlogo-clip-reg">
+                                <path d="M47.5-87.5v425h-95v-425l-552-552v1250h1199v-1250z"/>
+                            </clipPath>
+                        </defs>
+                        <g clip-path="url(#wmlogo-clip-reg)">
+                            <circle r="336.5" fill="#339966"/>
+                            <circle r="480.25" fill="none" stroke="#006699" stroke-width="135.5"/>
+                        </g>
+                        <circle cy="-379.5" r="184.5" fill="#990000"/>
+                    </g>
+                    <text x="85" y="38" font-family="'Inter', 'Hind Siliguri', sans-serif" font-size="20" font-weight="700" fill="#202122">উইকিমিডিয়া</text>
+                    <text x="85" y="60" font-family="'Inter', 'Hind Siliguri', sans-serif" font-size="16" font-weight="500" fill="#54595d">বাংলাদেশ</text>
+                </svg>
+            </div>
+            <div class="flex flex-wrap justify-center gap-md">
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org/wiki/Privacy_policy" target="_blank">গোপনীয়তা নীতি</a>
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org" target="_blank">উইকিমিডিয়া বাংলাদেশ সম্পর্কে</a>
+                <a class="text-on-surface-variant hover:underline font-body-md text-body-md" href="https://bd.wikimedia.org/wiki/Disclaimer" target="_blank">দাবিত্যাগ</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const alertEl = document.getElementById('statsAlert');
+        const alertText = document.getElementById('alertText');
+        const alertIcon = document.getElementById('alertIcon');
+        const searchInput = document.getElementById('searchInput');
+
+        let leaderboardData = [];
+        let autoRefreshInterval = null;
+
+        function showAlert(message, type) {
+            alertEl.classList.remove('hidden');
+            alertText.innerText = message;
+            
+            if (type === 'success') {
+                alertEl.className = "w-full p-md rounded-lg border border-secondary bg-secondary-container/20 text-on-secondary-container flex items-center gap-md mb-md";
+                alertIcon.className = "material-symbols-outlined text-secondary";
+                alertIcon.innerText = "check_circle";
+            } else {
+                alertEl.className = "w-full p-md rounded-lg border border-error bg-error-container/20 text-on-error-container flex items-center gap-md mb-md";
+                alertIcon.className = "material-symbols-outlined text-error";
+                alertIcon.innerText = "error";
+            }
+            setTimeout(() => {
+                alertEl.classList.add('hidden');
+            }, 6000);
+        }
+
+        function loadStats() {
+            fetch('/api/stats')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        document.getElementById('leaderboardBody').innerHTML = `
+                            <tr>
+                                <td colspan="5" class="px-lg py-xl text-center text-error font-bold font-body-md">
+                                    ত্রুটি: ${data.error}
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    // Populate Event Info
+                    document.getElementById('eventName').innerText = data.event.name;
+                    document.getElementById('eventWikis').innerText = data.event.target_wikis;
+
+                    const startLocal = new Date(data.event.start_time).toLocaleString('bn-BD', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                    const endLocal = new Date(data.event.end_time).toLocaleString('bn-BD', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                    document.getElementById('eventDuration').innerText = `ইভেন্ট সময়কাল: ${startLocal} থেকে ${endLocal}`;
+
+                    // Set Event Status Badge
+                    const now = new Date();
+                    const startDate = new Date(data.event.start_time);
+                    const endDate = new Date(data.event.end_time);
+                    const badge = document.getElementById('eventStatusBadge');
+                    
+                    if (now < startDate) {
+                        badge.innerText = 'আসন্ন ইভেন্ট';
+                        badge.className = 'bg-primary/20 text-primary text-xs px-sm py-xs rounded-full font-bold';
+                    } else if (now > endDate) {
+                        badge.innerText = 'ইভেন্ট সমাপ্ত';
+                        badge.className = 'bg-error/20 text-error text-xs px-sm py-xs rounded-full font-bold';
+                    } else {
+                        badge.innerText = 'চলমান ইভেন্ট';
+                        badge.className = 'bg-secondary/20 text-secondary text-xs px-sm py-xs rounded-full font-bold';
+                    }
+
+                    // Set Summary Cards
+                    document.getElementById('totalParticipants').innerText = data.stats.total_participants.toLocaleString('bn-BD') + ' জন';
+                    document.getElementById('totalEdits').innerText = data.stats.total_edits.toLocaleString('bn-BD') + ' টি';
+                    document.getElementById('totalUploads').innerText = data.stats.total_uploads.toLocaleString('bn-BD') + ' টি';
+                    
+                    // Format bytes nicely
+                    const bytes = data.stats.total_bytes;
+                    let bytesText = '০ বাইট';
+                    if (bytes > 1024 * 1024) {
+                        bytesText = (bytes / (1024 * 1024)).toFixed(2).toLocaleString('bn-BD') + ' MB';
+                    } else if (bytes > 1024) {
+                        bytesText = (bytes / 1024).toFixed(2).toLocaleString('bn-BD') + ' KB';
+                    } else {
+                        bytesText = bytes.toLocaleString('bn-BD') + ' বাইট';
+                    }
+                    document.getElementById('totalBytes').innerText = bytesText;
+
+                    // Set Last Updated Time
+                    if (data.stats.last_updated) {
+                        const updateDate = new Date(data.stats.last_updated);
+                        document.getElementById('lastUpdatedText').innerText = 'সর্বশেষ আপডেট: ' + updateDate.toLocaleTimeString('bn-BD');
+                    }
+
+                    // Render Leaderboard
+                    leaderboardData = data.leaderboard || [];
+                    renderLeaderboardTable();
+                })
+                .catch(err => {
+                    console.error("Stats fetch error:", err);
+                    document.getElementById('leaderboardBody').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-lg py-xl text-center text-error font-bold font-body-md">
+                                পরিসংখ্যান লোড করতে ব্যর্থ হয়েছে।
+                            </td>
+                        </tr>
+                    `;
+                });
+        }
+
+        function renderLeaderboardTable(filterTerm = '') {
+            const filtered = leaderboardData.filter(p => {
+                return p.username.toLowerCase().includes(filterTerm.toLowerCase());
+            });
+
+            const tbody = document.getElementById('leaderboardBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                            ${filterTerm ? 'কোনো মিল পাওয়া যায়নি।' : 'লিডারবোর্ডে এখনো কোনো অংশগ্রহণকারী নেই।'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(p => {
+                const letter = p.username ? p.username.trim().charAt(0).toUpperCase() : 'U';
+                
+                // Color formatting for top 3 positions
+                let rankHtml = '';
+                if (p.rank === 1) {
+                    rankHtml = `<span class="inline-flex w-8 h-8 items-center justify-center bg-yellow-400 text-yellow-950 font-extrabold rounded-full shadow-sm">১</span>`;
+                } else if (p.rank === 2) {
+                    rankHtml = `<span class="inline-flex w-8 h-8 items-center justify-center bg-slate-300 text-slate-800 font-extrabold rounded-full shadow-sm">২</span>`;
+                } else if (p.rank === 3) {
+                    rankHtml = `<span class="inline-flex w-8 h-8 items-center justify-center bg-amber-600 text-amber-50 font-extrabold rounded-full shadow-sm">৩</span>`;
+                } else {
+                    rankHtml = p.rank.toLocaleString('bn-BD');
+                }
+
+                // Format bytes added
+                let byteColText = '০';
+                if (p.bytes_added > 1024 * 1024) {
+                    byteColText = (p.bytes_added / (1024 * 1024)).toFixed(1).toLocaleString('bn-BD') + ' MB';
+                } else if (p.bytes_added > 1024) {
+                    byteColText = (p.bytes_added / 1024).toFixed(1).toLocaleString('bn-BD') + ' KB';
+                } else {
+                    byteColText = p.bytes_added.toLocaleString('bn-BD') + ' B';
+                }
+
+                return `
+                    <tr class="hover:bg-surface-container transition-colors group">
+                        <td class="px-lg py-md text-center font-bold text-body-lg">${rankHtml}</td>
+                        <td class="px-lg py-md">
+                            <div class="flex items-center gap-sm">
+                                <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold shrink-0">
+                                    ${letter}
+                                </div>
+                                <span class="font-medium text-on-surface font-bold block">${p.username}</span>
+                            </div>
+                        </td>
+                        <td class="px-lg py-md text-center font-semibold text-on-surface">${p.total_edits.toLocaleString('bn-BD')}</td>
+                        <td class="px-lg py-md text-center font-semibold text-on-surface">${p.file_uploads.toLocaleString('bn-BD')}</td>
+                        <td class="px-lg py-md text-right font-mono text-sm text-secondary font-bold">${byteColText}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Handle search
+        searchInput.addEventListener('input', (e) => {
+            renderLeaderboardTable(e.target.value);
+        });
+
+        // Handle manual refresh
+        const refreshBtn = document.getElementById('refreshBtn');
+        const refreshIcon = document.getElementById('refreshIcon');
+        const refreshBtnText = document.getElementById('refreshBtnText');
+
+        refreshBtn.addEventListener('click', () => {
+            refreshBtn.disabled = true;
+            refreshIcon.classList.add('animate-spin');
+            refreshBtnText.innerText = 'আপডেট হচ্ছে...';
+
+            fetch('/api/stats/refresh', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message || 'পরিসংখ্যান হালনাগাদ করা হচ্ছে। অনুগ্রহ করে কয়েক সেকেন্ড অপেক্ষা করুন।', 'success');
+                    // Reload data after 3 seconds to let backend poller gather stats
+                    setTimeout(() => {
+                        loadStats();
+                        refreshBtn.disabled = false;
+                        refreshIcon.classList.remove('animate-spin');
+                        refreshBtnText.innerText = 'রিফ্রেশ করুন';
+                    }, 3500);
+                } else {
+                    showAlert(data.error || 'আপডেট করতে ব্যর্থ হয়েছে।', 'error');
+                    refreshBtn.disabled = false;
+                    refreshIcon.classList.remove('animate-spin');
+                    refreshBtnText.innerText = 'রিফ্রেশ করুন';
+                }
+            })
+            .catch(err => {
+                showAlert('সার্ভারের সাথে যোগাযোগে ব্যর্থতা।', 'error');
+                refreshBtn.disabled = false;
+                refreshIcon.classList.remove('animate-spin');
+                refreshBtnText.innerText = 'রিফ্রেশ করুন';
+            });
+        });
+
+        // Initialize and setup polling
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            // Pull stats every 30 seconds
+            autoRefreshInterval = setInterval(loadStats, 30000);
+        });
+    </script>
+</body>
+</html>

@@ -574,11 +574,17 @@ app.get('/admin/settings', isAdmin, async (req, res) => {
   const workshopUrl = await db.get("SELECT value FROM settings WHERE key = 'workshop_url'");
   const addInstructions = await db.get("SELECT value FROM settings WHERE key = 'additional_instructions'");
   const welcomeMessage = await db.get("SELECT value FROM settings WHERE key = 'welcome_message'");
+  const eventStart = await db.get("SELECT value FROM settings WHERE key = 'event_start'");
+  const eventEnd = await db.get("SELECT value FROM settings WHERE key = 'event_end'");
+  const eventWikis = await db.get("SELECT value FROM settings WHERE key = 'event_wikis'");
   
   const regActiveVal = regActive && regActive.value === '1' ? 'true' : 'false';
   const wUrl = workshopUrl ? workshopUrl.value : 'https://bn.wikipedia.org';
   const instructionsText = addInstructions ? addInstructions.value : '';
   const welcomeText = welcomeMessage ? welcomeMessage.value : '';
+  const startText = eventStart ? eventStart.value : '2026-06-18T00:00';
+  const endText = eventEnd ? eventEnd.value : '2026-06-25T23:59';
+  const wikisText = eventWikis ? eventWikis.value : 'bn.wikipedia.org';
 
   res.send(renderView('event_settings.html', {
     ADMIN_USERNAME: req.session.username,
@@ -587,7 +593,10 @@ app.get('/admin/settings', isAdmin, async (req, res) => {
     REG_ACTIVE_VAL: regActiveVal,
     WORKSHOP_URL: wUrl,
     ADDITIONAL_INSTRUCTIONS: instructionsText,
-    WELCOME_MESSAGE: welcomeText
+    WELCOME_MESSAGE: welcomeText,
+    EVENT_START: startText,
+    EVENT_END: endText,
+    EVENT_WIKIS: wikisText
   }, req));
 });
 
@@ -625,7 +634,17 @@ app.get('/api/requests', isAdmin, async (req, res) => {
 
 // Save global settings
 app.post('/api/settings', isAdmin, async (req, res) => {
-  const { event_name, registration_active, workshop_url, additional_instructions, welcome_message } = req.body;
+  const { 
+    event_name, 
+    registration_active, 
+    workshop_url, 
+    additional_instructions, 
+    welcome_message,
+    event_start,
+    event_end,
+    event_wikis
+  } = req.body;
+  
   if (!event_name) {
     return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
   }
@@ -641,8 +660,35 @@ app.post('/api/settings', isAdmin, async (req, res) => {
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('additional_instructions', ?)", additional_instructions || '');
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('welcome_message', ?)", welcome_message || '');
     
+    if (event_start) {
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", event_start);
+    }
+    if (event_end) {
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", event_end);
+    }
+    if (event_wikis) {
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", event_wikis);
+    }
+
+    // Also update in events table
+    await db.run(
+      `UPDATE events 
+       SET workshop_url = ?, start_time = ?, end_time = ?, target_wikis = ? 
+       WHERE name = ?`,
+      workshop_url || 'https://bn.wikipedia.org',
+      event_start || '2026-06-18T00:00',
+      event_end || '2026-06-25T23:59',
+      event_wikis || 'bn.wikipedia.org',
+      event_name
+    );
+
+    if (typeof runStatsPoller === 'function') {
+      runStatsPoller().catch(console.error);
+    }
+    
     res.json({ success: true });
   } catch (err) {
+    console.error("Save settings error:", err);
     res.status(500).json({ success: false, error: 'কনফিগারেশন সংরক্ষণ করা যায়নি।' });
   }
 });
@@ -688,7 +734,7 @@ app.get('/api/events/:eventName/requests', isAdmin, async (req, res) => {
 
 // Create a new event and set it active
 app.post('/api/events', isAdmin, async (req, res) => {
-  const { name, workshop_url } = req.body;
+  const { name, workshop_url, start_time, end_time, target_wikis } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
   }
@@ -698,14 +744,33 @@ app.post('/api/events', isAdmin, async (req, res) => {
     return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
   }
 
+  const startTimeVal = start_time || new Date().toISOString().slice(0, 16);
+  const defaultEndTime = new Date(new Date(startTimeVal).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+  const endTimeVal = end_time || defaultEndTime;
+  const targetWikisVal = target_wikis || 'bn.wikipedia.org';
+
   try {
     const db = await getDatabase();
     // 1. Insert into events table
-    await db.run('INSERT INTO events (name, workshop_url) VALUES (?, ?)', name.trim(), wUrl);
+    await db.run(
+      'INSERT INTO events (name, workshop_url, start_time, end_time, target_wikis) VALUES (?, ?, ?, ?, ?)',
+      name.trim(),
+      wUrl,
+      startTimeVal,
+      endTimeVal,
+      targetWikisVal
+    );
     // 2. Set active settings
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_name', ?)", name.trim());
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", wUrl);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", startTimeVal);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", endTimeVal);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", targetWikisVal);
     
+    if (typeof runStatsPoller === 'function') {
+      runStatsPoller().catch(console.error);
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("Create event error:", err);
@@ -849,6 +914,23 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
         reason ? reason.trim() : null,
         requestId
       );
+
+      // Add to event participants
+      try {
+        const reqObj = await db.get("SELECT username, event_name FROM requests WHERE id = ?", requestId);
+        if (reqObj) {
+          await db.run(
+            "INSERT OR IGNORE INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 0)",
+            reqObj.event_name,
+            reqObj.username
+          );
+          if (typeof runStatsPoller === 'function') {
+            runStatsPoller().catch(console.error);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to auto-add participant on mock approval:", err);
+      }
       
       // --- EDIT/POST MOCK WELCOME MESSAGE ON TALK PAGE ---
       try {
@@ -930,6 +1012,23 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
       );
       console.log(`Account "${request.username}" successfully created on "${targetWiki}".`);
 
+      // Add to event participants
+      try {
+        const reqObj = await db.get("SELECT username, event_name FROM requests WHERE id = ?", requestId);
+        if (reqObj) {
+          await db.run(
+            "INSERT OR IGNORE INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 0)",
+            reqObj.event_name,
+            reqObj.username
+          );
+          if (typeof runStatsPoller === 'function') {
+            runStatsPoller().catch(console.error);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to auto-add participant on real approval:", err);
+      }
+
       
       // --- EDIT/POST WELCOME MESSAGE ON TALK PAGE ---
       try {
@@ -1005,6 +1104,417 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
     
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+// --- LIVE LEADERBOARD & STATISTICS INTEGRATION ---
+
+// Helper: Convert Bangladesh Local Time (UTC+6) string to UTC ISO string
+function localToUTC(localDateTimeStr) {
+  if (!localDateTimeStr) return new Date().toISOString();
+  // If already contains Z or timezone offset, parse as is
+  if (localDateTimeStr.includes('Z') || localDateTimeStr.includes('+')) {
+    return new Date(localDateTimeStr).toISOString();
+  }
+  // Otherwise assume it is in BD local time (UTC+6)
+  const date = new Date(localDateTimeStr + ":00+06:00");
+  return date.toISOString();
+}
+
+// Helper: Fetch all contributions for a user on a target wiki
+async function fetchWikiContribs(wiki, username, startUTC, endUTC) {
+  let totalEdits = 0;
+  let bytesAdded = 0;
+  let uccontinue = null;
+  
+  do {
+    const url = new URL(`https://${wiki}/w/api.php`);
+    url.searchParams.append('action', 'query');
+    url.searchParams.append('list', 'usercontribs');
+    url.searchParams.append('ucuser', username);
+    url.searchParams.append('ucstart', startUTC);
+    url.searchParams.append('ucend', endUTC);
+    url.searchParams.append('ucdir', 'newer');
+    url.searchParams.append('uclimit', 'max');
+    url.searchParams.append('ucprop', 'sizediff');
+    url.searchParams.append('format', 'json');
+    url.searchParams.append('origin', '*');
+    
+    if (uccontinue) {
+      url.searchParams.append('uccontinue', uccontinue);
+    }
+    
+    try {
+      const response = await fetch(url.toString(), {
+        headers: {
+          'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://acd.toolforge.org; contact@wikimedia.org.bd)'
+        }
+      });
+      if (!response.ok) break;
+      const data = await response.json();
+      
+      if (data.query && data.query.usercontribs) {
+        const contribs = data.query.usercontribs;
+        totalEdits += contribs.length;
+        for (const c of contribs) {
+          if (c.sizediff && c.sizediff > 0) {
+            bytesAdded += c.sizediff;
+          }
+        }
+      }
+      
+      uccontinue = data.continue ? data.continue.uccontinue : null;
+    } catch (err) {
+      console.error(`Error querying usercontribs for ${username} on ${wiki}:`, err);
+      break;
+    }
+  } while (uccontinue);
+  
+  return { totalEdits, bytesAdded };
+}
+
+// Helper: Fetch file uploads count for a user on a target wiki
+async function fetchWikiUploads(wiki, username, startUTC, endUTC) {
+  let fileUploads = 0;
+  let lecontinue = null;
+  
+  do {
+    const url = new URL(`https://${wiki}/w/api.php`);
+    url.searchParams.append('action', 'query');
+    url.searchParams.append('list', 'logevents');
+    url.searchParams.append('leuser', username);
+    url.searchParams.append('letype', 'upload');
+    url.searchParams.append('lestart', startUTC);
+    url.searchParams.append('leend', endUTC);
+    url.searchParams.append('ledir', 'newer');
+    url.searchParams.append('lelimit', 'max');
+    url.searchParams.append('format', 'json');
+    url.searchParams.append('origin', '*');
+    
+    if (lecontinue) {
+      url.searchParams.append('lecontinue', lecontinue);
+    }
+    
+    try {
+      const response = await fetch(url.toString(), {
+        headers: {
+          'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://acd.toolforge.org; contact@wikimedia.org.bd)'
+        }
+      });
+      if (!response.ok) break;
+      const data = await response.json();
+      
+      if (data.query && data.query.logevents) {
+        fileUploads += data.query.logevents.length;
+      }
+      
+      lecontinue = data.continue ? data.continue.lecontinue : null;
+    } catch (err) {
+      console.error(`Error querying uploads for ${username} on ${wiki}:`, err);
+      break;
+    }
+  } while (lecontinue);
+  
+  return fileUploads;
+}
+
+// Helper: Fetch aggregate stats for a user across multiple wikis
+async function fetchUserStats(wikisList, username, startUTC, endUTC) {
+  let totalEdits = 0;
+  let fileUploads = 0;
+  let bytesAdded = 0;
+  
+  for (const wiki of wikisList) {
+    const contribs = await fetchWikiContribs(wiki, username, startUTC, endUTC);
+    totalEdits += contribs.totalEdits;
+    bytesAdded += contribs.bytesAdded;
+    
+    const uploads = await fetchWikiUploads(wiki, username, startUTC, endUTC);
+    fileUploads += uploads;
+  }
+  
+  return { totalEdits, fileUploads, bytesAdded };
+}
+
+// Background poller to query Wikimedia APIs and update stats in DB
+let isPolling = false;
+async function runStatsPoller() {
+  if (isPolling) {
+    console.log("Stats poller already running. Skipping this cycle.");
+    return;
+  }
+  isPolling = true;
+  
+  try {
+    const db = await getDatabase();
+    
+    // Get active event name
+    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    if (!eventNameSetting) {
+      isPolling = false;
+      return;
+    }
+    const eventName = eventNameSetting.value;
+    
+    // Get event details
+    const event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
+    if (!event) {
+      console.log(`Active event "${eventName}" not found in events table.`);
+      isPolling = false;
+      return;
+    }
+    
+    // Check if event has ended (allow 12 hours buffer for edits/corrections after end time)
+    const now = new Date();
+    const endTimeDate = new Date(event.end_time + ":00+06:00");
+    const endBufferDate = new Date(endTimeDate.getTime() + 12 * 60 * 60 * 1000);
+    
+    if (now > endBufferDate) {
+      console.log(`Event "${eventName}" has ended (buffer time passed). Polling skipped.`);
+      isPolling = false;
+      return;
+    }
+    
+    // Sync approved account creations to participants table
+    const approvedRequests = await db.all(
+      "SELECT username FROM requests WHERE event_name = ? AND status = 'approved'",
+      eventName
+    );
+    for (const reqUser of approvedRequests) {
+      await db.run(
+        "INSERT OR IGNORE INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 0)",
+        eventName,
+        reqUser.username
+      );
+    }
+    
+    // Fetch all participants
+    const participants = await db.all(
+      "SELECT username FROM event_participants WHERE event_name = ?",
+      eventName
+    );
+    
+    const startUTC = localToUTC(event.start_time);
+    const endUTC = localToUTC(event.end_time);
+    const wikis = (event.target_wikis || 'bn.wikipedia.org')
+      .split(',')
+      .map(w => w.trim())
+      .filter(Boolean);
+      
+    console.log(`Polling stats for ${participants.length} participants in event "${eventName}" across: ${wikis.join(', ')}`);
+    
+    for (const p of participants) {
+      const stats = await fetchUserStats(wikis, p.username, startUTC, endUTC);
+      await db.run(
+        `UPDATE event_participants 
+         SET total_edits = ?, file_uploads = ?, bytes_added = ? 
+         WHERE event_name = ? AND username = ?`,
+        stats.totalEdits,
+        stats.fileUploads,
+        stats.bytesAdded,
+        eventName,
+        p.username
+      );
+      // Brief delay to prevent overloading target API
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    // Save last updated timestamp
+    await db.run(
+      "INSERT OR REPLACE INTO settings (key, value) VALUES ('stats_last_updated', ?)",
+      new Date().toISOString()
+    );
+    
+    console.log("Stats polling cycle completed.");
+  } catch (err) {
+    console.error("Error in runStatsPoller background execution:", err);
+  } finally {
+    isPolling = false;
+  }
+}
+
+// Scheduled pollers
+setTimeout(runStatsPoller, 5000); // Startup poll (5 seconds after launch)
+setInterval(runStatsPoller, 5 * 60 * 1000); // Every 5 minutes
+
+// SECURED API: Fetch participants list for the active event
+app.get('/api/admin/participants', isAdmin, async (req, res) => {
+  try {
+    const db = await getDatabase();
+    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    if (!eventNameSetting) {
+      return res.status(400).json({ error: 'চলমান কোনো ইভেন্ট নেই।' });
+    }
+    const eventName = eventNameSetting.value;
+    
+    // Sync approved accounts first to make sure they are in the list
+    const approvedRequests = await db.all(
+      "SELECT username FROM requests WHERE event_name = ? AND status = 'approved'",
+      eventName
+    );
+    for (const reqUser of approvedRequests) {
+      await db.run(
+        "INSERT OR IGNORE INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 0)",
+        eventName,
+        reqUser.username
+      );
+    }
+    
+    const participants = await db.all(
+      "SELECT id, username, is_custom, added_at FROM event_participants WHERE event_name = ? ORDER BY added_at DESC",
+      eventName
+    );
+    
+    res.json({ success: true, participants });
+  } catch (err) {
+    console.error("Error fetching participants:", err);
+    res.status(500).json({ error: 'অংশগ্রহণকারী তালিকা লোড করা যায়নি।' });
+  }
+});
+
+// SECURED API: Add a participant manually
+app.post('/api/admin/participants', isAdmin, async (req, res) => {
+  const { username } = req.body;
+  if (!username || !username.trim()) {
+    return res.status(400).json({ success: false, error: 'ব্যবহারকারী নাম আবশ্যক।' });
+  }
+  
+  try {
+    const db = await getDatabase();
+    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    if (!eventNameSetting) {
+      return res.status(400).json({ success: false, error: 'চলমান কোনো ইভেন্ট নেই।' });
+    }
+    const eventName = eventNameSetting.value;
+    
+    // Insert into event_participants
+    await db.run(
+      "INSERT INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 1)",
+      eventName,
+      username.trim()
+    );
+    
+    // Trigger stats update in the background for this user
+    runStatsPoller().catch(console.error);
+    
+    res.json({ success: true });
+  } catch (err) {
+    if (err.message.includes('UNIQUE constraint failed') || err.message.includes('unique')) {
+      return res.status(400).json({ success: false, error: 'এই ব্যবহারকারী ইতিমধ্যে ইভেন্টে যুক্ত আছেন।' });
+    }
+    console.error("Error adding participant:", err);
+    res.status(500).json({ success: false, error: 'অংশগ্রহণকারী যুক্ত করা যায়নি।' });
+  }
+});
+
+// SECURED API: Remove a participant
+app.delete('/api/admin/participants/:id', isAdmin, async (req, res) => {
+  const participantId = req.params.id;
+  try {
+    const db = await getDatabase();
+    await db.run("DELETE FROM event_participants WHERE id = ?", participantId);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error deleting participant:", err);
+    res.status(500).json({ success: false, error: 'অংশগ্রহণকারী বাদ দেওয়া যায়নি।' });
+  }
+});
+
+// PUBLIC API: Fetch statistics & leaderboard
+app.get('/api/stats', async (req, res) => {
+  try {
+    const db = await getDatabase();
+    
+    // Get active event name
+    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    if (!eventNameSetting) {
+      return res.json({ success: false, error: 'কোনো চলমান ইভেন্ট পাওয়া যায়নি।' });
+    }
+    const eventName = eventNameSetting.value;
+    
+    // Get event details
+    const event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
+    if (!event) {
+      return res.json({ success: false, error: 'চলমান ইভেন্টের বিস্তারিত পাওয়া যায়নি।' });
+    }
+    
+    // Get participants stats
+    const participants = await db.all(
+      `SELECT username, total_edits, file_uploads, bytes_added, is_custom 
+       FROM event_participants 
+       WHERE event_name = ? 
+       ORDER BY total_edits DESC, bytes_added DESC`,
+      eventName
+    );
+    
+    // Calculate global stats
+    let totalEdits = 0;
+    let totalUploads = 0;
+    let totalBytes = 0;
+    
+    const leaderboard = participants.map((p, idx) => {
+      totalEdits += p.total_edits || 0;
+      totalUploads += p.file_uploads || 0;
+      totalBytes += p.bytes_added || 0;
+      
+      return {
+        rank: idx + 1,
+        username: p.username,
+        total_edits: p.total_edits || 0,
+        file_uploads: p.file_uploads || 0,
+        bytes_added: p.bytes_added || 0
+      };
+    });
+    
+    // Get last updated time
+    const lastUpdatedSetting = await db.get("SELECT value FROM settings WHERE key = 'stats_last_updated'");
+    const lastUpdated = lastUpdatedSetting ? lastUpdatedSetting.value : null;
+    
+    res.json({
+      success: true,
+      event: {
+        name: event.name,
+        workshop_url: event.workshop_url,
+        start_time: event.start_time,
+        end_time: event.end_time,
+        target_wikis: event.target_wikis
+      },
+      stats: {
+        total_participants: participants.length,
+        total_edits: totalEdits,
+        total_uploads: totalUploads,
+        total_bytes: totalBytes,
+        last_updated: lastUpdated
+      },
+      leaderboard
+    });
+  } catch (err) {
+    console.error("Error fetching stats:", err);
+    res.status(500).json({ success: false, error: 'পরিসংখ্যান লোড করতে সমস্যা হয়েছে।' });
+  }
+});
+
+// PUBLIC API: Trigger stats refresh (Rate limited to once per minute)
+let lastManualRefreshTime = 0;
+app.post('/api/stats/refresh', async (req, res) => {
+  const now = Date.now();
+  if (now - lastManualRefreshTime < 60 * 1000) {
+    return res.status(429).json({ 
+      success: false, 
+      error: 'পরিসংখ্যান ইতিমধ্যে সম্প্রতি রিফ্রেশ করা হয়েছে। অনুগ্রহ করে ১ মিনিট পর আবার চেষ্টা করুন।' 
+    });
+  }
+  
+  lastManualRefreshTime = now;
+  
+  // Run poller asynchronously
+  runStatsPoller().catch(console.error);
+  
+  res.json({ success: true, message: 'পরিসংখ্যান আপডেট করার কাজ শুরু হয়েছে।' });
+});
+
+// PUBLIC ROUTE: Statistics Leaderboard View Page
+app.get('/stats', async (req, res) => {
+  res.send(renderView('stats.html', {}, req));
 });
 
 // Start server
