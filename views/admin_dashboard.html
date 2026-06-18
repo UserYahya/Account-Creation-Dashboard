@@ -798,7 +798,7 @@
                                 endTimeStr += '+06:00';
                             }
                             const end = new Date(endTimeStr);
-                            return now < end;
+                            return now < end && e.registration_active === 1;
                         });
                         
                         // Populate Desktop Menu
