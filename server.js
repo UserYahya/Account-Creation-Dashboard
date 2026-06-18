@@ -1273,7 +1273,7 @@ async function fetchUserStats(wikisList, username, startUTC, endUTC, namespaces)
 
 // Background poller to query Wikimedia APIs and update stats in DB
 let isPolling = false;
-async function runStatsPoller() {
+async function runStatsPoller(isManual = false) {
   if (isPolling) {
     console.log("Stats poller already running. Skipping this cycle.");
     return;
@@ -1304,7 +1304,7 @@ async function runStatsPoller() {
     const endTimeDate = new Date(event.end_time + ":00+06:00");
     const endBufferDate = new Date(endTimeDate.getTime() + 12 * 60 * 60 * 1000);
     
-    if (now > endBufferDate) {
+    if (!isManual && now > endBufferDate) {
       console.log(`Event "${eventName}" has ended (buffer time passed). Polling skipped.`);
       isPolling = false;
       return;
@@ -1625,8 +1625,8 @@ app.post('/api/stats/refresh', async (req, res) => {
   
   lastManualRefreshTime = now;
   
-  // Run poller asynchronously
-  runStatsPoller().catch(console.error);
+  // Run poller asynchronously with manual flag enabled
+  runStatsPoller(true).catch(console.error);
   
   res.json({ success: true, message: 'পরিসংখ্যান আপডেট করার কাজ শুরু হয়েছে।' });
 });
