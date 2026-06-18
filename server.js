@@ -313,6 +313,14 @@ app.get('/qr.png', (req, res) => {
   res.sendFile(path.join(__dirname, 'qr.png'));
 });
 
+// Serve Favicon
+app.get('/favicon.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'favicon.png'));
+});
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'favicon.png'));
+});
+
 
 // Real-time username availability check endpoint
 app.get('/api/check-username', ipRateLimiter(30, 60 * 1000), async (req, res) => {

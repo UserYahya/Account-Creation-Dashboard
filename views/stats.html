@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>ইভেন্ট পরিসংখ্যান - অ্যাকাউন্ট তৈরির ড্যাশবোর্ড</title>
+    <link rel="icon" type="image/png" href="/favicon.png"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -300,6 +301,7 @@
 
         let leaderboardData = [];
         let autoRefreshInterval = null;
+        let targetWiki = 'bn.wikipedia.org';
 
         function showAlert(message, type) {
             alertEl.classList.remove('hidden');
@@ -337,6 +339,13 @@
                     // Populate Event Info
                     document.getElementById('eventName').innerText = data.event.name;
                     document.getElementById('eventWikis').innerText = data.event.target_wikis;
+
+                    if (data.event.target_wikis) {
+                        const wikis = data.event.target_wikis.split(',').map(w => w.trim()).filter(Boolean);
+                        if (wikis.length > 0) {
+                            targetWiki = wikis[0];
+                        }
+                    }
 
                     const namespaceNames = {
                         'all': 'সকল',
@@ -474,7 +483,7 @@
                                 <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold shrink-0">
                                     ${letter}
                                 </div>
-                                <span class="font-medium text-on-surface font-bold block">${p.username}</span>
+                                <a href="https://${targetWiki}/wiki/Special:Contributions/${encodeURIComponent(p.username)}" target="_blank" class="font-medium text-primary hover:underline font-bold block">${p.username}</a>
                             </div>
                         </td>
                         <td class="px-lg py-md text-center font-semibold text-on-surface">${p.total_edits.toLocaleString('bn-BD')}</td>
