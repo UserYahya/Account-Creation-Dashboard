@@ -525,6 +525,262 @@ function renderView(viewName, replacements = {}, req = null) {
     </script>
     `;
   }
+  
+  let participantManagementHtml = '';
+  if (viewName === 'stats.html' && req && req.session && req.session.isAdmin) {
+    participantManagementHtml = `
+      <!-- Participant Management Card (Admin Only) -->
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+          <div class="p-lg border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+              <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">ইভেন্ট অংশগ্রহণকারীগণ (লিডারবোর্ড)</h3>
+              <span class="bg-primary-container text-on-primary-container text-[10px] px-sm py-xs rounded font-bold" id="adminParticipantCount">০ জন</span>
+          </div>
+          <div class="p-lg space-y-md text-left">
+              <!-- Add Participant Input -->
+              <div class="space-y-sm">
+                  <div class="flex gap-sm">
+                      <input class="flex-grow bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="newParticipantUsername" placeholder="উইকিপিডিয়া ব্যবহারকারী নাম লিখুন (যেমন: John Doe)" type="text"/>
+                      <button id="addParticipantBtn" class="px-lg py-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary font-bold hover:opacity-90 transition-all active:scale-95 shrink-0">যুক্ত করুন</button>
+                  </div>
+                  <div class="flex justify-between items-center px-xs">
+                      <button id="toggleMassAddBtn" class="text-xs text-primary font-bold hover:underline flex items-center gap-xs focus:outline-none">
+                          <span class="material-symbols-outlined text-[14px]">group_add</span>
+                          একসাথে একাধিক ব্যবহারকারী যোগ করুন (Mass Add)
+                      </button>
+                  </div>
+              </div>
+
+              <!-- Mass Add Users Section -->
+              <div id="massAddSection" class="hidden p-md border border-outline-variant rounded-lg bg-surface-container-low space-y-sm">
+                  <label class="block font-label-md text-label-md text-on-surface font-bold" for="massUsernames">ব্যবহারকারীর নামের তালিকা (প্রতি লাইনে একটি করে নাম লিখুন)</label>
+                  <textarea id="massUsernames" rows="4" class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" placeholder="ব্যবহারকারী_১&#10;ব্যবহারকারী_২&#10;ব্যবহারকারী_৩"></textarea>
+                  <div class="flex justify-end gap-sm">
+                      <button id="cancelMassAddBtn" class="px-md py-xs rounded-lg font-label-md text-label-md hover:bg-surface-variant transition-all text-on-surface-variant font-bold text-xs">বাতিল</button>
+                      <button id="submitMassAddBtn" class="px-md py-xs rounded-lg font-label-md text-label-md bg-primary text-on-primary font-bold hover:opacity-90 transition-all text-xs">সবগুলো যোগ করুন</button>
+                  </div>
+              </div>
+
+              <div id="participantError" class="hidden p-sm rounded-lg border border-error bg-error-container/20 text-on-error-container font-body-md text-xs font-bold"></div>
+              
+              <!-- List of participants -->
+              <div class="border border-outline-variant rounded-lg max-h-64 overflow-y-auto custom-scrollbar bg-white">
+                  <ul id="participantsList" class="divide-y divide-outline-variant font-body-md text-body-md text-on-surface">
+                      <li class="p-md text-center text-on-surface-variant">কোনো অংশগ্রহণকারী পাওয়া যায়নি।</li>
+                  </ul>
+              </div>
+          </div>
+      </div>
+
+      <script>
+        // JS block for Admin Participant Management
+        document.addEventListener('DOMContentLoaded', () => {
+            const participantsList = document.getElementById('participantsList');
+            const participantCountEl = document.getElementById('adminParticipantCount');
+            const newParticipantUsername = document.getElementById('newParticipantUsername');
+            const addParticipantBtn = document.getElementById('addParticipantBtn');
+            const participantError = document.getElementById('participantError');
+            const massAddSection = document.getElementById('massAddSection');
+            const toggleMassAddBtn = document.getElementById('toggleMassAddBtn');
+            const cancelMassAddBtn = document.getElementById('cancelMassAddBtn');
+            const submitMassAddBtn = document.getElementById('submitMassAddBtn');
+            const massUsernames = document.getElementById('massUsernames');
+
+            // Resolve eventId from URL
+            const pathParts = window.location.pathname.split('/');
+            let eventId = null;
+            if (pathParts.includes('event')) {
+                const eventIdx = pathParts.indexOf('event');
+                eventId = pathParts[eventIdx + 1];
+            }
+
+            function escapeHTML(str) {
+                if (!str) return '';
+                return str
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function loadAdminParticipants() {
+                const url = eventId ? \`/api/admin/participants?eventId=\${eventId}\` : '/api/admin/participants';
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.success) return;
+                        
+                        const list = data.participants || [];
+                        participantCountEl.innerText = \`\${list.length} জন\`;
+                        
+                        if (list.length === 0) {
+                            participantsList.innerHTML = '<li class="p-md text-center text-on-surface-variant">কোনো অংশগ্রহণকারী পাওয়া যায়নি।</li>';
+                            return;
+                        }
+                        
+                        participantsList.innerHTML = list.map(p => {
+                            const typeLabel = p.is_custom === 1 
+                                ? '<span class="bg-primary/10 text-primary text-[10px] px-xs py-0.5 rounded font-bold ml-sm">ম্যানুয়াল</span>'
+                                : '<span class="bg-secondary/10 text-secondary text-[10px] px-xs py-0.5 rounded font-bold ml-sm">স্বয়ংক্রিয়</span>';
+                                
+                            return \`
+                                <li class="p-md flex justify-between items-center hover:bg-surface-container/50 transition-colors text-left">
+                                    <div class="flex items-center">
+                                        <span class="font-semibold font-body-md text-on-surface">\${escapeHTML(p.username)}</span>
+                                        \${typeLabel}
+                                    </div>
+                                    <button onclick="deleteParticipant(\${p.id}, '\${escapeHTML(p.username)}')" class="text-error hover:bg-error-container/20 p-xs rounded transition-colors flex items-center justify-center" title="বাদ দিন">
+                                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                                    </button>
+                                </li>
+                            \`;
+                        }).join('');
+                    })
+                    .catch(err => {
+                        console.error("Error loading participants:", err);
+                    });
+            }
+
+            // Toggles
+            if (toggleMassAddBtn) {
+                toggleMassAddBtn.addEventListener('click', () => {
+                    massAddSection.classList.toggle('hidden');
+                });
+            }
+
+            if (cancelMassAddBtn) {
+                cancelMassAddBtn.addEventListener('click', () => {
+                    massAddSection.classList.add('hidden');
+                    massUsernames.value = '';
+                });
+            }
+
+            // Add single
+            if (addParticipantBtn) {
+                addParticipantBtn.addEventListener('click', () => {
+                    const username = newParticipantUsername.value.trim();
+                    participantError.classList.add('hidden');
+                    
+                    if (!username) {
+                        participantError.innerText = 'ব্যবহারকারী নাম লিখুন।';
+                        participantError.classList.remove('hidden');
+                        return;
+                    }
+                    
+                    addParticipantBtn.innerText = 'যুক্ত হচ্ছে...';
+                    addParticipantBtn.disabled = true;
+                    
+                    fetch('/api/admin/participants', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
+                        },
+                        body: JSON.stringify({ username, eventId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        addParticipantBtn.innerText = 'যুক্ত করুন';
+                        addParticipantBtn.disabled = false;
+                        
+                        if (data.success) {
+                            newParticipantUsername.value = '';
+                            loadAdminParticipants();
+                            if (typeof loadStats === 'function') loadStats();
+                            showAlert(\`"\${username}" সফলভাবে অংশগ্রহণকারী হিসেবে যুক্ত করা হয়েছে।\`, 'success');
+                        } else {
+                            participantError.innerText = data.error || 'যুক্ত করা সম্ভব হয়নি।';
+                            participantError.classList.remove('hidden');
+                        }
+                    })
+                    .catch(err => {
+                        addParticipantBtn.innerText = 'যুক্ত করুন';
+                        addParticipantBtn.disabled = false;
+                        participantError.innerText = 'সার্ভারের সাথে যোগাযোগ করতে ব্যর্থ।';
+                        participantError.classList.remove('hidden');
+                    });
+                });
+            }
+
+            // Mass add
+            if (submitMassAddBtn) {
+                submitMassAddBtn.addEventListener('click', () => {
+                    const rawText = massUsernames.value;
+                    const usernames = rawText.split('\\n')
+                        .map(name => name.trim())
+                        .filter(name => name.length > 0);
+                    
+                    if (usernames.length === 0) {
+                        showAlert("অনুগ্রহ করে অন্তত একজন ব্যবহারকারীর নাম লিখুন।", "error");
+                        return;
+                    }
+
+                    submitMassAddBtn.innerText = "যোগ করা হচ্ছে...";
+                    submitMassAddBtn.disabled = true;
+
+                    fetch('/api/admin/participants/mass', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
+                        },
+                        body: JSON.stringify({ usernames, eventId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        submitMassAddBtn.innerText = "সবগুলো যোগ করুন";
+                        submitMassAddBtn.disabled = false;
+                        
+                        if (data.success) {
+                            showAlert(\`সফলভাবে \${data.addedCount} জন নতুন অংশগ্রহণকারী যুক্ত করা হয়েছে!\`, "success");
+                            massUsernames.value = '';
+                            massAddSection.classList.add('hidden');
+                            loadAdminParticipants();
+                            if (typeof loadStats === 'function') loadStats();
+                        } else {
+                            showAlert(\`অংশগ্রহণকারী যুক্ত করতে সমস্যা: \${data.error}\`, "error");
+                        }
+                    })
+                    .catch(err => {
+                        submitMassAddBtn.innerText = "সবগুলো যোগ করুন";
+                        submitMassAddBtn.disabled = false;
+                        showAlert("সার্ভারের সাথে যোগাযোগ করতে সমস্যা হয়েছে।", "error");
+                    });
+                });
+            }
+
+            // Delete participant
+            window.deleteParticipant = function(id, username) {
+                if (!confirm(\`আপনি কি নিশ্চিতভাবে "\${username}"-কে লিডারবোর্ড থেকে বাদ দিতে চান?\`)) return;
+                
+                fetch(\`/api/admin/participants/\${id}\`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        loadAdminParticipants();
+                        if (typeof loadStats === 'function') loadStats();
+                        showAlert(\`"\${username}"-কে সফলভাবে বাদ দেওয়া হয়েছে।\`, 'success');
+                    } else {
+                        showAlert(\`বাদ দিতে সমস্যা: \${data.error}\`, 'error');
+                    }
+                })
+                .catch(err => {
+                    showAlert('সার্ভারের সাথে যোগাযোগ করতে ব্যর্থ।', 'error');
+                });
+            };
+
+            // Initial load
+            loadAdminParticipants();
+        });
+      </script>
+    `;
+  }
+  html = html.replace('<!-- ADMIN_PARTICIPANT_MANAGEMENT -->', participantManagementHtml);
   html = html.replace('<!-- ADMIN_EDIT_ACTION -->', editActionHtml);
   html = html.replace('<!-- ADMIN_EDIT_MODAL -->', editModalHtml);
 
@@ -1958,15 +2214,26 @@ async function runStatsPoller(isManual = false, targetEventId = null) {
 setTimeout(runStatsPoller, 5000); // Startup poll (5 seconds after launch)
 setInterval(runStatsPoller, 5 * 60 * 1000); // Every 5 minutes
 
-// SECURED API: Fetch participants list for the active event
+// SECURED API: Fetch participants list for a specific or the active event
 app.get('/api/admin/participants', isAdmin, async (req, res) => {
   try {
     const db = await getDatabase();
-    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
-    if (!eventNameSetting) {
-      return res.status(400).json({ error: 'চলমান কোনো ইভেন্ট নেই।' });
+    let eventName;
+    const eventId = req.query.eventId;
+    
+    if (eventId) {
+      const event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
+      if (!event) {
+        return res.status(404).json({ error: 'ইভেন্টটি পাওয়া যায়নি।' });
+      }
+      eventName = event.name;
+    } else {
+      const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+      if (!eventNameSetting) {
+        return res.status(400).json({ error: 'চলমান কোনো ইভেন্ট নেই।' });
+      }
+      eventName = eventNameSetting.value;
     }
-    const eventName = eventNameSetting.value;
     
     // Sync approved accounts first to make sure they are in the list
     const approvedRequests = await db.all(
@@ -1995,18 +2262,34 @@ app.get('/api/admin/participants', isAdmin, async (req, res) => {
 
 // SECURED API: Add a participant manually
 app.post('/api/admin/participants', isAdmin, async (req, res) => {
-  const { username } = req.body;
+  const { username, eventId } = req.body;
   if (!username || !username.trim()) {
     return res.status(400).json({ success: false, error: 'ব্যবহারকারী নাম আবশ্যক।' });
   }
   
   try {
     const db = await getDatabase();
-    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
-    if (!eventNameSetting) {
-      return res.status(400).json({ success: false, error: 'চলমান কোনো ইভেন্ট নেই।' });
+    let eventName;
+    let targetEventId = null;
+    
+    if (eventId) {
+      const event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
+      if (!event) {
+        return res.status(404).json({ success: false, error: 'ইভেন্টটি পাওয়া যায়নি।' });
+      }
+      eventName = event.name;
+      targetEventId = event.id;
+    } else {
+      const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+      if (!eventNameSetting) {
+        return res.status(400).json({ success: false, error: 'চলমান কোনো ইভেন্ট নেই।' });
+      }
+      eventName = eventNameSetting.value;
+      const event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
+      if (event) {
+        targetEventId = event.id;
+      }
     }
-    const eventName = eventNameSetting.value;
     
     // Insert into event_participants
     await db.run(
@@ -2016,7 +2299,7 @@ app.post('/api/admin/participants', isAdmin, async (req, res) => {
     );
     
     // Trigger stats update in the background for this user
-    runStatsPoller().catch(console.error);
+    runStatsPoller(true, targetEventId).catch(console.error);
     
     res.json({ success: true });
   } catch (err) {
@@ -2043,18 +2326,34 @@ app.delete('/api/admin/participants/:id', isAdmin, async (req, res) => {
 
 // SECURED API: Mass add participants manually
 app.post('/api/admin/participants/mass', isAdmin, async (req, res) => {
-  const { usernames } = req.body;
+  const { usernames, eventId } = req.body;
   if (!usernames || !Array.isArray(usernames) || usernames.length === 0) {
     return res.status(400).json({ success: false, error: 'ব্যবহারকারী নামের তালিকা আবশ্যক।' });
   }
   
   try {
     const db = await getDatabase();
-    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
-    if (!eventNameSetting) {
-      return res.status(400).json({ success: false, error: 'চলমান কোনো ইভেন্ট নেই।' });
+    let eventName;
+    let targetEventId = null;
+    
+    if (eventId) {
+      const event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
+      if (!event) {
+        return res.status(404).json({ success: false, error: 'ইভেন্টটি পাওয়া যায়নি।' });
+      }
+      eventName = event.name;
+      targetEventId = event.id;
+    } else {
+      const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+      if (!eventNameSetting) {
+        return res.status(400).json({ success: false, error: 'চলমান কোনো ইভেন্ট নেই।' });
+      }
+      eventName = eventNameSetting.value;
+      const event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
+      if (event) {
+        targetEventId = event.id;
+      }
     }
-    const eventName = eventNameSetting.value;
     
     let addedCount = 0;
     
@@ -2079,13 +2378,14 @@ app.post('/api/admin/participants/mass', isAdmin, async (req, res) => {
       throw txErr;
     }
     
-    runStatsPoller().catch(console.error);
+    runStatsPoller(true, targetEventId).catch(console.error);
     res.json({ success: true, addedCount });
   } catch (err) {
     console.error("Error mass adding participants:", err);
     res.status(500).json({ success: false, error: 'অংশগ্রহণকারীগণকে যুক্ত করা যায়নি।' });
   }
 });
+
 
 // SECURED API: Delete an event (Developer / Super Admin only)
 app.delete('/api/admin/events/:id', isAdmin, async (req, res) => {

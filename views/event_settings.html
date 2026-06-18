@@ -216,47 +216,7 @@
                     </div>
                 </div>
 
-                <!-- Participant Management Card -->
-                <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-                    <div class="p-lg border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-                        <h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">ইভেন্ট অংশগ্রহণকারীগণ (লিডারবোর্ড)</h3>
-                        <span class="bg-primary-container text-on-primary-container text-[10px] px-sm py-xs rounded font-bold" id="participantCount">০ জন</span>
-                    </div>
-                    <div class="p-lg space-y-md">
-                        <!-- Add Participant Input -->
-                        <div class="space-y-sm">
-                            <div class="flex gap-sm">
-                                <input class="flex-grow bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" id="newParticipantUsername" placeholder="উইকিপিডিয়া ব্যবহারকারী নাম লিখুন (যেমন: John Doe)" type="text"/>
-                                <button id="addParticipantBtn" class="px-lg py-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary font-bold hover:opacity-90 transition-all active:scale-95 shrink-0">যুক্ত করুন</button>
-                            </div>
-                            <div class="flex justify-between items-center px-xs">
-                                <button id="toggleMassAddBtn" class="text-xs text-primary font-bold hover:underline flex items-center gap-xs focus:outline-none">
-                                    <span class="material-symbols-outlined text-[14px]">group_add</span>
-                                    একসাথে একাধিক ব্যবহারকারী যোগ করুন (Mass Add)
-                                </button>
-                            </div>
-                        </div>
 
-                        <!-- Mass Add Users Section -->
-                        <div id="massAddSection" class="hidden p-md border border-outline-variant rounded-lg bg-surface-container-low space-y-sm">
-                            <label class="block font-label-md text-label-md text-on-surface font-bold" for="massUsernames">ব্যবহারকারীর নামের তালিকা (প্রতি লাইনে একটি করে নাম লিখুন)</label>
-                            <textarea id="massUsernames" rows="4" class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono" placeholder="ব্যবহারকারী_১&#10;ব্যবহারকারী_২&#10;ব্যবহারকারী_৩"></textarea>
-                            <div class="flex justify-end gap-sm">
-                                <button id="cancelMassAddBtn" class="px-md py-xs rounded-lg font-label-md text-label-md hover:bg-surface-variant transition-all text-on-surface-variant font-bold text-xs">বাতিল</button>
-                                <button id="submitMassAddBtn" class="px-md py-xs rounded-lg font-label-md text-label-md bg-primary text-on-primary font-bold hover:opacity-90 transition-all text-xs">সবগুলো যোগ করুন</button>
-                            </div>
-                        </div>
-
-                        <div id="participantError" class="hidden p-sm rounded-lg border border-error bg-error-container/20 text-on-error-container font-body-md text-xs font-bold"></div>
-                        
-                        <!-- List of participants -->
-                        <div class="border border-outline-variant rounded-lg max-h-64 overflow-y-auto custom-scrollbar bg-white">
-                            <ul id="participantsList" class="divide-y divide-outline-variant font-body-md text-body-md text-on-surface">
-                                <li class="p-md text-center text-on-surface-variant">কোনো অংশগ্রহণকারী পাওয়া যায়নি।</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Create New Event Form Card -->
                 <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
@@ -521,7 +481,7 @@
                         showToast(`"${eventName}" ইভেন্টটি সফলভাবে মুছে ফেলা হয়েছে।`, 'success');
                         loadEventHistory();
                         if (data.isActiveReset) {
-                            loadParticipants();
+                            // Active event was reset
                         }
                     } else {
                         showToast(`ইভেন্ট মুছতে সমস্যা: ${data.error}`, 'error');
@@ -533,62 +493,7 @@
             }
         }
 
-        // Mass Add UI Toggles
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('toggleMassAddBtn').addEventListener('click', () => {
-                document.getElementById('massAddSection').classList.toggle('hidden');
-            });
 
-            document.getElementById('cancelMassAddBtn').addEventListener('click', () => {
-                document.getElementById('massAddSection').classList.add('hidden');
-                document.getElementById('massUsernames').value = '';
-            });
-
-            document.getElementById('submitMassAddBtn').addEventListener('click', () => {
-                const textarea = document.getElementById('massUsernames');
-                const rawText = textarea.value;
-                const usernames = rawText.split('\n')
-                    .map(name => name.trim())
-                    .filter(name => name.length > 0);
-                
-                if (usernames.length === 0) {
-                    showToast("অনুগ্রহ করে অন্তত একজন ব্যবহারকারীর নাম লিখুন।", "error");
-                    return;
-                }
-
-                const submitBtn = document.getElementById('submitMassAddBtn');
-                submitBtn.innerText = "যোগ করা হচ্ছে...";
-                submitBtn.disabled = true;
-
-                fetch('/api/admin/participants/mass', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
-                    },
-                    body: JSON.stringify({ usernames })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    submitBtn.innerText = "সবগুলো যোগ করুন";
-                    submitBtn.disabled = false;
-                    
-                    if (data.success) {
-                        showToast(`সফলভাবে ${data.addedCount} জন নতুন অংশগ্রহণকারী যুক্ত করা হয়েছে!`, "success");
-                        textarea.value = '';
-                        document.getElementById('massAddSection').classList.add('hidden');
-                        loadParticipants();
-                    } else {
-                        showToast(`অংশগ্রহণকারী যুক্ত করতে সমস্যা: ${data.error}`, "error");
-                    }
-                })
-                .catch(err => {
-                    submitBtn.innerText = "সবগুলো যোগ করুন";
-                    submitBtn.disabled = false;
-                    showToast("সার্ভারের সাথে যোগাযোগ করতে সমস্যা হয়েছে।", "error");
-                });
-            });
-        });
 
         function showToast(message, type) {
             toastEl.classList.remove('hidden');
@@ -908,115 +813,7 @@
             }, 200);
         }
 
-        // Load, add, delete participants
-        const participantsList = document.getElementById('participantsList');
-        const participantCountEl = document.getElementById('participantCount');
-        const newParticipantUsername = document.getElementById('newParticipantUsername');
-        const addParticipantBtn = document.getElementById('addParticipantBtn');
-        const participantError = document.getElementById('participantError');
 
-        function loadParticipants() {
-            fetch('/api/admin/participants')
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.success) return;
-                    
-                    const list = data.participants || [];
-                    participantCountEl.innerText = `${list.length} জন`;
-                    
-                    if (list.length === 0) {
-                        participantsList.innerHTML = '<li class="p-md text-center text-on-surface-variant">কোনো অংশগ্রহণকারী পাওয়া যায়নি।</li>';
-                        return;
-                    }
-                    
-                    participantsList.innerHTML = list.map(p => {
-                        const typeLabel = p.is_custom === 1 
-                            ? '<span class="bg-primary/10 text-primary text-[10px] px-xs py-0.5 rounded font-bold ml-sm">ম্যানুয়াল</span>'
-                            : '<span class="bg-secondary/10 text-secondary text-[10px] px-xs py-0.5 rounded font-bold ml-sm">স্বয়ংক্রিয়</span>';
-                            
-                        return `
-                            <li class="p-md flex justify-between items-center hover:bg-surface-container/50 transition-colors">
-                                <div class="flex items-center">
-                                    <span class="font-semibold font-body-md">${escapeHTML(p.username)}</span>
-                                    ${typeLabel}
-                                </div>
-                                <button onclick="deleteParticipant(${p.id}, '${escapeHTML(p.username)}')" class="text-error hover:bg-error-container/20 p-xs rounded transition-colors flex items-center justify-center" title="বাদ দিন">
-                                    <span class="material-symbols-outlined text-[18px]">delete</span>
-                                </button>
-                            </li>
-                        `;
-                    }).join('');
-                })
-                .catch(err => {
-                    console.error("Error loading participants:", err);
-                });
-        }
-
-        addParticipantBtn.addEventListener('click', () => {
-            const username = newParticipantUsername.value.trim();
-            participantError.classList.add('hidden');
-            
-            if (!username) {
-                participantError.innerText = 'ব্যবহারকারী নাম লিখুন।';
-                participantError.classList.remove('hidden');
-                return;
-            }
-            
-            addParticipantBtn.innerText = 'যুক্ত হচ্ছে...';
-            addParticipantBtn.disabled = true;
-            
-            fetch('/api/admin/participants', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
-                },
-                body: JSON.stringify({ username })
-            })
-            .then(res => res.json())
-            .then(data => {
-                addParticipantBtn.innerText = 'যুক্ত করুন';
-                addParticipantBtn.disabled = false;
-                
-                if (data.success) {
-                    newParticipantUsername.value = '';
-                    loadParticipants();
-                    showToast(`"${username}" সফলভাবে অংশগ্রহণকারী হিসেবে যুক্ত করা হয়েছে।`, 'success');
-                } else {
-                    participantError.innerText = data.error || 'যুক্ত করা সম্ভব হয়নি।';
-                    participantError.classList.remove('hidden');
-                }
-            })
-            .catch(err => {
-                addParticipantBtn.innerText = 'যুক্ত করুন';
-                addParticipantBtn.disabled = false;
-                participantError.innerText = 'সার্ভারের সাথে যোগাযোগ করতে ব্যর্থ।';
-                participantError.classList.remove('hidden');
-            });
-        });
-
-        window.deleteParticipant = function(id, username) {
-            if (!confirm(`আপনি কি নিশ্চিতভাবে "${username}"-কে লিডারবোর্ড থেকে বাদ দিতে চান?`)) return;
-            
-            fetch(`/api/admin/participants/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    loadParticipants();
-                    showToast(`"${username}"-কে সফলভাবে বাদ দেওয়া হয়েছে।`, 'success');
-                } else {
-                    showToast(`বাদ দিতে সমস্যা: ${data.error}`, 'error');
-                }
-            })
-            .catch(err => {
-                showToast('সার্ভারের সাথে যোগাযোগ করতে ব্যর্থ।', 'error');
-            });
-        };
 
         function loadOngoingEvents() {
             fetch('/api/public/events')
@@ -1067,7 +864,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadOngoingEvents();
             loadEventHistory();
-            loadParticipants();
             
             // Set up namespaces UI
             setNamespaceCheckboxes('all', true);
