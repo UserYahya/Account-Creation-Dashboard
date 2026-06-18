@@ -117,7 +117,6 @@
     </script>
 </head>
 <body class="bg-background text-on-surface min-h-screen flex flex-col">
-    <!-- TopAppBar -->
     <header class="bg-surface border-b border-outline-variant w-full sticky top-0 z-50">
         <div class="flex justify-between items-center w-full px-lg md:px-xl max-w-container-max mx-auto h-16">
             <div class="flex items-center gap-md">
@@ -127,12 +126,26 @@
                 <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/">হোম</a>
                 <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="/about">ড্যাশবোর্ড পরিচিতি</a>
                 <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="/stats">পরিসংখ্যান</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়ায় ফেরত যান</a>
             </nav>
             <div class="flex items-center gap-md">
                 <!-- NAV_AUTH -->
+                <button id="mobileMenuBtn" class="md:hidden flex items-center justify-center p-sm text-on-surface hover:bg-surface-container-low rounded-lg transition-colors active:scale-95" aria-label="মেইন মেনু">
+                    <span class="material-symbols-outlined text-[24px]" id="mobileMenuIcon">menu</span>
+                </button>
             </div>
         </div>
     </header>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobileMenu" class="hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="fixed top-16 left-0 right-0 bg-surface border-b border-outline-variant p-lg flex flex-col gap-md shadow-lg transform -translate-y-full transition-transform duration-300 ease-in-out" id="mobileMenuContainer">
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-body-lg py-sm border-b border-outline-variant/50" href="/">হোম</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-body-lg py-sm border-b border-outline-variant/50" href="/about">ড্যাশবোর্ড পরিচিতি</a>
+            <a class="text-primary font-bold transition-colors font-medium text-body-lg py-sm border-b border-outline-variant/50" href="/stats">পরিসংখ্যান</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-body-lg py-sm" href="https://bn.wikipedia.org" target="_blank">উইকিপিডিয়ায় ফেরত যান</a>
+        </div>
+    </div>
 
     <!-- Main Container -->
     <main class="flex-grow max-w-container-max w-full mx-auto px-md py-lg md:py-xl space-y-lg">
@@ -477,6 +490,12 @@
             renderLeaderboardTable(e.target.value);
         });
 
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
         // Handle manual refresh
         const refreshBtn = document.getElementById('refreshBtn');
         const refreshIcon = document.getElementById('refreshIcon');
@@ -490,7 +509,8 @@
             fetch('/api/stats/refresh', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
                 }
             })
             .then(res => res.json())
@@ -518,6 +538,43 @@
                 refreshBtnText.innerText = 'রিফ্রেশ করুন';
             });
         });
+
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuContainer = document.getElementById('mobileMenuContainer');
+        const mobileMenuIcon = document.getElementById('mobileMenuIcon');
+
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                const isHidden = mobileMenu.classList.contains('hidden');
+                if (isHidden) {
+                    mobileMenu.classList.remove('hidden');
+                    mobileMenu.offsetHeight; // Force reflow
+                    mobileMenu.classList.remove('opacity-0');
+                    mobileMenuContainer.classList.remove('-translate-y-full');
+                    if (mobileMenuIcon) mobileMenuIcon.innerText = 'close';
+                } else {
+                    closeMobileMenu();
+                }
+            });
+
+            mobileMenu.addEventListener('click', (e) => {
+                if (e.target === mobileMenu) {
+                    closeMobileMenu();
+                }
+            });
+        }
+
+        function closeMobileMenu() {
+            if (!mobileMenu) return;
+            mobileMenu.classList.add('opacity-0');
+            mobileMenuContainer.classList.add('-translate-y-full');
+            if (mobileMenuIcon) mobileMenuIcon.innerText = 'menu';
+            setTimeout(() => {
+                mobileMenu.classList.add('hidden');
+            }, 300);
+        }
 
         // Initialize and setup polling
         document.addEventListener('DOMContentLoaded', () => {
