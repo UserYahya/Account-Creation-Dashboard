@@ -577,6 +577,7 @@ app.get('/admin/settings', isAdmin, async (req, res) => {
   const eventStart = await db.get("SELECT value FROM settings WHERE key = 'event_start'");
   const eventEnd = await db.get("SELECT value FROM settings WHERE key = 'event_end'");
   const eventWikis = await db.get("SELECT value FROM settings WHERE key = 'event_wikis'");
+  const eventNamespaces = await db.get("SELECT value FROM settings WHERE key = 'event_namespaces'");
   
   const regActiveVal = regActive && regActive.value === '1' ? 'true' : 'false';
   const wUrl = workshopUrl ? workshopUrl.value : 'https://bn.wikipedia.org';
@@ -585,6 +586,10 @@ app.get('/admin/settings', isAdmin, async (req, res) => {
   const startText = eventStart ? eventStart.value : '2026-06-18T00:00';
   const endText = eventEnd ? eventEnd.value : '2026-06-25T23:59';
   const wikisText = eventWikis ? eventWikis.value : 'bn.wikipedia.org';
+  const namespacesText = eventNamespaces ? eventNamespaces.value : 'all';
+  
+  const isDeveloper = req.session.isDeveloper ? 'true' : 'false';
+  const superAdminClass = req.session.isDeveloper ? '' : 'hidden';
 
   res.send(renderView('event_settings.html', {
     ADMIN_USERNAME: req.session.username,
@@ -596,7 +601,10 @@ app.get('/admin/settings', isAdmin, async (req, res) => {
     WELCOME_MESSAGE: welcomeText,
     EVENT_START: startText,
     EVENT_END: endText,
-    EVENT_WIKIS: wikisText
+    EVENT_WIKIS: wikisText,
+    EVENT_NAMESPACES: namespacesText,
+    IS_DEVELOPER: isDeveloper,
+    SUPER_ADMIN_CLASS: superAdminClass
   }, req));
 });
 
@@ -642,7 +650,8 @@ app.post('/api/settings', isAdmin, async (req, res) => {
     welcome_message,
     event_start,
     event_end,
-    event_wikis
+    event_wikis,
+    event_namespaces
   } = req.body;
   
   if (!event_name) {
@@ -669,16 +678,20 @@ app.post('/api/settings', isAdmin, async (req, res) => {
     if (event_wikis) {
       await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", event_wikis);
     }
+    if (event_namespaces) {
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_namespaces', ?)", event_namespaces);
+    }
 
     // Also update in events table
     await db.run(
       `UPDATE events 
-       SET workshop_url = ?, start_time = ?, end_time = ?, target_wikis = ? 
+       SET workshop_url = ?, start_time = ?, end_time = ?, target_wikis = ?, target_namespaces = ? 
        WHERE name = ?`,
       workshop_url || 'https://bn.wikipedia.org',
       event_start || '2026-06-18T00:00',
       event_end || '2026-06-25T23:59',
       event_wikis || 'bn.wikipedia.org',
+      event_namespaces || 'all',
       event_name
     );
 
@@ -734,7 +747,7 @@ app.get('/api/events/:eventName/requests', isAdmin, async (req, res) => {
 
 // Create a new event and set it active
 app.post('/api/events', isAdmin, async (req, res) => {
-  const { name, workshop_url, start_time, end_time, target_wikis } = req.body;
+  const { name, workshop_url, start_time, end_time, target_wikis, target_namespaces } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
   }
@@ -748,17 +761,19 @@ app.post('/api/events', isAdmin, async (req, res) => {
   const defaultEndTime = new Date(new Date(startTimeVal).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
   const endTimeVal = end_time || defaultEndTime;
   const targetWikisVal = target_wikis || 'bn.wikipedia.org';
+  const targetNamespacesVal = target_namespaces || 'all';
 
   try {
     const db = await getDatabase();
     // 1. Insert into events table
     await db.run(
-      'INSERT INTO events (name, workshop_url, start_time, end_time, target_wikis) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO events (name, workshop_url, start_time, end_time, target_wikis, target_namespaces) VALUES (?, ?, ?, ?, ?, ?)',
       name.trim(),
       wUrl,
       startTimeVal,
       endTimeVal,
-      targetWikisVal
+      targetWikisVal,
+      targetNamespacesVal
     );
     // 2. Set active settings
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_name', ?)", name.trim());
@@ -766,6 +781,7 @@ app.post('/api/events', isAdmin, async (req, res) => {
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", startTimeVal);
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", endTimeVal);
     await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", targetWikisVal);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_namespaces', ?)", targetNamespacesVal);
     
     if (typeof runStatsPoller === 'function') {
       runStatsPoller().catch(console.error);
@@ -1121,7 +1137,7 @@ function localToUTC(localDateTimeStr) {
 }
 
 // Helper: Fetch all contributions for a user on a target wiki
-async function fetchWikiContribs(wiki, username, startUTC, endUTC) {
+async function fetchWikiContribs(wiki, username, startUTC, endUTC, namespaces) {
   let totalEdits = 0;
   let bytesAdded = 0;
   let uccontinue = null;
@@ -1138,6 +1154,11 @@ async function fetchWikiContribs(wiki, username, startUTC, endUTC) {
     url.searchParams.append('ucprop', 'sizediff');
     url.searchParams.append('format', 'json');
     url.searchParams.append('origin', '*');
+    
+    if (namespaces && namespaces !== 'all') {
+      const pipeNamespaces = namespaces.split(',').map(n => n.trim()).join('|');
+      url.searchParams.append('ucnamespace', pipeNamespaces);
+    }
     
     if (uccontinue) {
       url.searchParams.append('uccontinue', uccontinue);
@@ -1173,7 +1194,14 @@ async function fetchWikiContribs(wiki, username, startUTC, endUTC) {
 }
 
 // Helper: Fetch file uploads count for a user on a target wiki
-async function fetchWikiUploads(wiki, username, startUTC, endUTC) {
+async function fetchWikiUploads(wiki, username, startUTC, endUTC, namespaces) {
+  if (namespaces && namespaces !== 'all') {
+    const nsList = namespaces.split(',').map(n => n.trim());
+    if (!nsList.includes('6')) {
+      return 0; // File namespace (6) is not selected
+    }
+  }
+
   let fileUploads = 0;
   let lecontinue = null;
   
@@ -1218,17 +1246,17 @@ async function fetchWikiUploads(wiki, username, startUTC, endUTC) {
 }
 
 // Helper: Fetch aggregate stats for a user across multiple wikis
-async function fetchUserStats(wikisList, username, startUTC, endUTC) {
+async function fetchUserStats(wikisList, username, startUTC, endUTC, namespaces) {
   let totalEdits = 0;
   let fileUploads = 0;
   let bytesAdded = 0;
   
   for (const wiki of wikisList) {
-    const contribs = await fetchWikiContribs(wiki, username, startUTC, endUTC);
+    const contribs = await fetchWikiContribs(wiki, username, startUTC, endUTC, namespaces);
     totalEdits += contribs.totalEdits;
     bytesAdded += contribs.bytesAdded;
     
-    const uploads = await fetchWikiUploads(wiki, username, startUTC, endUTC);
+    const uploads = await fetchWikiUploads(wiki, username, startUTC, endUTC, namespaces);
     fileUploads += uploads;
   }
   
@@ -1299,11 +1327,12 @@ async function runStatsPoller() {
       .split(',')
       .map(w => w.trim())
       .filter(Boolean);
+    const namespaces = event.target_namespaces || 'all';
       
-    console.log(`Polling stats for ${participants.length} participants in event "${eventName}" across: ${wikis.join(', ')}`);
+    console.log(`Polling stats for ${participants.length} participants in event "${eventName}" across: ${wikis.join(', ')} (namespaces: ${namespaces})`);
     
     for (const p of participants) {
-      const stats = await fetchUserStats(wikis, p.username, startUTC, endUTC);
+      const stats = await fetchUserStats(wikis, p.username, startUTC, endUTC, namespaces);
       await db.run(
         `UPDATE event_participants 
          SET total_edits = ?, file_uploads = ?, bytes_added = ? 
@@ -1419,6 +1448,87 @@ app.delete('/api/admin/participants/:id', isAdmin, async (req, res) => {
   }
 });
 
+// SECURED API: Mass add participants manually
+app.post('/api/admin/participants/mass', isAdmin, async (req, res) => {
+  const { usernames } = req.body;
+  if (!usernames || !Array.isArray(usernames) || usernames.length === 0) {
+    return res.status(400).json({ success: false, error: 'ব্যবহারকারী নামের তালিকা আবশ্যক।' });
+  }
+  
+  try {
+    const db = await getDatabase();
+    const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    if (!eventNameSetting) {
+      return res.status(400).json({ success: false, error: 'চলমান কোনো ইভেন্ট নেই।' });
+    }
+    const eventName = eventNameSetting.value;
+    
+    let addedCount = 0;
+    
+    await db.run("BEGIN TRANSACTION");
+    try {
+      for (const rawUsername of usernames) {
+        const username = rawUsername.trim();
+        if (username) {
+          const result = await db.run(
+            "INSERT OR IGNORE INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 1)",
+            eventName,
+            username
+          );
+          if (result.changes > 0) {
+            addedCount++;
+          }
+        }
+      }
+      await db.run("COMMIT");
+    } catch (txErr) {
+      await db.run("ROLLBACK");
+      throw txErr;
+    }
+    
+    runStatsPoller().catch(console.error);
+    res.json({ success: true, addedCount });
+  } catch (err) {
+    console.error("Error mass adding participants:", err);
+    res.status(500).json({ success: false, error: 'অংশগ্রহণকারীগণকে যুক্ত করা যায়নি।' });
+  }
+});
+
+// SECURED API: Delete an event (Developer / Super Admin only)
+app.delete('/api/admin/events/:id', isAdmin, async (req, res) => {
+  if (!req.session.isDeveloper) {
+    return res.status(403).json({ success: false, error: 'দুঃখিত, শুধুমাত্র সুপার এডমিন (ডেভেলপার) ইভেন্ট ডিলিট করতে পারবেন।' });
+  }
+  
+  const eventId = req.params.id;
+  try {
+    const db = await getDatabase();
+    
+    const event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
+    if (!event) {
+      return res.status(404).json({ success: false, error: 'ইভেন্টটি পাওয়া যায়নি।' });
+    }
+    
+    const eventName = event.name;
+    const activeSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
+    const isActive = activeSetting && activeSetting.value === eventName;
+    
+    await db.run("DELETE FROM events WHERE id = ?", eventId);
+    await db.run("DELETE FROM event_participants WHERE event_name = ?", eventName);
+    await db.run("DELETE FROM requests WHERE event_name = ?", eventName);
+    
+    if (isActive) {
+      await db.run("UPDATE settings SET value = '' WHERE key = 'event_name'");
+      await db.run("UPDATE settings SET value = '0' WHERE key = 'registration_active'");
+    }
+    
+    res.json({ success: true, isActiveReset: isActive });
+  } catch (err) {
+    console.error("Delete event error:", err);
+    res.status(500).json({ success: false, error: 'ইভেন্ট ডিলিট করতে সমস্যা হয়েছে।' });
+  }
+});
+
 // PUBLIC API: Fetch statistics & leaderboard
 app.get('/api/stats', async (req, res) => {
   try {
@@ -1476,7 +1586,8 @@ app.get('/api/stats', async (req, res) => {
         workshop_url: event.workshop_url,
         start_time: event.start_time,
         end_time: event.end_time,
-        target_wikis: event.target_wikis
+        target_wikis: event.target_wikis,
+        target_namespaces: event.target_namespaces
       },
       stats: {
         total_participants: participants.length,

@@ -80,6 +80,9 @@ async function getDatabase() {
   try {
     await db.exec('ALTER TABLE events ADD COLUMN target_wikis TEXT');
   } catch (e) {}
+  try {
+    await db.exec('ALTER TABLE events ADD COLUMN target_namespaces TEXT');
+  } catch (e) {}
 
   // Insert default settings if they don't exist
   const eventName = await db.get('SELECT value FROM settings WHERE key = ?', 'event_name');
@@ -122,6 +125,11 @@ async function getDatabase() {
     await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', 'event_wikis', 'bn.wikipedia.org');
   }
 
+  const eventNamespaces = await db.get('SELECT value FROM settings WHERE key = ?', 'event_namespaces');
+  if (!eventNamespaces) {
+    await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', 'event_namespaces', 'all');
+  }
+
   // Migrate active event to events table if empty
   const eventsCount = await db.get('SELECT COUNT(*) as count FROM events');
   if (eventsCount.count === 0) {
@@ -130,14 +138,16 @@ async function getDatabase() {
     const curStart = await db.get('SELECT value FROM settings WHERE key = ?', 'event_start');
     const curEnd = await db.get('SELECT value FROM settings WHERE key = ?', 'event_end');
     const curWikis = await db.get('SELECT value FROM settings WHERE key = ?', 'event_wikis');
+    const curNamespaces = await db.get('SELECT value FROM settings WHERE key = ?', 'event_namespaces');
     
     await db.run(
-      'INSERT INTO events (name, workshop_url, start_time, end_time, target_wikis) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO events (name, workshop_url, start_time, end_time, target_wikis, target_namespaces) VALUES (?, ?, ?, ?, ?, ?)',
       curName ? curName.value : 'অমর একুশে উইকিপিডিয়া নিবন্ধ প্রতিযোগিতা ২০২৪',
       curUrl ? curUrl.value : 'https://bn.wikipedia.org',
       curStart ? curStart.value : '2026-06-18T00:00',
       curEnd ? curEnd.value : '2026-06-25T23:59',
-      curWikis ? curWikis.value : 'bn.wikipedia.org'
+      curWikis ? curWikis.value : 'bn.wikipedia.org',
+      curNamespaces ? curNamespaces.value : 'all'
     );
   }
 
@@ -145,6 +155,7 @@ async function getDatabase() {
   await db.run("UPDATE events SET start_time = '2026-06-18T00:00' WHERE start_time IS NULL");
   await db.run("UPDATE events SET end_time = '2026-06-25T23:59' WHERE end_time IS NULL");
   await db.run("UPDATE events SET target_wikis = 'bn.wikipedia.org' WHERE target_wikis IS NULL");
+  await db.run("UPDATE events SET target_namespaces = 'all' WHERE target_namespaces IS NULL");
 
   return db;
 }

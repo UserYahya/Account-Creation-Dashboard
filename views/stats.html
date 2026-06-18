@@ -153,6 +153,11 @@
                     <span>টার্গেট উইকি:</span>
                     <span id="eventWikis" class="font-bold text-primary">লোড হচ্ছে...</span>
                 </p>
+                <p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-[18px]">rule</span>
+                    <span>টার্গেট নেমস্পেস:</span>
+                    <span id="eventNamespaces" class="font-bold text-primary">লোড হচ্ছে...</span>
+                </p>
             </div>
             <div class="flex items-center gap-sm self-stretch lg:self-auto justify-between lg:justify-start">
                 <span class="text-xs text-on-surface-variant font-label-md" id="lastUpdatedText">সর্বশেষ আপডেট: কখনো নয়</span>
@@ -319,6 +324,28 @@
                     // Populate Event Info
                     document.getElementById('eventName').innerText = data.event.name;
                     document.getElementById('eventWikis').innerText = data.event.target_wikis;
+
+                    const namespaceNames = {
+                        'all': 'সকল',
+                        '0': 'নিবন্ধ (Main)',
+                        '1': 'আলাপ (Talk)',
+                        '2': 'ব্যবহারকারী (User)',
+                        '4': 'উইকিপিডিয়া (Project)',
+                        '6': 'চিত্র (File)',
+                        '10': 'টেমপ্লেট (Template)',
+                        '14': 'বিষয়শ্রেণী (Category)',
+                        '118': 'খসড়া (Draft)',
+                        '828': 'মডিউল (Module)'
+                    };
+
+                    let nsText = 'সকল';
+                    if (data.event.target_namespaces && data.event.target_namespaces !== 'all') {
+                        nsText = data.event.target_namespaces
+                            .split(',')
+                            .map(nsId => namespaceNames[nsId.trim()] || nsId.trim())
+                            .join(', ');
+                    }
+                    document.getElementById('eventNamespaces').innerText = nsText;
 
                     const startLocal = new Date(data.event.start_time).toLocaleString('bn-BD', {
                         year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
