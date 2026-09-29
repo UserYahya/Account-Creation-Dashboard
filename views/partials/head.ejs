@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title === 'ইভেন্ট ড্যাশবোর্ড' ? title : `${title} | ইভেন্ট ড্যাশবোর্ড` %></title>
+  <meta name="description" content="উইকিমিডিয়া আউটরিচ ইভেন্ট ও কর্মশালার অংশগ্রহণকারীদের উইকিপিডিয়া অ্যাকাউন্ট তৈরি ও অগ্রগতি ট্র্যাক করার টুল।">
+  <meta name="csrf-token" content="<%= locals.csrfToken || '' %>">
+  <meta name="icon-sprite" content="<%= asset('icons.svg') %>">
+  <meta name="theme-color" content="#004e9f">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/static/img/icon-192.png">
+  <link rel="stylesheet" href="<%= asset('css/app.css') %>">
+</head>
+<body class="min-h-screen flex flex-col <%= locals.bodyClass || '' %>" data-admin="<%= locals.isAdminPage ? 'true' : 'false' %>">
+  <a class="skip-link" href="#main">মূল অংশে যান</a>

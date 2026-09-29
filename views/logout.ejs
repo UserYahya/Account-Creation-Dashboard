@@ -1,0 +1,15 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main" class="flex-grow w-full max-w-[480px] mx-auto px-md py-xl">
+  <form class="card p-lg md:p-xl text-center space-y-md" method="post" action="/logout">
+    <h1 class="text-headline-md font-bold">লগ আউট করবেন?</h1>
+    <p class="text-body-md text-on-surface-variant">আপনি <strong><%= user.username %></strong> হিসেবে লগ ইন আছেন।</p>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="flex justify-center gap-sm">
+      <button class="btn btn-danger" type="submit"><%- icon('logout', 'icon-sm') %> লগ আউট</button>
+      <a class="btn btn-outline" href="/admin">বাতিল</a>
+    </div>
+  </form>
+</main>
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

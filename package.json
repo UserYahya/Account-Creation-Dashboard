@@ -1,18 +1,34 @@
 {
   "name": "event-dashboard",
-  "version": "1.0.0",
-  "description": "Event Dashboard for quick Wikimedia user account creation",
+  "version": "2.0.0",
+  "description": "Event Dashboard: Wikipedia account requests and live progress tracking for Wikimedia outreach events",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "build": "node scripts/build-assets.js && tailwindcss -c tailwind.config.js -i src/styles/app.css -o public/css/app.css --minify",
+    "test": "node --test test/*.test.js",
+    "lint": "eslint ."
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "express-session": "^1.18.0",
-    "qrcode": "^1.5.4",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^16.6.1",
+    "ejs": "^3.1.10",
+    "express": "^4.22.3",
+    "express-session": "^1.19.0",
+    "qrcode": "^1.5.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/hind-siliguri": "^5.3.0",
+    "@material-symbols/svg-400": "^0.47.5",
+    "@tailwindcss/forms": "^0.5.11",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "tailwindcss": "^3.4.19"
   }
 }

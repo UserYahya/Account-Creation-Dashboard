@@ -1,0 +1,19 @@
+<section class="card p-lg space-y-md" aria-labelledby="policyTitle">
+  <h2 id="policyTitle" class="text-headline-sm font-bold flex items-center gap-sm"><%- icon('policy', 'icon-lg text-primary') %> ব্যবহারকারী নামের নীতিমালা</h2>
+  <p class="text-body-md text-on-surface-variant">উইকিপিডিয়ায় অ্যাকাউন্ট তৈরির আগে নিচের বিষয়গুলো খেয়াল করুন:</p>
+  <ul class="list-disc pl-lg space-y-sm text-body-md text-on-surface-variant">
+    <li><strong>বিভ্রান্তিকর নাম নয়:</strong> কোনো জীবিত ব্যক্তি, সুপরিচিত ব্যক্তিত্ব বা উইকিপিডিয়ার কর্মকর্তা/প্রশাসকদের নামের সাথে মিলিয়ে বিভ্রান্তিকর নাম নেওয়া যাবে না।</li>
+    <li><strong>প্রতিষ্ঠানের নাম নয়:</strong> কোনো কোম্পানি, ব্র্যান্ড, দল বা প্রতিষ্ঠানের নাম ব্যবহারকারী নাম হিসেবে ব্যবহার করা যাবে না। নাম ব্যক্তিগত হতে হবে।</li>
+    <li><strong>আক্রমণাত্মক নাম নয়:</strong> কাউকে হেয় করে এমন, অশালীন বা উস্কানিমূলক নাম ব্যবহার করা যাবে না।</li>
+    <li><strong>বিশেষ চিহ্ন বাদ দিন:</strong> নামে # &lt; &gt; [ ] | { } @ : = / এই চিহ্নগুলো ব্যবহার করা যায় না। প্রথম অক্ষর সবসময় বড় হাতের হবে।</li>
+  </ul>
+  <% if (locals.instructions && instructions.length) { %>
+    <div class="pt-md border-t border-outline-variant">
+      <h3 class="text-body-lg font-bold text-primary mb-sm">আয়োজকদের নির্দেশনা</h3>
+      <ul class="list-disc pl-lg space-y-sm text-body-md text-on-surface-variant">
+        <% instructions.forEach(line => { %><li><%= line %></li><% }) %>
+      </ul>
+    </div>
+  <% } %>
+  <p class="pt-sm border-t border-outline-variant text-body-md text-on-surface-variant">কারিগরি সহায়তার জন্য যোগাযোগ করুন: <a class="font-bold" href="mailto:<%= contactEmail %>"><%= contactEmail %></a></p>
+</section>

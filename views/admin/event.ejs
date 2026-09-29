@@ -1,0 +1,185 @@
+<%- include('../partials/admin-header') %>
+<div class="max-w-container-max mx-auto space-y-lg">
+  <div class="space-y-sm">
+    <a class="text-label-md font-bold" href="/admin"><%- icon('arrow_back', 'icon-sm') %> সব ইভেন্ট</a>
+    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-md">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-xs mb-xs">
+          <span class="badge badge-<%= phase %>"><%= phaseLabels[phase] %></span>
+          <span id="registrationBadge" class="badge <%= event.registration_active ? 'badge-ongoing' : 'badge-pending' %>"><%= event.registration_active ? 'নিবন্ধন চালু' : 'নিবন্ধন বন্ধ' %></span>
+        </div>
+        <h1 class="text-headline-md font-bold break-words"><%= event.name %></h1>
+        <p class="text-body-md text-on-surface-variant"><%= formatBn(event.start_time) %> – <%= formatBn(event.end_time) %></p>
+        <p class="text-label-md text-on-surface-variant mt-xs flex items-center gap-xs"><%- icon('verified_user', 'icon-sm') %> আপনি অনুমোদন করলে অ্যাকাউন্ট তৈরি হবে: <strong><%= accountWiki %></strong></p>
+      </div>
+      <div class="flex flex-wrap gap-sm">
+        <button type="button" class="btn <%= event.registration_active ? 'btn-danger-outline' : 'btn-secondary' %>" id="toggleRegistration" data-active="<%= event.registration_active %>">
+          <%= event.registration_active ? 'নিবন্ধন বন্ধ করুন' : 'নিবন্ধন চালু করুন' %>
+        </button>
+        <a class="btn btn-outline" href="/event/<%= event.id %>" target="_blank"><%- icon('open_in_new', 'icon-sm') %> নিবন্ধন পাতা</a>
+        <a class="btn btn-outline" href="/event/<%= event.id %>/stats" target="_blank"><%- icon('leaderboard', 'icon-sm') %> পরিসংখ্যান</a>
+        <a class="btn btn-outline" href="/event/<%= event.id %>/display" target="_blank"><%- icon('slideshow', 'icon-sm') %> প্রজেক্টর</a>
+        <a class="btn btn-outline" href="/event/<%= event.id %>/qr.png?size=1000" download="event-<%= event.id %>-qr.png"><%- icon('qr_code_2', 'icon-sm') %> QR ডাউনলোড</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex border-b border-outline-variant overflow-x-auto" role="tablist" aria-label="ইভেন্ট পরিচালনা">
+    <button type="button" class="tab" role="tab" id="tab-requests" aria-controls="panel-requests" aria-selected="true" data-tab="requests">
+      আবেদন <span class="badge badge-upcoming ml-xs" id="pendingBadge"><%= formatNumber(counts.pending + counts.processing) %></span>
+    </button>
+    <button type="button" class="tab" role="tab" id="tab-participants" aria-controls="panel-participants" aria-selected="false" tabindex="-1" data-tab="participants">
+      অংশগ্রহণকারী <span class="badge badge-manual ml-xs" id="participantBadge"><%= formatNumber(counts.participants) %></span>
+    </button>
+    <button type="button" class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings">সেটিংস</button>
+  </div>
+
+  <!-- Requests -->
+  <section id="panel-requests" role="tabpanel" aria-labelledby="tab-requests" class="space-y-lg">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">অপেক্ষমাণ আবেদন</h2>
+        <div class="flex flex-wrap items-center gap-sm">
+          <span class="text-label-md text-on-surface-variant flex items-center gap-xs" id="liveIndicator"><span class="w-2 h-2 rounded-pill bg-secondary inline-block"></span> স্বয়ংক্রিয় হালনাগাদ</span>
+          <label class="sr-only" for="requestSearch">আবেদন খুঁজুন</label>
+          <input class="input w-56 py-xs" id="requestSearch" type="search" placeholder="নাম দিয়ে খুঁজুন...">
+        </div>
+      </div>
+      <div id="bulkBar" class="px-lg py-sm border-b border-outline-variant bg-primary/5 flex flex-wrap items-center gap-sm" hidden>
+        <strong class="text-body-md" id="bulkCount"></strong>
+        <button type="button" class="btn btn-primary btn-sm" id="bulkApprove"><%- icon('done_all', 'icon-sm') %> নির্বাচিতগুলো অনুমোদন</button>
+        <button type="button" class="btn btn-danger-outline btn-sm" id="bulkDecline"><%- icon('block', 'icon-sm') %> নির্বাচিতগুলো বাতিল</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="bulkClear">নির্বাচন মুছুন</button>
+      </div>
+      <div id="bulkProgress" class="px-lg py-sm border-b border-outline-variant" hidden aria-live="polite">
+        <div class="flex justify-between text-label-md font-bold mb-xs"><span id="bulkProgressText"></span><button type="button" class="text-error" id="bulkStop">থামান</button></div>
+        <div class="h-2 bg-surface-container-high rounded-pill overflow-hidden"><div id="bulkProgressBar" class="h-full bg-primary transition-all w-0"></div></div>
+      </div>
+      <div class="overflow-x-auto">
+        <%# On phones the pending rows stack into cards so the action buttons stay in view %>
+        <table class="table table-stack">
+          <thead>
+            <tr>
+              <th class="w-10 stack-keep"><label class="inline-flex items-center gap-sm"><input class="checkbox" type="checkbox" id="selectAll" aria-label="সব নির্বাচন করুন"><span class="md:hidden">সব নির্বাচন</span></label></th>
+              <th>ব্যবহারকারী নাম</th>
+              <th data-email-col hidden>ইমেইল</th>
+              <th>আবেদনের সময়</th>
+              <th class="text-right">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="pendingBody"><tr><td colspan="5" class="text-center text-on-surface-variant py-lg">লোড হচ্ছে...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">পূর্ববর্তী সিদ্ধান্ত</h2>
+        <div class="flex items-center gap-sm">
+          <label class="text-label-md font-bold" for="historyFilter">দেখান:</label>
+          <select class="input w-auto py-xs" id="historyFilter">
+            <option value="all">সব</option>
+            <option value="approved">অনুমোদিত</option>
+            <option value="declined">বাতিল</option>
+          </select>
+          <a class="btn btn-outline btn-sm" href="/api/admin/events/<%= event.id %>/requests.csv"><%- icon('download', 'icon-sm') %> CSV</a>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead><tr><th>ব্যবহারকারী নাম</th><th data-email-col hidden>ইমেইল</th><th>স্ট্যাটাস</th><th>আবেদনের সময়</th><th>সিদ্ধান্ত</th><th>মন্তব্য</th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="6" class="text-center text-on-surface-variant py-lg">লোড হচ্ছে...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Participants -->
+  <section id="panel-participants" role="tabpanel" aria-labelledby="tab-participants" class="space-y-lg" hidden>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><%- icon('group_add', 'text-primary') %> অংশগ্রহণকারী যোগ করুন</h2></div>
+      <form id="addParticipantsForm" class="card-body space-y-sm" novalidate>
+        <label class="label" for="participantNames">উইকিপিডিয়া ব্যবহারকারী নাম (প্রতি লাইনে একটি, বা কমা দিয়ে আলাদা)</label>
+        <textarea class="input font-mono" id="participantNames" rows="3" placeholder="Rahim Uddin&#10;Karima Begum"></textarea>
+        <p class="help">নামগুলো উইকিপিডিয়ায় আছে কিনা যাচাই করে যোগ করা হবে। এই টুলের মাধ্যমে তৈরি হওয়া অ্যাকাউন্ট নিজে থেকেই যুক্ত হয়।</p>
+        <div id="addResult" aria-live="polite"></div>
+        <div class="flex justify-end"><button class="btn btn-primary" type="submit" id="addParticipantsBtn"><%- icon('person_add', 'icon-sm') %> যোগ করুন</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">অংশগ্রহণকারীর তালিকা</h2>
+        <div class="flex flex-wrap items-center gap-sm">
+          <label class="flex items-center gap-xs text-label-md"><input class="checkbox" type="checkbox" id="showExcluded"> বাদ দেওয়াদেরও দেখান</label>
+          <label class="sr-only" for="participantSearch">অংশগ্রহণকারী খুঁজুন</label>
+          <input class="input w-48 py-xs" id="participantSearch" type="search" placeholder="খুঁজুন...">
+          <a class="btn btn-outline btn-sm" href="/api/admin/events/<%= event.id %>/participants.csv"><%- icon('download', 'icon-sm') %> CSV</a>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead><tr><th>ব্যবহারকারী নাম</th><th>যেভাবে যুক্ত</th><th class="text-right">সম্পাদনা</th><th class="text-right">নতুন নিবন্ধ</th><th class="text-right">বাইট</th><th class="text-right">অ্যাকশন</th></tr></thead>
+          <tbody id="participantsBody"><tr><td colspan="6" class="text-center text-on-surface-variant py-lg">লোড হচ্ছে...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Settings -->
+  <section id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" class="space-y-lg max-w-3xl" hidden>
+    <%- include('_event-form', { formId: 'eventForm', submitLabel: 'পরিবর্তন সংরক্ষণ করুন' }) %>
+
+    <div class="card border-error/40">
+      <div class="card-header"><h2 class="card-title text-error"><%- icon('warning') %> সতর্কতার সাথে ব্যবহার করুন</h2></div>
+      <div class="card-body space-y-md">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-sm">
+          <p class="text-body-md text-on-surface-variant">পরিসংখ্যান শুরু থেকে আবার গণনা করুন (যেমন কোনো সম্পাদনা মুছে গেলে)।</p>
+          <button type="button" class="btn btn-outline shrink-0" id="resyncBtn"><%- icon('sync', 'icon-sm') %> আবার গণনা করুন</button>
+        </div>
+        <% if (user.isDeveloper) { %>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-sm pt-md border-t border-outline-variant">
+            <p class="text-body-md text-on-surface-variant">ইভেন্টটি মুছে ফেলুন। সব আবেদন, অংশগ্রহণকারী ও পরিসংখ্যান চিরতরে মুছে যাবে।</p>
+            <button type="button" class="btn btn-danger shrink-0" id="deleteEventBtn"><%- icon('delete', 'icon-sm') %> ইভেন্ট মুছুন</button>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Comment / reason dialog -->
+<div class="modal-backdrop" id="reasonModal" hidden role="dialog" aria-modal="true" aria-labelledby="reasonTitle">
+  <form class="modal" id="reasonForm">
+    <div class="card-header"><h2 class="card-title" id="reasonTitle"></h2><button type="button" class="btn btn-ghost btn-sm" data-modal-close aria-label="বন্ধ করুন"><%- icon('close') %></button></div>
+    <div class="card-body space-y-sm">
+      <p class="text-body-md text-on-surface-variant" id="reasonDescription"></p>
+      <label class="label" for="reasonInput">মন্তব্য বা কারণ (ঐচ্ছিক)</label>
+      <textarea class="input" id="reasonInput" rows="3" maxlength="500" data-autofocus></textarea>
+    </div>
+    <div class="card-footer">
+      <button type="button" class="btn btn-outline" data-modal-close>বাতিল</button>
+      <button type="submit" class="btn btn-primary" id="reasonSubmit"></button>
+    </div>
+  </form>
+</div>
+
+<!-- Rename dialog -->
+<div class="modal-backdrop" id="renameModal" hidden role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+  <form class="modal" id="renameForm">
+    <div class="card-header"><h2 class="card-title" id="renameTitle">ব্যবহারকারী নাম পরিবর্তন</h2><button type="button" class="btn btn-ghost btn-sm" data-modal-close aria-label="বন্ধ করুন"><%- icon('close') %></button></div>
+    <div class="card-body space-y-sm">
+      <p class="text-body-md text-on-surface-variant">নামটি নেওয়া হয়ে গেলে বা সমস্যা থাকলে আবেদনকারীর সাথে কথা বলে নতুন নাম দিন।</p>
+      <label class="label" for="renameInput">নতুন ব্যবহারকারী নাম</label>
+      <input class="input" id="renameInput" type="text" maxlength="85" data-autofocus>
+      <div id="renameError" class="alert alert-error" hidden><%- icon('error') %><p></p></div>
+    </div>
+    <div class="card-footer">
+      <button type="button" class="btn btn-outline" data-modal-close>বাতিল</button>
+      <button type="submit" class="btn btn-primary" id="renameSubmit">সংরক্ষণ</button>
+    </div>
+  </form>
+</div>
+
+<script type="application/json" id="page-data"><%- pageData({ mode: 'edit', eventId: event.id, isDeveloper: user.isDeveloper, eventName: event.name, targetWiki: event.target_wikis.split(',')[0] }) %></script>
+<%- include('../partials/admin-footer', { scripts: ['admin-event-form.js', 'admin-event.js'] }) %>

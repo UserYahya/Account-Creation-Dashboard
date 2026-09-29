@@ -1,0 +1,19 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main" class="flex-grow w-full max-w-[640px] mx-auto px-md py-xl">
+  <section class="card p-lg md:p-xl text-center space-y-md">
+    <div class="mx-auto w-20 h-20 rounded-pill bg-error/15 text-error flex items-center justify-center"><%- icon('gpp_bad', 'icon-xl') %></div>
+    <h1 class="text-headline-md font-bold">দুঃখিত, আপনার প্রবেশাধিকার নেই</h1>
+    <p class="text-body-lg text-on-surface-variant">
+      অ্যাডমিন প্যানেলে ঢুকতে <strong><%= adminWikis.join(' বা ') %></strong>-এ আপনার অ্যাকাউন্টকে এই গ্রুপগুলোর যেকোনো একটির সদস্য হতে হবে: <strong><%= allowedGroups.join(', ') %></strong>।
+    </p>
+    <% if (username) { %><p class="text-body-md text-on-surface-variant">আপনি লগ ইন করেছেন <strong><%= username %></strong> হিসেবে।</p><% } %>
+    <p class="text-body-md text-on-surface-variant">সহায়তার জন্য যোগাযোগ করুন: <a class="font-bold" href="mailto:<%= contactEmail %>"><%= contactEmail %></a></p>
+    <div class="flex flex-wrap justify-center gap-sm pt-sm">
+      <a class="btn btn-primary" href="/"><%- icon('home', 'icon-sm') %> হোম পাতা</a>
+      <a class="btn btn-outline" href="/login">অন্য অ্যাকাউন্টে লগ ইন</a>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>
