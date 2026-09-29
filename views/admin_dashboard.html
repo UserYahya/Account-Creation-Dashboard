@@ -355,6 +355,10 @@
     </div>
 
     <script>
+        // Escape text before inserting it into HTML
+        function esc(str) {
+            return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+        }
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -421,7 +425,14 @@
 
         function loadRequests() {
             fetch('/api/requests')
-                .then(res => res.json())
+                .then(res => {
+                    // Session expired: send the admin back to the login page
+                    if (res.status === 401) {
+                        window.location.href = '/login';
+                        throw new Error('auth_required');
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     requests = data.requests || [];
                     const stats = data.stats || { pending: 0, approved: 0 };
@@ -495,15 +506,15 @@
                         <td class="px-lg py-md">
                             <div class="flex items-center gap-sm">
                                 <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold shrink-0">
-                                    ${letter}
+                                    ${esc(letter)}
                                 </div>
                                 <div>
-                                    <span class="font-body-md text-body-md font-medium text-on-surface font-bold block">${req.username}</span>
+                                    <span class="font-body-md text-body-md font-medium text-on-surface font-bold block">${esc(req.username)}</span>
                                     ${errorHtml}
                                 </div>
                             </div>
                         </td>
-                        <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${req.email || '-'}</td>
+                        <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${esc(req.email) || '-'}</td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant max-w-[150px] truncate" title="${escapeHTML(req.event_name) || '-'}">${escapeHTML(req.event_name) || '-'}</td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${date}</td>
                         <td class="px-lg py-md text-right">
@@ -579,10 +590,10 @@
                         <td class="px-lg py-md">
                             <div class="flex items-center gap-sm">
                                 <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold shrink-0">
-                                    ${letter}
+                                    ${esc(letter)}
                                 </div>
                                 <div>
-                                    <span class="font-medium text-on-surface font-bold block">${req.username}</span>
+                                    <span class="font-medium text-on-surface font-bold block">${esc(req.username)}</span>
                                     ${userSubText}
                                 </div>
                             </div>
@@ -810,8 +821,8 @@
                             let html = '';
                             activeEvents.forEach(e => {
                                 html += `
-                                    <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${e.name}">
-                                        ${e.name}
+                                    <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${esc(e.name)}">
+                                        ${esc(e.name)}
                                     </a>
                                 `;
                             });

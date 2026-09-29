@@ -335,6 +335,10 @@
     </footer>
 
     <script>
+        // Escape text before inserting it into HTML
+        function esc(str) {
+            return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+        }
         const alertEl = document.getElementById('statsAlert');
         const alertText = document.getElementById('alertText');
         const alertIcon = document.getElementById('alertIcon');
@@ -391,7 +395,7 @@
                         document.getElementById('leaderboardBody').innerHTML = `
                             <tr>
                                 <td colspan="5" class="px-lg py-xl text-center text-error font-bold font-body-md">
-                                    ত্রুটি: ${data.error}
+                                    ত্রুটি: ${esc(data.error)}
                                 </td>
                             </tr>
                         `;
@@ -540,14 +544,14 @@
                             <div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between gap-md">
                                 <div class="space-y-sm">
                                     <span class="bg-error/15 text-error text-[10px] px-sm py-xs rounded-full font-bold">সমাপ্ত</span>
-                                    <h3 class="font-headline-sm text-on-surface font-bold text-[18px] line-clamp-2">${e.name}</h3>
+                                    <h3 class="font-headline-sm text-on-surface font-bold text-[18px] line-clamp-2">${esc(e.name)}</h3>
                                     <p class="text-xs text-on-surface-variant flex items-center gap-xs">
                                         <span class="material-symbols-outlined text-[16px]">calendar_month</span>
                                         <span>সময়কাল: ${start} - ${end}</span>
                                     </p>
                                     <p class="text-xs text-on-surface-variant flex items-center gap-xs">
                                         <span class="material-symbols-outlined text-[16px]">language</span>
-                                        <span>উইকি: ${e.target_wikis}</span>
+                                        <span>উইকি: ${esc(e.target_wikis)}</span>
                                     </p>
                                 </div>
                                 <a href="/event/${e.id}/stats" class="inline-flex items-center justify-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-bold font-label-md hover:bg-primary/90 transition-colors shadow-sm text-center">
@@ -617,7 +621,7 @@
                                 activeEvents.forEach(e => {
                                     html += `
                                         <a class="text-primary hover:underline font-medium text-sm py-xs block" href="/event/${e.id}">
-                                            ${e.name}
+                                            ${esc(e.name)}
                                         </a>
                                     `;
                                 });
@@ -635,8 +639,8 @@
                                 let html = '';
                                 activeEvents.forEach(e => {
                                     html += `
-                                        <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${e.name}">
-                                            ${e.name}
+                                        <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${esc(e.name)}">
+                                            ${esc(e.name)}
                                         </a>
                                     `;
                                 });
@@ -698,9 +702,9 @@
                         <td class="px-lg py-md">
                             <div class="flex items-center gap-sm">
                                 <div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface text-xs font-bold shrink-0">
-                                    ${letter}
+                                    ${esc(letter)}
                                 </div>
-                                <a href="https://${targetWiki}/wiki/Special:Contributions/${encodeURIComponent(p.username)}" target="_blank" class="font-medium text-primary hover:underline font-bold block">${p.username}</a>
+                                <a href="https://${esc(targetWiki)}/wiki/Special:Contributions/${encodeURIComponent(p.username)}" target="_blank" class="font-medium text-primary hover:underline font-bold block">${esc(p.username)}</a>
                             </div>
                         </td>
                         <td class="px-lg py-md text-center font-semibold text-on-surface">${p.total_edits.toLocaleString('bn-BD')}</td>

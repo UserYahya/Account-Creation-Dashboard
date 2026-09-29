@@ -361,6 +361,10 @@
     </footer>
 
     <script>
+        // Escape text before inserting it into HTML
+        function esc(str) {
+            return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+        }
         // Mobile menu toggle
         (function() {
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -448,7 +452,7 @@
                                     activeEvents.forEach(e => {
                                         html += `
                                             <a class="text-primary hover:underline font-medium text-sm py-xs block" href="/event/${e.id}">
-                                                ${e.name}
+                                                ${esc(e.name)}
                                             </a>
                                         `;
                                     });
@@ -466,8 +470,8 @@
                                     let html = '';
                                     activeEvents.forEach(e => {
                                         html += `
-                                            <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${e.name}">
-                                                ${e.name}
+                                            <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${esc(e.name)}">
+                                                ${esc(e.name)}
                                             </a>
                                         `;
                                     });

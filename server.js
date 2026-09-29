@@ -14,19 +14,53 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Toolforge (and most hosts) terminate HTTPS at a front proxy. Without this,
+// secure session cookies are never sent and req.ip is the proxy's address.
+const trustProxyEnv = process.env.TRUST_PROXY;
+if (trustProxyEnv !== undefined && trustProxyEnv !== '') {
+  app.set('trust proxy', /^\d+$/.test(trustProxyEnv) ? Number(trustProxyEnv) : trustProxyEnv === 'true');
+} else if (isProduction) {
+  app.set('trust proxy', 1);
+}
+app.disable('x-powered-by');
+
+app.use(express.json({ limit: '200kb' }));
+app.use(express.urlencoded({ extended: true, limit: '200kb' }));
 
 // Enforce strong session secret in production
 const sessionSecret = process.env.SESSION_SECRET;
-if (isProduction && (!sessionSecret || sessionSecret === 'some_random_session_secret_string')) {
-  console.error("CRITICAL: SESSION_SECRET is not securely configured in production.");
+if (isProduction && (!sessionSecret || sessionSecret === 'some_random_session_secret_string' || sessionSecret.length < 16)) {
+  console.error("CRITICAL: SESSION_SECRET is not securely configured in production (use at least 16 random characters).");
   process.exit(1);
 }
 
-// Setup session
+// Mock login is only ever enabled explicitly, and never in production.
+const mockLoginEnabled = process.env.ENABLE_MOCK_LOGIN === 'true' && !isProduction;
+if (process.env.ENABLE_MOCK_LOGIN === 'true' && isProduction) {
+  console.error("ENABLE_MOCK_LOGIN is ignored because NODE_ENV=production.");
+}
+
+// Usernames with developer (super admin) rights, e.g. DEVELOPER_USERNAMES=Yahya
+const developerUsernames = (process.env.DEVELOPER_USERNAMES || '')
+  .split(',')
+  .map(name => normalizeUsername(name))
+  .filter(Boolean);
+function isDeveloperUsername(username) {
+  return developerUsernames.includes(normalizeUsername(username));
+}
+
+// Wiki user groups that may use the admin panel (checked on bn.wikipedia.org and bd.wikimedia.org)
+const allowedGroups = (process.env.ALLOWED_GROUPS || 'sysop')
+  .split(',')
+  .map(g => g.trim())
+  .filter(Boolean);
+
+// Setup session (stored in SQLite so sessions survive restarts)
+const SqliteSessionStore = require('./session-store')(session);
 app.use(session({
-  secret: sessionSecret || 'wmbdedu_secret_session_key_2026',
+  name: 'acd.sid',
+  secret: sessionSecret || crypto.randomBytes(32).toString('hex'),
+  store: new SqliteSessionStore({ getDatabase }),
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -42,6 +76,11 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  if (req.secure) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  }
   next();
 });
 
@@ -60,37 +99,61 @@ app.use((req, res, next) => {
 });
 
 // CSRF Verification Middleware
+function tokensMatch(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 function csrfVerify(req, res, next) {
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
     const clientToken = req.headers['x-xsrf-token'] || (req.body && req.body._csrf);
-    if (!clientToken || clientToken !== req.session.csrfToken) {
-      return res.status(403).json({ success: false, error: 'CSRF verification failed.' });
+    if (!tokensMatch(clientToken, req.session.csrfToken)) {
+      return res.status(403).json({ success: false, error: 'নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পাতাটি রিলোড করে আবার চেষ্টা করুন।' });
     }
   }
   next();
 }
 app.use(csrfVerify);
 
-// Custom In-Memory IP Rate Limiter
-const rateLimitMap = new Map();
-function ipRateLimiter(limit, windowMs) {
+// In-memory rate limiter. Participants at one event usually share a single
+// Wi-Fi IP, so each request is counted per browser session (tight limit) and
+// per IP (generous limit that only stops floods).
+const RATE_LIMIT_MESSAGE = 'অতিরিক্ত রিকোয়েস্ট করা হয়েছে। অনুগ্রহ করে কিছু সময় পর আবার চেষ্টা করুন।';
+const rateLimitBuckets = new Map();
+function hitRateLimit(key, limit, windowMs) {
+  const now = Date.now();
+  let bucket = rateLimitBuckets.get(key);
+  if (!bucket || now >= bucket.resetAt) {
+    bucket = { count: 0, resetAt: now + windowMs };
+    rateLimitBuckets.set(key, bucket);
+  }
+  bucket.count++;
+  return bucket.count > limit;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of rateLimitBuckets) {
+    if (now >= bucket.resetAt) rateLimitBuckets.delete(key);
+  }
+}, 60 * 1000).unref();
+
+function rateLimiter(name, { perSession, perIp, windowMs }) {
   return (req, res, next) => {
-    if (isProduction) {
-      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-      const now = Date.now();
-      if (!rateLimitMap.has(ip)) {
-        rateLimitMap.set(ip, []);
-      }
-      const timestamps = rateLimitMap.get(ip);
-      const activeTimestamps = timestamps.filter(t => now - t < windowMs);
-      if (activeTimestamps.length >= limit) {
-        return res.status(429).json({ success: false, error: 'অতিরিক্ত রিকোয়েস্ট করা হয়েছে। অনুগ্রহ করে কিছু সময় পর আবার চেষ্টা করুন।' });
-      }
-      activeTimestamps.push(now);
-      rateLimitMap.set(ip, activeTimestamps);
+    const sessionKey = `${name}:s:${req.sessionID}`;
+    const ipKey = `${name}:ip:${req.ip}`;
+    const sessionBlocked = hitRateLimit(sessionKey, perSession, windowMs);
+    const ipBlocked = hitRateLimit(ipKey, perIp, windowMs);
+    if (sessionBlocked || ipBlocked) {
+      const bucket = rateLimitBuckets.get(sessionBlocked ? sessionKey : ipKey);
+      res.setHeader('Retry-After', Math.max(1, Math.ceil((bucket.resetAt - Date.now()) / 1000)));
+      return res.status(429).json({ success: false, valid: false, error: RATE_LIMIT_MESSAGE, reason: RATE_LIMIT_MESSAGE });
     }
     next();
   };
+}
+
+// API routes answer with JSON instead of redirecting to the login page
+function wantsJson(req) {
+  return req.path.startsWith('/api/') || (req.headers.accept || '').includes('application/json');
 }
 
 // URL Validation Helper
@@ -99,9 +162,88 @@ function isValidHttpUrl(string) {
   try {
     url = new URL(string);
   } catch (_) {
-    return false;  
+    return false;
   }
   return url.protocol === "http:" || url.protocol === "https:";
+}
+
+// Input validation helpers
+const EMAIL_REGEX = /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]{2,}$/;
+function isValidEmail(email) {
+  return typeof email === 'string' && email.length <= 254 && EMAIL_REGEX.test(email);
+}
+
+// Normalise a username the way MediaWiki does: underscores become spaces,
+// repeated spaces collapse and the first letter is capitalised.
+function normalizeUsername(name) {
+  if (typeof name !== 'string') return '';
+  const cleaned = name.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return '';
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+// Characters MediaWiki never allows in usernames
+const INVALID_USERNAME_CHARS = /[#<>[\]|{}@:=/\\\u0000-\u001f\u007f]/;
+function usernameProblem(username) {
+  if (!username || username.length < 3) return 'ব্যবহারকারী নাম কমপক্ষে ৩ অক্ষরের হতে হবে।';
+  if (username.length > 85) return 'ব্যবহারকারী নাম ৮৫ অক্ষরের বেশি হতে পারবে না।';
+  if (INVALID_USERNAME_CHARS.test(username)) return 'নামে # < > [ ] | { } @ : = / \\ অক্ষরগুলো ব্যবহার করা যাবে না।';
+  return null;
+}
+
+// Only Wikimedia wikis may be used as stats or account-creation targets
+const WIKI_DOMAIN_REGEX = /^([a-z0-9-]+\.)?(wikipedia|wiktionary|wikibooks|wikinews|wikiquote|wikisource|wikiversity|wikivoyage|wikimedia|wikidata|mediawiki|wikifunctions)\.org$/;
+function parseWikiList(value) {
+  const wikis = String(value || '')
+    .split(',')
+    .map(w => w.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, ''))
+    .filter(Boolean);
+  const invalid = wikis.filter(w => !WIKI_DOMAIN_REGEX.test(w));
+  return { wikis: [...new Set(wikis)], invalid };
+}
+
+function isValidLocalDateTime(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) && !isNaN(parseBangladeshTime(value));
+}
+
+const NAMESPACE_REGEX = /^(all|\d{1,4}(,\d{1,4})*)$/;
+
+// Validate event form input; returns { error } or { values }
+function validateEventInput(body) {
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (!name) return { error: 'ইভেন্টের নাম আবশ্যক।' };
+  if (name.length > 150) return { error: 'ইভেন্টের নাম ১৫০ অক্ষরের বেশি হতে পারবে না।' };
+
+  const workshopUrl = typeof body.workshop_url === 'string' && body.workshop_url.trim() ? body.workshop_url.trim() : 'https://bn.wikipedia.org';
+  if (!isValidHttpUrl(workshopUrl) || workshopUrl.length > 500) return { error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' };
+
+  const start = body.start_time || '';
+  const end = body.end_time || '';
+  if (!isValidLocalDateTime(start) || !isValidLocalDateTime(end)) return { error: 'ইভেন্টের শুরু ও শেষের সময় সঠিকভাবে দিন।' };
+  if (parseBangladeshTime(end) <= parseBangladeshTime(start)) return { error: 'ইভেন্ট শেষের সময় অবশ্যই শুরুর সময়ের পরে হতে হবে।' };
+
+  const { wikis, invalid } = parseWikiList(body.target_wikis || 'bn.wikipedia.org');
+  if (invalid.length > 0) return { error: `এই উইকিগুলো গ্রহণযোগ্য নয়: ${invalid.join(', ')}। শুধুমাত্র উইকিমিডিয়া প্রকল্পের ডোমেইন (যেমন bn.wikipedia.org) দিন।` };
+  if (wikis.length === 0) return { error: 'অন্তত একটি টার্গেট উইকি দিন।' };
+  if (wikis.length > 10) return { error: 'সর্বোচ্চ ১০টি টার্গেট উইকি দেওয়া যাবে।' };
+
+  const namespaces = typeof body.target_namespaces === 'string' && body.target_namespaces.trim() ? body.target_namespaces.trim() : 'all';
+  if (!NAMESPACE_REGEX.test(namespaces)) return { error: 'নেমস্পেস তালিকা সঠিক নয়।' };
+
+  return { values: { name, workshopUrl, start, end, targetWikis: wikis.join(','), namespaces } };
+}
+
+// Prevent spreadsheet formula injection in CSV exports
+function escapeCSV(val) {
+  if (val === null || val === undefined) return '';
+  let str = String(val);
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+  if (/[",\n\r]/.test(str)) {
+    return `"${str.replaceAll('"', '""')}"`;
+  }
+  return str;
 }
 
 // HTML Escaping Helper
@@ -132,16 +274,28 @@ function isAdmin(req, res, next) {
   if (req.session && req.session.isAdmin) {
     return next();
   }
+  if (wantsJson(req)) {
+    return res.status(401).json({ success: false, code: 'auth_required', error: 'আপনার সেশনের মেয়াদ শেষ হয়েছে। অনুগ্রহ করে আবার লগ ইন করুন।' });
+  }
   res.redirect('/login');
+}
+
+const USER_AGENT = 'Wikimedia-BD-Outreach-Tool/1.1 (https://acd.toolforge.org; contact@wikimedia.org.bd) - Account creator for outreach event and workshop participants';
+
+function wikiApiUrl(wiki) {
+  if (!WIKI_DOMAIN_REGEX.test(wiki)) {
+    throw new Error(`Refusing to contact non-Wikimedia host: ${wiki}`);
+  }
+  return `https://${wiki}/w/api.php`;
 }
 
 // Helper: Query MediaWiki Action API (GET)
 async function queryWikiAPI(wiki, params, accessToken = null) {
-  const url = new URL(`https://${wiki}/w/api.php`);
+  const url = new URL(wikiApiUrl(wiki));
   Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
   
   const headers = {
-    'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://acd.toolforge.org; contact@wikimedia.org.bd) - Account creator for outreach event and workshop participants'
+    'User-Agent': USER_AGENT
   };
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
@@ -156,13 +310,13 @@ async function queryWikiAPI(wiki, params, accessToken = null) {
 
 // Helper: Post to MediaWiki Action API (POST)
 async function postWikiAPI(wiki, params, accessToken = null) {
-  const url = `https://${wiki}/w/api.php`;
+  const url = wikiApiUrl(wiki);
   const body = new URLSearchParams();
   Object.keys(params).forEach(key => body.append(key, params[key]));
   
   const headers = {
     'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://acd.toolforge.org; contact@wikimedia.org.bd) - Account creator for outreach event and workshop participants'
+    'User-Agent': USER_AGENT
   };
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
@@ -192,7 +346,11 @@ async function checkUsername(username) {
       formatversion: '2'
     });
     
-    if (localData.query && localData.query.users && localData.query.users[0] && !localData.query.users[0].missing) {
+    const localUser = localData.query && localData.query.users && localData.query.users[0];
+    if (localUser && localUser.invalid) {
+      return { valid: false, reason: 'নামটি উইকিপিডিয়ার ব্যবহারকারী নাম হিসেবে গ্রহণযোগ্য নয়। অন্য একটি নাম চেষ্টা করুন।' };
+    }
+    if (localUser && !localUser.missing) {
       return { valid: false, reason: 'স্থানীয় উইকিপিডিয়ায় (bnwiki) এই ব্যবহারকারী নাম ইতিমধ্যে বিদ্যমান।' };
     }
 
@@ -629,7 +787,7 @@ function renderView(viewName, replacements = {}, req = null) {
                                         <span class="font-semibold font-body-md text-on-surface">\${escapeHTML(p.username)}</span>
                                         \${typeLabel}
                                     </div>
-                                    <button onclick="deleteParticipant(\${p.id}, '\${escapeHTML(p.username)}')" class="text-error hover:bg-error-container/20 p-xs rounded transition-colors flex items-center justify-center" title="বাদ দিন">
+                                    <button data-delete-participant="\${p.id}" data-username="\${escapeHTML(p.username)}" class="text-error hover:bg-error-container/20 p-xs rounded transition-colors flex items-center justify-center" title="বাদ দিন">
                                         <span class="material-symbols-outlined text-[18px]">delete</span>
                                     </button>
                                 </li>
@@ -749,8 +907,12 @@ function renderView(viewName, replacements = {}, req = null) {
                 });
             }
 
-            // Delete participant
-            window.deleteParticipant = function(id, username) {
+            // Delete participant (buttons carry the id and name as data attributes)
+            participantsList.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-delete-participant]');
+                if (btn) deleteParticipant(btn.dataset.deleteParticipant, btn.dataset.username);
+            });
+            function deleteParticipant(id, username) {
                 if (!confirm(\`আপনি কি নিশ্চিতভাবে "\${username}"-কে লিডারবোর্ড থেকে বাদ দিতে চান?\`)) return;
                 
                 fetch(\`/api/admin/participants/\${id}\`, {
@@ -780,9 +942,9 @@ function renderView(viewName, replacements = {}, req = null) {
       </script>
     `;
   }
-  html = html.replace('<!-- ADMIN_PARTICIPANT_MANAGEMENT -->', participantManagementHtml);
-  html = html.replace('<!-- ADMIN_EDIT_ACTION -->', editActionHtml);
-  html = html.replace('<!-- ADMIN_EDIT_MODAL -->', editModalHtml);
+  html = html.replace('<!-- ADMIN_PARTICIPANT_MANAGEMENT -->', () => participantManagementHtml);
+  html = html.replace('<!-- ADMIN_EDIT_ACTION -->', () => editActionHtml);
+  html = html.replace('<!-- ADMIN_EDIT_MODAL -->', () => editModalHtml);
 
   // Replace custom variables passed in
   Object.keys(replacements).forEach(key => {
@@ -790,7 +952,8 @@ function renderView(viewName, replacements = {}, req = null) {
     if (typeof value === 'string' && !key.endsWith('_HTML')) {
       value = escapeHTML(value);
     }
-    html = html.replaceAll(`{{${key}}}`, value);
+    // A replacer function stops "$&" or "$'" inside values from being expanded
+    html = html.replaceAll(`{{${key}}}`, () => String(value));
   });
 
   // Render navigation auth section
@@ -805,7 +968,7 @@ function renderView(viewName, replacements = {}, req = null) {
       <a class="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:opacity-80 transition-opacity" href="/login">লগ ইন</a>
     `;
   }
-  html = html.replace('<!-- NAV_AUTH -->', authHtml);
+  html = html.replace('<!-- NAV_AUTH -->', () => authHtml);
 
   return html;
 }
@@ -1038,268 +1201,289 @@ app.get('/favicon.ico', (req, res) => {
 
 
 // Real-time username availability check endpoint
-app.get('/api/check-username', ipRateLimiter(30, 60 * 1000), async (req, res) => {
-  const username = req.query.username;
-  if (!username || username.trim().length < 3) {
-    return res.status(400).json({ valid: false, reason: 'নামটি কমপক্ষে ৩ অক্ষরের হতে হবে।' });
+app.get('/api/check-username', rateLimiter('check-username', { perSession: 60, perIp: 1500, windowMs: 60 * 1000 }), async (req, res) => {
+  const username = normalizeUsername(req.query.username);
+  const problem = usernameProblem(username);
+  if (problem) {
+    return res.status(400).json({ valid: false, reason: problem });
   }
-  
+
   try {
-    const result = await checkUsername(username.trim());
-    res.json(result);
+    const result = await checkUsername(username);
+    res.json({ ...result, normalized: username });
   } catch (err) {
-    res.status(500).json({ valid: false, reason: err.message });
+    res.status(502).json({ valid: false, reason: err.message });
   }
 });
 
 // Submit registration requests
-app.post('/api/register', ipRateLimiter(5, 15 * 60 * 1000), async (req, res) => {
-  const { email, username, eventId } = req.body;
+app.post('/api/register', rateLimiter('register', { perSession: 5, perIp: 300, windowMs: 15 * 60 * 1000 }), async (req, res) => {
+  const { eventId, website } = req.body;
+  // Honeypot: real visitors never see or fill this field
+  if (website) {
+    return res.json({ success: true });
+  }
+
+  const email = typeof req.body.email === 'string' ? req.body.email.trim() : '';
+  const username = normalizeUsername(req.body.username);
   if (!email || !username) {
     return res.status(400).json({ success: false, error: 'সবগুলো ঘর পূরণ করা আবশ্যক।' });
+  }
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ success: false, error: 'ইমেইল ঠিকানাটি সঠিক নয়।' });
+  }
+  const problem = usernameProblem(username);
+  if (problem) {
+    return res.status(400).json({ success: false, error: problem });
   }
 
   try {
     const db = await getDatabase();
-    
-    // Backend validation of username to prevent bypass
-    const check = await checkUsername(username.trim());
-    if (!check.valid) {
-      return res.status(400).json({ success: false, error: check.reason });
-    }
 
-    let eventName = '';
     let event = null;
     if (eventId) {
       event = await db.get("SELECT * FROM events WHERE id = ?", eventId);
       if (!event) {
-        return res.status(404).json({ success: false, error: 'অনুরোধকৃত ইভেন্টটি পাওয়া যায়নি।' });
-      }
-      eventName = event.name;
-      
-      // Check event duration and registration active status
-      const now = new Date();
-      const start = parseBangladeshTime(event.start_time);
-      const end = parseBangladeshTime(event.end_time);
-      const isDurationActive = (start && end && now >= start && now <= end);
-      if (event.registration_active !== 1 || !isDurationActive) {
-        return res.status(403).json({ success: false, error: 'দুঃখিত, এই ইভেন্টের রেজিস্ট্রেশন বর্তমানে বন্ধ বা সময়সীমা অতিক্রম হয়েছে।' });
+        return res.status(404).json({ success: false, error: 'অনুরোধকৃত ইভেন্টটি পাওয়া যায়নি।' });
       }
     } else {
       const eventNameSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
-      eventName = eventNameSetting ? eventNameSetting.value : '';
-      
-      if (eventName) {
-        event = await db.get("SELECT * FROM events WHERE name = ?", eventName);
+      const activeName = eventNameSetting ? eventNameSetting.value : '';
+      if (activeName) {
+        event = await db.get("SELECT * FROM events WHERE name = ?", activeName);
       }
       if (!event) {
         event = await db.get("SELECT * FROM events ORDER BY id DESC LIMIT 1");
       }
-      
       if (!event) {
-        return res.status(404).json({ success: false, error: 'কোনো সক্রিয় ইভেন্ট পাওয়া যায়নি।' });
+        return res.status(404).json({ success: false, error: 'কোনো সক্রিয় ইভেন্ট পাওয়া যায়নি।' });
       }
-      
-      eventName = event.name;
-      const now = new Date();
-      const start = parseBangladeshTime(event.start_time);
-      const end = parseBangladeshTime(event.end_time);
-      const isDurationActive = (start && end && now >= start && now <= end);
-      if (event.registration_active !== 1 || !isDurationActive) {
-        return res.status(403).json({ success: false, error: 'দুঃখিত, বর্তমানে রেজিস্ট্রেশন বন্ধ আছে।' });
-      }
+    }
+
+    // Check event duration and registration active status
+    const now = new Date();
+    const start = parseBangladeshTime(event.start_time);
+    const end = parseBangladeshTime(event.end_time);
+    const isDurationActive = (start && end && now >= start && now <= end);
+    if (event.registration_active !== 1 || !isDurationActive) {
+      return res.status(403).json({ success: false, error: 'দুঃখিত, এই ইভেন্টের রেজিস্ট্রেশন বর্তমানে বন্ধ বা সময়সীমা অতিক্রম হয়েছে।' });
+    }
+
+    // Backend validation of username to prevent bypass
+    const check = await checkUsername(username);
+    if (!check.valid) {
+      return res.status(400).json({ success: false, error: check.reason });
     }
 
     // Insert request
     await db.run(
       'INSERT INTO requests (username, email, status, event_name) VALUES (?, ?, ?, ?)',
-      username.trim(),
-      email.trim(),
+      username,
+      email,
       'pending',
-      eventName
+      event.name
     );
 
     res.json({ success: true, eventId: event.id });
   } catch (err) {
     if (err.message && err.message.includes('UNIQUE constraint failed')) {
-      return res.status(400).json({ success: false, error: 'এই ব্যবহারকারী নাম দিয়ে ইতিমধ্যে একটি আবেদন করা হয়েছে।' });
+      return res.status(400).json({ success: false, error: 'এই ব্যবহারকারী নাম দিয়ে ইতিমধ্যে একটি আবেদন করা হয়েছে।' });
     }
     console.error("Register request error:", err);
-    res.status(500).json({ success: false, error: 'আবেদনটি সংরক্ষণ করতে ব্যর্থ হয়েছে।' });
+    res.status(500).json({ success: false, error: 'আবেদনটি সংরক্ষণ করতে ব্যর্থ হয়েছে।' });
   }
 });
 
 // --- OAUTH AUTHENTICATION ROUTES ---
 
+const OAUTH_BASE_URL = process.env.OAUTH_BASE_URL || 'https://meta.wikimedia.org/w/rest.php/oauth2';
+const ADMIN_WIKIS = ['bn.wikipedia.org', 'bd.wikimedia.org'];
+
+function regenerateSession(req) {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate(err => (err ? reject(err) : resolve()));
+  });
+}
+
+// Start a fresh session for a logged-in admin (prevents session fixation)
+async function startAdminSession(req, { username, adminWikis, tokens, mock }) {
+  await regenerateSession(req);
+  req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  req.session.username = username;
+  req.session.isAdmin = true;
+  req.session.isDeveloper = isDeveloperUsername(username);
+  req.session.adminWikis = adminWikis;
+  // Accounts are created on bn.wikipedia.org when possible, otherwise bd.wikimedia.org
+  req.session.adminWiki = adminWikis[0];
+  req.session.isMock = !!mock;
+  if (tokens) {
+    req.session.accessToken = tokens.access_token;
+    req.session.refreshToken = tokens.refresh_token || null;
+    req.session.tokenExpiresAt = tokens.expires_in ? Date.now() + tokens.expires_in * 1000 : null;
+  }
+  try {
+    const db = await getDatabase();
+    await db.run('INSERT INTO login_logs (username, wiki) VALUES (?, ?)', username, req.session.adminWiki);
+  } catch (dbErr) {
+    console.error("Failed to log login:", dbErr);
+  }
+}
+
+async function requestOAuthToken(params) {
+  const tokenRes = await fetch(`${OAUTH_BASE_URL}/access_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
+    body: new URLSearchParams({
+      client_id: process.env.WIKIMEDIA_CLIENT_ID,
+      client_secret: process.env.WIKIMEDIA_CLIENT_SECRET,
+      ...params
+    })
+  });
+  if (!tokenRes.ok) {
+    throw new Error(`Token request failed: ${tokenRes.status} ${tokenRes.statusText}`);
+  }
+  return tokenRes.json();
+}
+
+// Return a usable access token, refreshing it when it is about to expire.
+// Returns null when the admin has to log in again.
+async function getValidAccessToken(req) {
+  const s = req.session;
+  if (!s.accessToken) return null;
+  if (!s.tokenExpiresAt || s.tokenExpiresAt - Date.now() > 60 * 1000) {
+    return s.accessToken;
+  }
+  if (!s.refreshToken) return null;
+  try {
+    const tokens = await requestOAuthToken({ grant_type: 'refresh_token', refresh_token: s.refreshToken });
+    s.accessToken = tokens.access_token;
+    s.refreshToken = tokens.refresh_token || s.refreshToken;
+    s.tokenExpiresAt = tokens.expires_in ? Date.now() + tokens.expires_in * 1000 : null;
+    return s.accessToken;
+  } catch (err) {
+    console.error("OAuth token refresh failed:", err);
+    return null;
+  }
+}
+
+async function getUserGroups(wiki, username) {
+  try {
+    const data = await queryWikiAPI(wiki, {
+      action: 'query',
+      list: 'users',
+      ususers: username,
+      usprop: 'groups',
+      format: 'json',
+      formatversion: '2'
+    });
+    const user = data.query && data.query.users && data.query.users[0];
+    return (user && user.groups) || [];
+  } catch (e) {
+    console.error(`Failed to query user groups on ${wiki}:`, e);
+    return [];
+  }
+}
+
 // Login route (initiates OAuth)
 app.get('/login', async (req, res) => {
-  const clientID = process.env.WIKIMEDIA_CLIENT_ID;
-  
-  // MOCK LOGIN MODE (if credentials are placeholders or not set)
-  if (!clientID || clientID === 'your_client_id_here') {
-    if (isProduction) {
-      console.error("CRITICAL: WIKIMEDIA_CLIENT_ID is not configured in production mode.");
-      return res.status(500).send("Critical Configuration Error: Wikimedia OAuth client credentials are not configured.");
-    }
-    console.log("Wikimedia OAuth credentials not configured. Entering Mock OAuth Mode.");
-    
-    // Support mock developer login: /login?user=Yahya
-    const mockUser = req.query.user === 'Yahya' ? 'Yahya' : 'উইকি_অ্যাডমিন';
-    req.session.username = mockUser;
-    req.session.isAdmin = true;
-    req.session.isDeveloper = mockUser === 'Yahya';
-    
-    // Allow query parameter override for testing different targets: ?wiki=bd
-    const targetWiki = req.query.wiki === 'bd' ? 'bd.wikimedia.org' : 'bn.wikipedia.org';
-    req.session.adminWiki = targetWiki;
-
-    // Log mock login in database
-    try {
-      const db = await getDatabase();
-      await db.run('INSERT INTO login_logs (username, wiki) VALUES (?, ?)', mockUser, targetWiki);
-    } catch (dbErr) {
-      console.error("Failed to log mock login:", dbErr);
-    }
-    
+  if (mockLoginEnabled) {
+    // Local testing only: /login?user=Name&wiki=bd
+    const mockUser = normalizeUsername(typeof req.query.user === 'string' ? req.query.user : '') || 'Test admin';
+    const adminWikis = req.query.wiki === 'bd' ? ['bd.wikimedia.org'] : ['bn.wikipedia.org'];
+    console.log(`[MOCK LOGIN] Logged in as "${mockUser}" (${adminWikis[0]}).`);
+    await startAdminSession(req, { username: mockUser, adminWikis, mock: true });
     return res.redirect('/admin');
   }
 
-  // Real OAuth flow redirect
-  const authUrl = `https://meta.wikimedia.org/w/rest.php/oauth2/authorize?response_type=code&client_id=${clientID}&redirect_uri=${encodeURIComponent(process.env.WIKIMEDIA_REDIRECT_URI)}`;
-  res.redirect(authUrl);
+  const clientID = process.env.WIKIMEDIA_CLIENT_ID;
+  if (!clientID || clientID === 'your_client_id_here' || !process.env.WIKIMEDIA_REDIRECT_URI) {
+    console.error("WIKIMEDIA_CLIENT_ID / WIKIMEDIA_REDIRECT_URI are not configured. Set ENABLE_MOCK_LOGIN=true for local testing.");
+    return res.status(500).send("Configuration error: Wikimedia OAuth client credentials are not configured.");
+  }
+
+  // Random state ties the callback to this browser session (prevents login CSRF)
+  const state = crypto.randomBytes(16).toString('hex');
+  req.session.oauthState = state;
+  const authUrl = new URL(`${OAUTH_BASE_URL}/authorize`);
+  authUrl.searchParams.set('response_type', 'code');
+  authUrl.searchParams.set('client_id', clientID);
+  authUrl.searchParams.set('redirect_uri', process.env.WIKIMEDIA_REDIRECT_URI);
+  authUrl.searchParams.set('state', state);
+  req.session.save(() => res.redirect(authUrl.toString()));
 });
 
 // OAuth callback
 app.get('/auth/callback', async (req, res) => {
-  const code = req.query.code;
-  if (!code) {
-    return res.status(400).send('OAuth callback parameters missing.');
+  const { code, state } = req.query;
+  const expectedState = req.session.oauthState;
+  delete req.session.oauthState;
+
+  if (req.query.error) {
+    return res.status(400).send('লগ ইন বাতিল করা হয়েছে। <a href="/">হোম পাতায় ফিরে যান</a>');
+  }
+  if (!code || !tokensMatch(state, expectedState)) {
+    return res.status(400).send('লগ ইন যাচাই ব্যর্থ হয়েছে। অনুগ্রহ করে <a href="/login">আবার লগ ইন করুন</a>।');
   }
 
   try {
     // Exchange authorization code for access token
-    const tokenUrl = 'https://meta.wikimedia.org/w/rest.php/oauth2/access_token';
-    const params = new URLSearchParams({
+    const tokens = await requestOAuthToken({
       grant_type: 'authorization_code',
       code,
-      client_id: process.env.WIKIMEDIA_CLIENT_ID,
-      client_secret: process.env.WIKIMEDIA_CLIENT_SECRET,
       redirect_uri: process.env.WIKIMEDIA_REDIRECT_URI
     });
 
-    const tokenRes = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params
-    });
-
-    if (!tokenRes.ok) {
-      throw new Error(`Token exchange failed: ${tokenRes.statusText}`);
-    }
-
-    const tokenData = await tokenRes.json();
-    const accessToken = tokenData.access_token;
-
     // Fetch user profile info
-    const profileUrl = 'https://meta.wikimedia.org/w/rest.php/oauth2/resource/profile';
-    const profileRes = await fetch(profileUrl, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
+    const profileRes = await fetch(`${OAUTH_BASE_URL}/resource/profile`, {
+      headers: { 'Authorization': `Bearer ${tokens.access_token}`, 'User-Agent': USER_AGENT }
     });
-
     if (!profileRes.ok) {
       throw new Error(`Profile fetch failed: ${profileRes.statusText}`);
     }
-
     const profileData = await profileRes.json();
-    const username = profileData.username || profileData.sub;
-
+    const username = profileData.username;
     if (!username) {
       throw new Error("Unable to identify username from OAuth profile.");
     }
 
-    // Check if user is a sysop (admin) on bn.wikipedia.org or bd.wikimedia.org
-    let isBnAdmin = false;
-    let isBdAdmin = false;
-
-    try {
-      const bnUserData = await queryWikiAPI('bn.wikipedia.org', {
-        action: 'query',
-        list: 'users',
-        ususers: username,
-        usprop: 'groups',
-        format: 'json',
-        formatversion: '2'
-      });
-      const bnUser = bnUserData.query && bnUserData.query.users && bnUserData.query.users[0];
-      if (bnUser && bnUser.groups && bnUser.groups.includes('sysop')) {
-        isBnAdmin = true;
+    // Check the admin's groups on bn.wikipedia.org and bd.wikimedia.org
+    const adminWikis = [];
+    for (const wiki of ADMIN_WIKIS) {
+      const groups = await getUserGroups(wiki, username);
+      if (groups.some(g => allowedGroups.includes(g))) {
+        adminWikis.push(wiki);
       }
-    } catch (e) {
-      console.error("Failed to query bnwiki admin groups:", e);
     }
 
-    try {
-      const bdUserData = await queryWikiAPI('bd.wikimedia.org', {
-        action: 'query',
-        list: 'users',
-        ususers: username,
-        usprop: 'groups',
-        format: 'json',
-        formatversion: '2'
-      });
-      const bdUser = bdUserData.query && bdUserData.query.users && bdUserData.query.users[0];
-      if (bdUser && bdUser.groups && bdUser.groups.includes('sysop')) {
-        isBdAdmin = true;
-      }
-    } catch (e) {
-      console.error("Failed to query bdwikimedia admin groups:", e);
-    }
-
-    // Determine access and primary wiki target
-    if (isBnAdmin || isBdAdmin) {
-      req.session.username = username;
-      req.session.isAdmin = true;
-      req.session.accessToken = accessToken;
-      
-      // If username is Yahya, grant Developer rights
-      if (username.toLowerCase() === 'yahya') {
-        req.session.isDeveloper = true;
-      } else {
-        req.session.isDeveloper = false;
-      }
-
-      // If sysop on bnwiki, create account there; else on bd.wikimedia.org
-      const targetWiki = isBnAdmin ? 'bn.wikipedia.org' : 'bd.wikimedia.org';
-      req.session.adminWiki = targetWiki;
-
-      // Log successful login in database
-      try {
-        const db = await getDatabase();
-        await db.run('INSERT INTO login_logs (username, wiki) VALUES (?, ?)', username, targetWiki);
-      } catch (dbErr) {
-        console.error("Failed to log OAuth login:", dbErr);
-      }
-
+    if (adminWikis.length > 0) {
+      await startAdminSession(req, { username, adminWikis, tokens });
       res.redirect('/admin');
     } else {
       // Access denied
-      res.redirect(`/login-error?username=${encodeURIComponent(username)}`);
+      req.session.loginErrorUsername = username;
+      res.redirect('/login-error');
     }
   } catch (err) {
     console.error("OAuth callback error:", err);
-    res.status(500).send(`লগ ইন করতে সমস্যা হয়েছে: ${err.message}`);
+    res.status(500).send(`লগ ইন করতে সমস্যা হয়েছে: ${escapeHTML(err.message)}`);
   }
 });
 
 // Login error page
 app.get('/login-error', (req, res) => {
-  const username = req.query.username || 'ব্যবহারকারী';
+  const username = req.session.loginErrorUsername || 'ব্যবহারকারী';
+  delete req.session.loginErrorUsername;
   res.send(renderView('login_error.html', { ADMIN_USERNAME: username }));
 });
 
-// Logout
+// Logout (refuses cross-site requests so other sites cannot log admins out)
 app.get('/logout', (req, res) => {
+  const site = req.headers['sec-fetch-site'];
+  if (site && site !== 'same-origin' && site !== 'none') {
+    return res.redirect('/');
+  }
   req.session.destroy(() => {
+    res.clearCookie('acd.sid');
     res.redirect('/');
   });
 });
@@ -1397,77 +1581,26 @@ app.get('/api/requests', isAdmin, async (req, res) => {
   }
 });
 
-// Save global settings
+// Save global settings (additional instructions and welcome message)
 app.post('/api/settings', isAdmin, async (req, res) => {
-  const { 
-    event_name, 
-    registration_active, 
-    workshop_url, 
-    additional_instructions, 
-    welcome_message,
-    event_start,
-    event_end,
-    event_wikis,
-    event_namespaces
-  } = req.body;
-  
+  const { additional_instructions, welcome_message } = req.body;
+  if ((typeof additional_instructions === 'string' && additional_instructions.length > 5000) ||
+      (typeof welcome_message === 'string' && welcome_message.length > 10000)) {
+    return res.status(400).json({ success: false, error: 'লেখাটি অনেক বড়। অনুগ্রহ করে ছোট করুন।' });
+  }
+
   try {
     const db = await getDatabase();
-    
-    if (!event_name) {
-      if (additional_instructions !== undefined) {
-        await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('additional_instructions', ?)", additional_instructions || '');
-      }
-      if (welcome_message !== undefined) {
-        await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('welcome_message', ?)", welcome_message || '');
-      }
-      return res.json({ success: true });
+    if (additional_instructions !== undefined) {
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('additional_instructions', ?)", String(additional_instructions || ''));
     }
-
-    if (workshop_url && !isValidHttpUrl(workshop_url)) {
-      return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
+    if (welcome_message !== undefined) {
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('welcome_message', ?)", String(welcome_message || ''));
     }
-
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_name', ?)", event_name);
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('registration_active', ?)", String(registration_active));
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", workshop_url || 'https://bn.wikipedia.org');
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('additional_instructions', ?)", additional_instructions || '');
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('welcome_message', ?)", welcome_message || '');
-    
-    if (event_start) {
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", event_start);
-    }
-    if (event_end) {
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", event_end);
-    }
-    if (event_wikis) {
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", event_wikis);
-    }
-    if (event_namespaces) {
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_namespaces', ?)", event_namespaces);
-    }
-
-    // Also update in events table
-    await db.run(
-      `UPDATE events 
-       SET workshop_url = ?, start_time = ?, end_time = ?, target_wikis = ?, target_namespaces = ? 
-       WHERE name = ?`,
-      workshop_url || 'https://bn.wikipedia.org',
-      event_start || '2026-06-18T00:00',
-      event_end || '2026-06-25T23:59',
-      event_wikis || 'bn.wikipedia.org',
-      event_namespaces || 'all',
-      event_name
-    );
-
-    if (typeof runStatsPoller === 'function') {
-      runStatsPoller().catch(console.error);
-    }
-    
     res.json({ success: true });
   } catch (err) {
     console.error("Save settings error:", err);
-    res.status(500).json({ success: false, error: 'কনফিগারেশন সংরক্ষণ করা যায়নি।' });
+    res.status(500).json({ success: false, error: 'কনফিগারেশন সংরক্ষণ করা যায়নি।' });
   }
 });
 
@@ -1510,44 +1643,54 @@ app.get('/api/events/:eventName/requests', isAdmin, async (req, res) => {
   }
 });
 
+// Format a Date as a Bangladesh local "YYYY-MM-DDTHH:mm" string (UTC+6, no DST)
+function toBangladeshLocal(date) {
+  return new Date(date.getTime() + 6 * 60 * 60 * 1000).toISOString().slice(0, 16);
+}
+
+// Fill in default start (now) and end (start + 7 days) times, then validate
+function prepareEventInput(body) {
+  const input = { ...body };
+  if (!input.start_time) {
+    input.start_time = toBangladeshLocal(new Date());
+  }
+  if (!input.end_time && isValidLocalDateTime(input.start_time)) {
+    input.end_time = toBangladeshLocal(new Date(parseBangladeshTime(input.start_time).getTime() + 7 * 24 * 60 * 60 * 1000));
+  }
+  return validateEventInput(input);
+}
+
 // Create a new event and set it active
 app.post('/api/events', isAdmin, async (req, res) => {
-  const { name, workshop_url, start_time, end_time, target_wikis, target_namespaces } = req.body;
-  if (!name || !name.trim()) {
-    return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
+  const { error, values } = prepareEventInput(req.body);
+  if (error) {
+    return res.status(400).json({ success: false, error });
   }
-
-  const wUrl = workshop_url ? workshop_url.trim() : 'https://bn.wikipedia.org';
-  if (wUrl && !isValidHttpUrl(wUrl)) {
-    return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
-  }
-
-  const startTimeVal = start_time || new Date().toISOString().slice(0, 16);
-  const defaultEndTime = new Date(new Date(startTimeVal).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
-  const endTimeVal = end_time || defaultEndTime;
-  const targetWikisVal = target_wikis || 'bn.wikipedia.org';
-  const targetNamespacesVal = target_namespaces || 'all';
 
   try {
     const db = await getDatabase();
+    const existing = await db.get("SELECT id FROM events WHERE name = ?", values.name);
+    if (existing) {
+      return res.status(400).json({ success: false, error: 'এই নামে একটি ইভেন্ট ইতিমধ্যে আছে। অন্য একটি নাম দিন।' });
+    }
     // 1. Insert into events table
     await db.run(
       'INSERT INTO events (name, workshop_url, start_time, end_time, target_wikis, target_namespaces) VALUES (?, ?, ?, ?, ?, ?)',
-      name.trim(),
-      wUrl,
-      startTimeVal,
-      endTimeVal,
-      targetWikisVal,
-      targetNamespacesVal
+      values.name,
+      values.workshopUrl,
+      values.start,
+      values.end,
+      values.targetWikis,
+      values.namespaces
     );
     // 2. Set active settings
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_name', ?)", name.trim());
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", wUrl);
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", startTimeVal);
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", endTimeVal);
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", targetWikisVal);
-    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_namespaces', ?)", targetNamespacesVal);
-    
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_name', ?)", values.name);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", values.workshopUrl);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", values.start);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", values.end);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", values.targetWikis);
+    await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_namespaces', ?)", values.namespaces);
+
     if (typeof runStatsPoller === 'function') {
       runStatsPoller().catch(console.error);
     }
@@ -1555,30 +1698,20 @@ app.post('/api/events', isAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Create event error:", err);
-    res.status(500).json({ success: false, error: 'নতুন ইভেন্ট তৈরি করতে ব্যর্থ হয়েছে।' });
+    res.status(500).json({ success: false, error: 'নতুন ইভেন্ট তৈরি করতে ব্যর্থ হয়েছে।' });
   }
 });
 
 // Edit an existing event (Admin Only)
 app.post('/api/admin/events/edit', isAdmin, async (req, res) => {
-  const { id, name, workshop_url, start_time, end_time, target_wikis, target_namespaces, registration_active } = req.body;
-  
+  const { id, registration_active } = req.body;
   if (!id) {
     return res.status(400).json({ success: false, error: 'ইভেন্ট আইডি আবশ্যক।' });
   }
-  if (!name || !name.trim()) {
-    return res.status(400).json({ success: false, error: 'ইভেন্টের নাম আবশ্যক।' });
+  const { error, values } = prepareEventInput(req.body);
+  if (error) {
+    return res.status(400).json({ success: false, error });
   }
-
-  const wUrl = workshop_url ? workshop_url.trim() : 'https://bn.wikipedia.org';
-  if (wUrl && !isValidHttpUrl(wUrl)) {
-    return res.status(400).json({ success: false, error: 'ইউআরএলটি (Workshop URL) সঠিক নয়।' });
-  }
-
-  const startTimeVal = start_time || new Date().toISOString().slice(0, 16);
-  const endTimeVal = end_time || new Date(new Date(startTimeVal).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
-  const targetWikisVal = target_wikis || 'bn.wikipedia.org';
-  const targetNamespacesVal = target_namespaces || 'all';
   const regActiveVal = registration_active === 1 || registration_active === '1' ? 1 : 0;
 
   try {
@@ -1586,11 +1719,17 @@ app.post('/api/admin/events/edit', isAdmin, async (req, res) => {
     // 1. Get the existing event to find its name before editing
     const event = await db.get("SELECT * FROM events WHERE id = ?", id);
     if (!event) {
-      return res.status(404).json({ success: false, error: 'ইভেন্টটি পাওয়া যায়নি।' });
+      return res.status(404).json({ success: false, error: 'ইভেন্টটি পাওয়া যায়নি।' });
     }
 
     const oldName = event.name;
-    const newName = name.trim();
+    const newName = values.name;
+    if (newName !== oldName) {
+      const clash = await db.get("SELECT id FROM events WHERE name = ? AND id != ?", newName, id);
+      if (clash) {
+        return res.status(400).json({ success: false, error: 'এই নামে আরেকটি ইভেন্ট ইতিমধ্যে আছে।' });
+      }
+    }
 
     // 2. Update the event in events table
     await db.run(
@@ -1598,11 +1737,11 @@ app.post('/api/admin/events/edit', isAdmin, async (req, res) => {
        SET name = ?, workshop_url = ?, start_time = ?, end_time = ?, target_wikis = ?, target_namespaces = ?, registration_active = ?
        WHERE id = ?`,
       newName,
-      wUrl,
-      startTimeVal,
-      endTimeVal,
-      targetWikisVal,
-      targetNamespacesVal,
+      values.workshopUrl,
+      values.start,
+      values.end,
+      values.targetWikis,
+      values.namespaces,
       regActiveVal,
       id
     );
@@ -1617,11 +1756,11 @@ app.post('/api/admin/events/edit', isAdmin, async (req, res) => {
     const activeEventSetting = await db.get("SELECT value FROM settings WHERE key = 'event_name'");
     if (activeEventSetting && activeEventSetting.value === oldName) {
       await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_name', ?)", newName);
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", wUrl);
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", startTimeVal);
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", endTimeVal);
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", targetWikisVal);
-      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_namespaces', ?)", targetNamespacesVal);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('workshop_url', ?)", values.workshopUrl);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_start', ?)", values.start);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_end', ?)", values.end);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_wikis', ?)", values.targetWikis);
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('event_namespaces', ?)", values.namespaces);
       await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('registration_active', ?)", regActiveVal.toString());
     }
 
@@ -1632,14 +1771,14 @@ app.post('/api/admin/events/edit', isAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Edit event error:", err);
-    res.status(500).json({ success: false, error: 'ইভেন্ট এডিট করতে ব্যর্থ হয়েছে।' });
+    res.status(500).json({ success: false, error: 'ইভেন্ট এডিট করতে ব্যর্থ হয়েছে।' });
   }
 });
 
-// Download previous events request log containing email addresses (Developer Yahya only)
+// Download previous events request log containing email addresses (developers only)
 app.get('/api/admin/download-log', isAdmin, async (req, res) => {
   if (!req.session.isDeveloper) {
-    return res.status(403).send('দুঃখিত, এই ফাইলটি ডাউনলোড করার অনুমতি শুধুমাত্র ডেভেলপার Yahya-এর আছে।');
+    return res.status(403).send('দুঃখিত, এই ফাইলটি ডাউনলোড করার অনুমতি শুধুমাত্র ডেভেলপারদের আছে।');
   }
 
   try {
@@ -1649,16 +1788,6 @@ app.get('/api/admin/download-log', isAdmin, async (req, res) => {
     // Create CSV header (UTF-8 signature BOM first to preserve Bengali characters in Excel)
     let csvContent = '\uFEFFID,Username,Email,Status,Event Name,Requested At,Decided By,Decided At,Error Message,Decision Reason\n';
     
-    // Helper to escape CSV values
-    const escapeCSV = (val) => {
-      if (val === null || val === undefined) return '';
-      const str = String(val);
-      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-        return `"${str.replaceAll('"', '""')}"`;
-      }
-      return str;
-    };
-
     // Populate rows
     requests.forEach(r => {
       csvContent += `${r.id},${escapeCSV(r.username)},${escapeCSV(r.email)},${escapeCSV(r.status)},${escapeCSV(r.event_name)},${escapeCSV(r.requested_at)},${escapeCSV(r.decided_by)},${escapeCSV(r.decided_at)},${escapeCSV(r.error_message)},${escapeCSV(r.decision_reason)}\n`;
@@ -1673,10 +1802,10 @@ app.get('/api/admin/download-log', isAdmin, async (req, res) => {
   }
 });
 
-// Download login history logs (Developer Yahya only)
+// Download login history logs (developers only)
 app.get('/api/admin/download-login-log', isAdmin, async (req, res) => {
   if (!req.session.isDeveloper) {
-    return res.status(403).send('দুঃখিত, এই লগ ডাউনলোড করার অনুমতি শুধুমাত্র ডেভেলপার Yahya-এর আছে।');
+    return res.status(403).send('দুঃখিত, এই লগ ডাউনলোড করার অনুমতি শুধুমাত্র ডেভেলপারদের আছে।');
   }
 
   try {
@@ -1686,16 +1815,6 @@ app.get('/api/admin/download-login-log', isAdmin, async (req, res) => {
     // Create CSV header (UTF-8 signature BOM first to preserve Bengali characters in Excel)
     let csvContent = '\uFEFFID,Username,Wiki,Logged At\n';
     
-    // Helper to escape CSV values
-    const escapeCSV = (val) => {
-      if (val === null || val === undefined) return '';
-      const str = String(val);
-      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-        return `"${str.replaceAll('"', '""')}"`;
-      }
-      return str;
-    };
-
     // Populate rows
     logs.forEach(l => {
       csvContent += `${l.id},${escapeCSV(l.username)},${escapeCSV(l.wiki)},${escapeCSV(l.logged_at)}\n`;
@@ -1717,12 +1836,15 @@ app.post('/api/requests/:id/decline', isAdmin, async (req, res) => {
   const { reason } = req.body || {};
   try {
     const db = await getDatabase();
-    await db.run(
-      "UPDATE requests SET status = 'declined', decided_by = ?, decided_at = CURRENT_TIMESTAMP, decision_reason = ? WHERE id = ?",
+    const result = await db.run(
+      "UPDATE requests SET status = 'declined', decided_by = ?, decided_at = CURRENT_TIMESTAMP, decision_reason = ? WHERE id = ? AND status = 'pending'",
       req.session.username,
-      reason ? reason.trim() : null,
+      typeof reason === 'string' && reason.trim() ? reason.trim().slice(0, 500) : null,
       requestId
     );
+    if (result.changes === 0) {
+      return res.status(409).json({ success: false, error: 'আবেদনটি ইতিমধ্যে নিষ্পত্তি করা হয়েছে। পাতাটি রিলোড করুন।' });
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: 'আবেদনটি বাতিল করতে সমস্যা হয়েছে।' });
@@ -1732,7 +1854,7 @@ app.post('/api/requests/:id/decline', isAdmin, async (req, res) => {
 // Approve and create account on the target wiki
 app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
   const requestId = req.params.id;
-  const { reason } = req.body || {};
+  const reason = typeof (req.body || {}).reason === 'string' ? req.body.reason.trim().slice(0, 500) : '';
 
   
   try {
@@ -1758,11 +1880,8 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
 
     console.log(`Creating account "${request.username}" on "${targetWiki}" by admin "${req.session.username}"`);
 
-    // MOCK MODE CREATION (if session has no valid access token)
-    if (!req.session.accessToken) {
-      if (isProduction) {
-        return res.status(400).json({ success: false, error: 'সেশন টোকেন পাওয়া যায়নি। অনুগ্রহ করে আবার লগ ইন করুন।' });
-      }
+    // MOCK MODE CREATION (local testing with ENABLE_MOCK_LOGIN only)
+    if (req.session.isMock) {
       console.log(`[MOCK MODE] Account "${request.username}" successfully created on "${targetWiki}"!`);
       
       // Update database status
@@ -1807,6 +1926,11 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
 
     // --- REAL ACCOUNT CREATION VIA MEDIAWIKI API ---
 
+    const accessToken = await getValidAccessToken(req);
+    if (!accessToken) {
+      return res.status(401).json({ success: false, code: 'auth_required', error: 'আপনার উইকিপিডিয়া লগ ইনের মেয়াদ শেষ হয়েছে। অনুগ্রহ করে লগ আউট করে আবার লগ ইন করুন।' });
+    }
+
     // 1. Fetch createaccount token
     let tokenData;
     try {
@@ -1816,7 +1940,7 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
         type: 'createaccount',
         format: 'json',
         formatversion: '2'
-      }, req.session.accessToken);
+      }, accessToken);
     } catch (tokenErr) {
       console.error("Token fetch failed:", tokenErr);
       throw new Error(`টোকেন আনতে ব্যর্থ হয়েছে: ${tokenErr.message}`);
@@ -1842,7 +1966,7 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
         createreturnurl: returnUrl,
         format: 'json',
         formatversion: '2'
-      }, req.session.accessToken);
+      }, accessToken);
     } catch (creationErr) {
       console.error("Creation POST call failed:", creationErr);
       throw new Error(`অ্যাকাউন্ট তৈরির সাবমিশন ব্যর্থ হয়েছে: ${creationErr.message}`);
@@ -1905,7 +2029,7 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
             type: 'csrf',
             format: 'json',
             formatversion: '2'
-          }, req.session.accessToken);
+          }, accessToken);
           
           const csrfToken = tokenData.query && tokenData.query.tokens && tokenData.query.tokens.csrftoken;
           if (csrfToken) {
@@ -1914,11 +2038,12 @@ app.post('/api/requests/:id/approve', isAdmin, async (req, res) => {
               action: 'edit',
               title: `User talk:${request.username}`,
               text: welcomeText,
+              createonly: '1',
               summary: 'নতুন ব্যবহারকারীকে স্বাগত জানানো হলো (ইভেন্ট ড্যাশবোর্ড)',
               token: csrfToken,
               format: 'json',
               formatversion: '2'
-            }, req.session.accessToken);
+            }, accessToken);
             
             if (editResult.edit && editResult.edit.result === 'Success') {
               console.log(`Successfully posted welcome message to "User talk:${request.username}" on "${targetWiki}".`);
@@ -1985,7 +2110,7 @@ async function fetchWikiContribs(wiki, username, startUTC, endUTC, namespaces) {
   let uccontinue = null;
   
   do {
-    const url = new URL(`https://${wiki}/w/api.php`);
+    const url = new URL(wikiApiUrl(wiki));
     url.searchParams.append('action', 'query');
     url.searchParams.append('list', 'usercontribs');
     url.searchParams.append('ucuser', username);
@@ -2009,7 +2134,7 @@ async function fetchWikiContribs(wiki, username, startUTC, endUTC, namespaces) {
     try {
       const response = await fetch(url.toString(), {
         headers: {
-          'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://acd.toolforge.org; contact@wikimedia.org.bd)'
+          'User-Agent': USER_AGENT
         }
       });
       if (!response.ok) break;
@@ -2048,7 +2173,7 @@ async function fetchWikiUploads(wiki, username, startUTC, endUTC, namespaces) {
   let lecontinue = null;
   
   do {
-    const url = new URL(`https://${wiki}/w/api.php`);
+    const url = new URL(wikiApiUrl(wiki));
     url.searchParams.append('action', 'query');
     url.searchParams.append('list', 'logevents');
     url.searchParams.append('leuser', username);
@@ -2067,7 +2192,7 @@ async function fetchWikiUploads(wiki, username, startUTC, endUTC, namespaces) {
     try {
       const response = await fetch(url.toString(), {
         headers: {
-          'User-Agent': 'Wikimedia-BD-Outreach-Tool/1.0 (https://acd.toolforge.org; contact@wikimedia.org.bd)'
+          'User-Agent': USER_AGENT
         }
       });
       if (!response.ok) break;
@@ -2262,8 +2387,13 @@ app.get('/api/admin/participants', isAdmin, async (req, res) => {
 
 // SECURED API: Add a participant manually
 app.post('/api/admin/participants', isAdmin, async (req, res) => {
-  const { username, eventId } = req.body;
-  if (!username || !username.trim()) {
+  const { eventId } = req.body;
+  const username = normalizeUsername(req.body.username);
+  const nameProblem = username ? usernameProblem(username) : null;
+  if (nameProblem) {
+    return res.status(400).json({ success: false, error: nameProblem });
+  }
+  if (!username) {
     return res.status(400).json({ success: false, error: 'ব্যবহারকারী নাম আবশ্যক।' });
   }
   
@@ -2295,7 +2425,7 @@ app.post('/api/admin/participants', isAdmin, async (req, res) => {
     await db.run(
       "INSERT INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 1)",
       eventName,
-      username.trim()
+      username
     );
     
     // Trigger stats update in the background for this user
@@ -2327,6 +2457,9 @@ app.delete('/api/admin/participants/:id', isAdmin, async (req, res) => {
 // SECURED API: Mass add participants manually
 app.post('/api/admin/participants/mass', isAdmin, async (req, res) => {
   const { usernames, eventId } = req.body;
+  if (Array.isArray(usernames) && usernames.length > 500) {
+    return res.status(400).json({ success: false, error: 'একসাথে সর্বোচ্চ ৫০০ জন যোগ করা যাবে।' });
+  }
   if (!usernames || !Array.isArray(usernames) || usernames.length === 0) {
     return res.status(400).json({ success: false, error: 'ব্যবহারকারী নামের তালিকা আবশ্যক।' });
   }
@@ -2360,8 +2493,8 @@ app.post('/api/admin/participants/mass', isAdmin, async (req, res) => {
     await db.run("BEGIN TRANSACTION");
     try {
       for (const rawUsername of usernames) {
-        const username = rawUsername.trim();
-        if (username) {
+        const username = normalizeUsername(rawUsername);
+        if (username && !usernameProblem(username)) {
           const result = await db.run(
             "INSERT OR IGNORE INTO event_participants (event_name, username, is_custom) VALUES (?, ?, 1)",
             eventName,

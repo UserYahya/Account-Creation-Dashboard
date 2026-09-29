@@ -211,6 +211,11 @@
                     <span class="material-symbols-outlined text-[20px] mt-0.5" id="feedbackIcon"></span>
                     <p class="font-body-md text-body-md" id="feedbackText"></p>
                 </div>
+                <!-- Honeypot field: hidden from people, bots tend to fill it in -->
+                <div class="absolute -left-[9999px] w-px h-px overflow-hidden" aria-hidden="true">
+                    <label for="website">Website</label>
+                    <input id="website" name="website" type="text" tabindex="-1" autocomplete="off"/>
+                </div>
                 <!-- Submit Button -->
                 <button id="submitBtn" class="w-full bg-primary text-on-primary h-12 rounded font-bold font-body-lg text-body-lg hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-[0.98]" type="submit">
                     আবেদন জমা দিন
@@ -315,6 +320,10 @@
     </footer>
 
     <script>
+        // Escape text before inserting it into HTML
+        function esc(str) {
+            return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+        }
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -331,9 +340,11 @@
         const formErrorText = document.getElementById('formErrorText');
 
         let debounceTimer;
+        let checkSequence = 0;
 
         usernameInput.addEventListener('input', (e) => {
             const value = e.target.value.trim();
+            checkSequence++;
             formError.classList.add('hidden');
             
             if (value.length === 0) {
@@ -353,17 +364,21 @@
                     return;
                 }
 
+                // Ignore answers to older checks that arrive after a newer one
+                const sequence = checkSequence;
                 fetch(`/api/check-username?username=${encodeURIComponent(value)}`)
                     .then(res => res.json())
                     .then(data => {
+                        if (sequence !== checkSequence) return;
                         if (data.valid) {
                             showSuccess("ব্যবহারকারী নাম ব্যবহার করা যাবে!");
                             submitBtn.disabled = false;
                         } else {
-                            showError(data.reason);
+                            showError(data.reason || data.error || "নামটি যাচাই করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
                         }
                     })
                     .catch(err => {
+                        if (sequence !== checkSequence) return;
                         showError("নামটি যাচাই করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
                     });
             }, 500);
@@ -406,7 +421,7 @@
             const username = usernameInput.value.trim();
             const EVENT_ID = '{{EVENT_ID}}';
 
-            const reqBody = { email, username };
+            const reqBody = { email, username, website: document.getElementById('website').value };
             if (EVENT_ID && !EVENT_ID.startsWith('{{')) {
                 reqBody.eventId = EVENT_ID;
             }
@@ -529,7 +544,7 @@
                                 activeEvents.forEach(e => {
                                     html += `
                                         <a class="text-primary hover:underline font-medium text-sm py-xs block" href="/event/${e.id}">
-                                            ${e.name}
+                                            ${esc(e.name)}
                                         </a>
                                     `;
                                 });
@@ -547,8 +562,8 @@
                                 let html = '';
                                 activeEvents.forEach(e => {
                                     html += `
-                                        <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${e.name}">
-                                            ${e.name}
+                                        <a class="text-primary hover:underline font-medium text-xs px-sm py-xs block truncate" href="/event/${e.id}" title="${esc(e.name)}">
+                                            ${esc(e.name)}
                                         </a>
                                     `;
                                 });
@@ -567,7 +582,7 @@
                                 otherEvents.forEach(e => {
                                     html += `
                                         <a class="text-primary hover:underline font-bold py-md block flex justify-between items-center border-b border-outline-variant/30" href="/event/${e.id}">
-                                            <span class="truncate pr-sm">${e.name}</span>
+                                            <span class="truncate pr-sm">${esc(e.name)}</span>
                                             <span class="material-symbols-outlined text-[18px] shrink-0">arrow_forward</span>
                                         </a>
                                     `;
