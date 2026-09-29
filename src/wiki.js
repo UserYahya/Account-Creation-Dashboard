@@ -201,7 +201,7 @@ function createWikiClient(config, { fetchImpl = globalThis.fetch, log = console 
     const result = new Map();
     for (let i = 0; i < names.length; i += 50) {
       const batch = names.slice(i, i + 50);
-      const data = await call(wiki, { action: 'query', list: 'users', ususers: batch.join('|') });
+      const data = await call(wiki, { action: 'query', list: 'users', ususers: batch.join('|') }, { method: 'POST' });
       const err = apiError(data);
       if (err) throw new WikiError(err.text, { code: err.code });
       for (const u of (data.query && data.query.users) || []) {
@@ -334,7 +334,8 @@ function createWikiClient(config, { fetchImpl = globalThis.fetch, log = console 
       if (namespaces && namespaces !== 'all') {
         params.ucnamespace = namespaces.split(',').join('|');
       }
-      const data = await call(wiki, params, { maxlag: true });
+      // POST keeps the request small: 50 Bangla names can exceed URL length limits
+      const data = await call(wiki, params, { method: 'POST', maxlag: true });
       const err = apiError(data);
       if (err) throw new WikiError(err.text, { code: err.code });
       for (const c of (data.query && data.query.usercontribs) || []) {

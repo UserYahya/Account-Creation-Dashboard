@@ -138,7 +138,9 @@ function createAccountService({ db, wiki, stats, audit, data, log = console }) {
     const check = await wiki.checkUsername(username);
     if (!check.valid) return { status: 400, body: { success: false, error: check.reason } };
     try {
-      q.rename.run(username, requestId);
+      if (q.rename.run(username, requestId).changes === 0) {
+        return { status: 409, body: { success: false, error: 'আবেদনটি এর মধ্যে নিষ্পত্তি হয়ে গেছে। তালিকাটি রিফ্রেশ করুন।' } };
+      }
     } catch (err) {
       if (String(err.message).includes('UNIQUE')) {
         return { status: 400, body: { success: false, error: 'এই নামে আরেকটি আবেদন ইতিমধ্যে আছে।' } };

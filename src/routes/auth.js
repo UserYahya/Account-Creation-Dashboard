@@ -52,7 +52,8 @@ function createAuth({ config, db, wiki, oauth, log }) {
   }
 
   router.get('/login', asyncHandler(async (req, res) => {
-    if (req.session.isAdmin) return res.redirect('/admin');
+    // ?reauth=1 asks Wikimedia again, e.g. when the saved access token stopped working
+    if (req.session.isAdmin && req.query.reauth !== '1') return res.redirect('/admin');
 
     if (config.mockLogin) {
       // Local testing only: /login?user=Name&wiki=bd

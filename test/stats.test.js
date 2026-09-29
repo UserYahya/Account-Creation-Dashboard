@@ -44,6 +44,7 @@ test('contributions are counted per participant with the right metrics', async (
     assert.equal(active.bytes_added, 2920, 'only positive size changes are added');
     assert.equal(data.stats.total_participants, 2);
     assert.equal(data.stats.total_edits, 5);
+    assert.equal(data.stats.pages_edited, 3, 'a page edited by two participants counts once in the total');
     assert.ok(data.stats.last_updated);
     assert.equal(data.timeline.unit, 'day');
     assert.equal(data.timeline.points.reduce((s, p) => s + p.edits, 0), 5);
@@ -72,6 +73,7 @@ test('polling asks for 50 users at a time and only for new edits afterwards', as
     assert.ok(first.every(r => r.params.ucuser.split('|').length <= 50), 'batches of at most 50 users');
     assert.ok(first.length <= 4, `few requests for 122 users (got ${first.length})`);
     assert.equal(first[0].params.maxlag, '5', 'background requests send maxlag');
+    assert.ok(first.every(r => r.method === 'POST'), 'usernames go in the POST body, not a long URL');
 
     t.wiki.state.contribs.push(edit('Bulk Editor 7', { minutes: 1 }), edit('Bulk Editor 8', { minutes: 1 }));
     t.wiki.state.requests.length = 0;
@@ -156,6 +158,56 @@ test('upcoming events are not polled', async () => {
   try {
     const result = await t.ctx.stats.pollEvent(t.eventId);
     assert.equal(result.status, 'not_started');
+  } finally {
+    await t.stop();
+  }
+});
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+test('changing the event while a poll runs discards that poll and counts again', async () => {
+  const t = await setup({ target_namespaces: 'all' });
+  try {
+    t.wiki.state.contribs.push(
+      edit('Active Editor', { title: 'নিবন্ধ', ns: 0 }),
+      edit('Active Editor', { title: 'User:Active Editor', ns: 2 })
+    );
+    t.wiki.state.delayMs = 150;
+    const running = t.ctx.stats.pollEvent(t.eventId);
+    await sleep(50);
+    const update = await t.admin.put(`/api/admin/events/${t.eventId}`, eventInput({ target_namespaces: '0' }));
+    assert.equal(update.data.statsReset, true);
+    assert.equal((await running).status, 'reset', 'the poll that started before the change is thrown away');
+    t.wiki.state.delayMs = 0;
+    for (let i = 0; i < 40 && !t.db.prepare('SELECT stats_updated_at FROM events WHERE id = ?').get(t.eventId).stats_updated_at; i++) {
+      await sleep(50);
+    }
+    const { data } = await t.client().get(`/api/events/${t.eventId}/stats`);
+    assert.equal(data.stats.total_edits, 1, 'only the article namespace is counted after the change');
+  } finally {
+    await t.stop();
+  }
+});
+
+test('a poll requested while another runs is run afterwards', async () => {
+  const t = await setup();
+  try {
+    t.wiki.state.delayMs = 100;
+    const first = t.ctx.stats.pollEvent(t.eventId);
+    await sleep(20);
+    // Someone joins after the running poll already read the participant list
+    t.wiki.state.contribs.push(edit('Late Joiner'));
+    t.db.prepare("INSERT INTO participants (event_id, username, source, added_at) VALUES (?, 'Late Joiner', 'self', ?)").run(t.eventId, new Date().toISOString());
+    assert.equal((await t.ctx.stats.pollEvent(t.eventId)).status, 'busy');
+    await first;
+    t.wiki.state.delayMs = 0;
+    let row;
+    for (let i = 0; i < 40; i++) {
+      await sleep(50);
+      row = (await t.client().get(`/api/events/${t.eventId}/stats`)).data.leaderboard.find(r => r.username === 'Late Joiner');
+      if (row && row.total_edits === 1) break;
+    }
+    assert.equal(row.total_edits, 1);
   } finally {
     await t.stop();
   }

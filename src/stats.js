@@ -9,12 +9,20 @@ function isBadUserError(err) {
   return err instanceof WikiError && String(err.code || '').startsWith('baduser');
 }
 
+// Thrown when the event was reset while a poll was running
+class StaleSyncError extends Error {}
+
 // Tracks participants' contributions. Each poll only asks the wikis for edits
 // made since the previous poll; newly added participants get their full
 // history for the event window once.
 function createStatsService({ db, wiki, config, log = console }) {
   const running = new Set();
   const scheduled = new Map();
+  // Bumped by resetEvent; a poll that started earlier throws away its results
+  const generations = new Map();
+  // Events that need one more poll when the running one finishes
+  const rerun = new Set();
+  const generationOf = eventId => generations.get(eventId) || 0;
   let intervalTimer = null;
   let startupTimer = null;
 
@@ -41,6 +49,11 @@ function createStatsService({ db, wiki, config, log = console }) {
       LEFT JOIN contributions c ON c.event_id = p.event_id AND c.username = p.username
       WHERE p.event_id = ? AND p.excluded = 0
       GROUP BY p.id`),
+    pagesTotal: db.prepare(`
+      SELECT COUNT(DISTINCT c.wiki || '|' || c.title) AS n
+      FROM contributions c
+      JOIN participants p ON p.event_id = c.event_id AND p.username = c.username AND p.excluded = 0
+      WHERE c.event_id = ?`),
     contribs: db.prepare(`
       SELECT wiki, revid, title, ns, timestamp, sizediff, is_new
       FROM contributions WHERE event_id = ? AND username = ?
@@ -61,18 +74,22 @@ function createStatsService({ db, wiki, config, log = console }) {
 
   // Fetch contributions in batches; a batch rejected because of one bad
   // username is retried user by user so the others still count.
-  async function fetchAndStore(event, wikiName, usernames, from, to) {
+  async function fetchAndStore(event, wikiName, usernames, from, to, assertCurrent) {
     if (usernames.length === 0 || from >= to) return;
     for (let i = 0; i < usernames.length; i += BATCH_SIZE) {
       const batch = usernames.slice(i, i + BATCH_SIZE);
       const options = { start: from, end: to, namespaces: event.target_namespaces };
       try {
-        storeRows(event.id, wikiName, await wiki.fetchContribs(wikiName, batch, options));
+        const rows = await wiki.fetchContribs(wikiName, batch, options);
+        assertCurrent();
+        storeRows(event.id, wikiName, rows);
       } catch (err) {
         if (!isBadUserError(err)) throw err;
         for (const name of batch) {
           try {
-            storeRows(event.id, wikiName, await wiki.fetchContribs(wikiName, [name], options));
+            const rows = await wiki.fetchContribs(wikiName, [name], options);
+            assertCurrent();
+            storeRows(event.id, wikiName, rows);
           } catch (singleErr) {
             if (!isBadUserError(singleErr)) throw singleErr;
             log.warn(`Skipping invalid username "${name}" on ${wikiName}.`);
@@ -84,13 +101,20 @@ function createStatsService({ db, wiki, config, log = console }) {
 
   async function pollEvent(eventId) {
     eventId = Number(eventId);
-    if (running.has(eventId)) return { status: 'busy' };
+    if (running.has(eventId)) {
+      rerun.add(eventId);
+      return { status: 'busy' };
+    }
     const event = q.event.get(eventId);
     if (!event) return { status: 'missing' };
     const now = new Date();
     if (new Date(event.start_time) > now) return { status: 'not_started' };
 
     running.add(eventId);
+    const startGeneration = generationOf(eventId);
+    const assertCurrent = () => {
+      if (generationOf(eventId) !== startGeneration) throw new StaleSyncError();
+    };
     try {
       const windowEnd = new Date(Math.min(now.getTime(), new Date(event.end_time).getTime())).toISOString();
       const participants = q.participants.all(eventId);
@@ -99,25 +123,32 @@ function createStatsService({ db, wiki, config, log = console }) {
       const wikis = event.target_wikis.split(',').map(w => w.trim()).filter(Boolean);
 
       for (const wikiName of wikis) {
-        await fetchAndStore(event, wikiName, fresh.map(p => p.username), event.start_time, windowEnd);
+        await fetchAndStore(event, wikiName, fresh.map(p => p.username), event.start_time, windowEnd, assertCurrent);
         const state = q.syncState.get(eventId, wikiName);
         let from = event.start_time;
         if (state) {
           const resume = new Date(new Date(state.synced_until).getTime() - OVERLAP_MS).toISOString();
           if (resume > from) from = resume;
         }
-        await fetchAndStore(event, wikiName, known, from, windowEnd);
+        await fetchAndStore(event, wikiName, known, from, windowEnd, assertCurrent);
+        assertCurrent();
         q.setSync.run(eventId, wikiName, windowEnd);
       }
+      assertCurrent();
       db.transaction(() => fresh.forEach(p => q.markSynced.run(p.id)))();
       q.setUpdated.run(nowIso(), eventId);
       return { status: 'done' };
     } catch (err) {
+      if (err instanceof StaleSyncError) {
+        rerun.add(eventId);
+        return { status: 'reset' };
+      }
       log.error(`Stats update for event ${eventId} failed:`, err.message);
       q.setError.run(String(err.message).slice(0, 500), eventId);
       return { status: 'error', error: err.message };
     } finally {
       running.delete(eventId);
+      if (rerun.delete(eventId)) schedulePoll(eventId, 500);
     }
   }
 
@@ -144,6 +175,9 @@ function createStatsService({ db, wiki, config, log = console }) {
 
   // Forget all stored contributions, e.g. after the event's dates or wikis change
   function resetEvent(eventId) {
+    eventId = Number(eventId);
+    generations.set(eventId, generationOf(eventId) + 1);
+    if (running.has(eventId)) rerun.add(eventId);
     db.transaction(() => {
       db.prepare('DELETE FROM contributions WHERE event_id = ?').run(eventId);
       db.prepare('DELETE FROM sync_state WHERE event_id = ?').run(eventId);
@@ -178,6 +212,8 @@ function createStatsService({ db, wiki, config, log = console }) {
         (!event.goal_edits || r.total_edits >= event.goal_edits) &&
         (!event.goal_articles || r.articles_created >= event.goal_articles)).length
     } : null;
+    // A page edited by several participants counts once in the total
+    totals.pages_edited = q.pagesTotal.get(event.id).n;
     return {
       total_participants: rows.length,
       active_participants: rows.filter(r => r.total_edits > 0).length,

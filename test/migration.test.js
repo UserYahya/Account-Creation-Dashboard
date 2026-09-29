@@ -38,6 +38,9 @@ function createLegacyDatabase(file) {
   insertRequest.run('karim_ali', 'karim@example.com', 'pending', '2026-06-18 04:31:00', null, null, 'Ekushey 2024', null);
   insertRequest.run('Karim ali', 'karim2@example.com', 'pending', '2026-06-18 04:32:00', null, null, 'Ekushey 2024', null);
   insertRequest.run('Old Person', 'old@example.com', 'declined', '2026-07-01 04:00:00', 'Yahya', '2026-07-01 05:00:00', 'Workshop Dhaka', 'Duplicate');
+  // A failed pending request followed by the approved one for the same MediaWiki name
+  insertRequest.run('salma khatun', 'salma@example.com', 'pending', '2026-06-18 04:40:00', null, null, 'Ekushey 2024', null);
+  insertRequest.run('Salma khatun', 'salma2@example.com', 'approved', '2026-06-18 04:41:00', 'Yahya', '2026-06-18 05:10:00', 'Ekushey 2024', null);
   const insertParticipant = db.prepare('INSERT INTO event_participants (event_name, username, total_edits, is_custom) VALUES (?, ?, ?, ?)');
   insertParticipant.run('Ekushey 2024', 'Rahim Uddin', 12, 0);
   insertParticipant.run('Ekushey 2024', 'experienced_editor', 40, 1);
@@ -56,7 +59,7 @@ test('a database from version 1.x is backed up and converted without losing data
     const backups = fs.readdirSync(dir).filter(f => f.startsWith('database.backup-'));
     assert.equal(backups.length, 1, 'a backup was written before migrating');
     const backup = new Database(path.join(dir, backups[0]), { readonly: true });
-    assert.equal(backup.prepare('SELECT COUNT(*) AS n FROM requests').get().n, 4, 'backup has the original data');
+    assert.equal(backup.prepare('SELECT COUNT(*) AS n FROM requests').get().n, 6, 'backup has the original data');
     backup.close();
 
     assert.equal(db.pragma('user_version', { simple: true }), 1);
@@ -71,7 +74,7 @@ test('a database from version 1.x is backed up and converted without losing data
     assert.equal(events[1].workshop_url, null);
 
     const requests = db.prepare('SELECT * FROM requests ORDER BY id').all();
-    assert.equal(requests.length, 4);
+    assert.equal(requests.length, 6);
     assert.ok(requests.every(r => r.status_token && r.status_token.length >= 20), 'every request gets a status link');
     assert.equal(requests[0].event_id, 1);
     assert.equal(requests[0].email, 'rahim@example.com');
@@ -82,6 +85,8 @@ test('a database from version 1.x is backed up and converted without losing data
     assert.match(requests[2].decision_reason, /একই নামে/);
     assert.equal(requests[3].event_id, 2);
     assert.equal(requests[3].decision_reason, 'Duplicate');
+    assert.equal(requests[4].status, 'declined', 'the pending duplicate is closed');
+    assert.equal(requests[5].status, 'approved', 'the approved request keeps its status even though it came later');
 
     const participants = db.prepare('SELECT event_id, username, source, synced FROM participants ORDER BY username').all();
     assert.deepEqual(participants, [

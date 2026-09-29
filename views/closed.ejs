@@ -3,6 +3,7 @@
 
 <main id="main" class="flex-grow w-full max-w-[640px] mx-auto px-md py-xl space-y-lg">
   <section class="card p-lg md:p-xl text-center space-y-md">
+    <%# icons: schedule event_busy %>
     <div class="mx-auto w-20 h-20 rounded-pill bg-surface-container-high text-on-surface-variant flex items-center justify-center"><%- icon(phase === 'upcoming' ? 'schedule' : 'event_busy', 'icon-xl') %></div>
     <h1 class="text-headline-md font-bold">
       <% if (phase === 'upcoming') { %>"<%= event.name %>" ইভেন্টের নিবন্ধন এখনো শুরু হয়নি

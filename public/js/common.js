@@ -25,7 +25,7 @@
     if (authRedirectPending) return;
     authRedirectPending = true;
     toast(message || 'আপনার সেশনের মেয়াদ শেষ হয়েছে। আবার লগ ইন করুন।', 'error');
-    setTimeout(() => { window.location.href = '/login'; }, 2500);
+    setTimeout(() => { window.location.href = '/login?reauth=1'; }, 2500);
   }
 
   // JSON API call. Always resolves to { ok, status, data } unless aborted.

@@ -161,7 +161,12 @@ function migrateLegacyData(db) {
       INSERT INTO requests (id, event_id, username, email, status, status_token, requested_at, decided_by, decided_at, decision_reason, error_message)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
     const live = new Set();
-    for (const r of db.prepare('SELECT * FROM legacy_requests ORDER BY id').all()) {
+    // Approved requests are handled first so they always keep their status;
+    // ids are copied as they are, so the order here does not change them
+    const priority = { approved: 0, pending: 1 };
+    const legacyRequests = db.prepare('SELECT * FROM legacy_requests ORDER BY id').all()
+      .sort((a, b) => (priority[a.status] ?? 2) - (priority[b.status] ?? 2) || a.id - b.id);
+    for (const r of legacyRequests) {
       const username = normalizeUsername(r.username) || r.username;
       let status = ['pending', 'approved', 'declined'].includes(r.status) ? r.status : 'pending';
       let reason = r.decision_reason || null;

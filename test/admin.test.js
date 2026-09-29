@@ -192,6 +192,34 @@ test('the welcome message never overwrites an existing talk page', async () => {
   }
 });
 
+test('an admin whose Wikimedia token stopped working can log in again', async () => {
+  const t = await withEvent();
+  try {
+    const plain = await t.admin.get('/login');
+    assert.equal(plain.headers.get('location'), '/admin');
+    const again = await t.admin.get('/login?reauth=1');
+    assert.match(again.headers.get('location'), /\/oauth2\/authorize/, 'reauth starts OAuth even with an admin session');
+  } finally {
+    await t.stop();
+  }
+});
+
+test('a rename loses to an approval that happened meanwhile', async () => {
+  const t = await withEvent();
+  try {
+    const request = await submit(t, 'Slow Rename');
+    t.wiki.state.delayMs = 150;
+    const rename = t.admin.patch(`/api/admin/requests/${request.id}`, { username: 'Other Name' });
+    await new Promise(resolve => setTimeout(resolve, 50));
+    t.db.prepare("UPDATE requests SET status = 'approved' WHERE id = ?").run(request.id);
+    const res = await rename;
+    assert.equal(res.status, 409);
+    assert.equal(t.db.prepare('SELECT username FROM requests WHERE id = ?').get(request.id).username, 'Slow Rename');
+  } finally {
+    await t.stop();
+  }
+});
+
 test('admins can rename a pending request after re-checking the name', async () => {
   const t = await withEvent();
   try {

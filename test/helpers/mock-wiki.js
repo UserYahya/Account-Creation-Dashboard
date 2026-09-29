@@ -20,6 +20,8 @@ function createMockWiki() {
     logevents: [],
     createFail: null,
     down: false,
+    // Milliseconds to wait before answering, to test requests that overlap
+    delayMs: 0,
     requests: [],
     oauth: { code: 'good-code', accessToken: 'token-1', refreshToken: 'refresh-1', username: 'Admin User', expiresIn: 14400 }
   };
@@ -127,6 +129,7 @@ function createMockWiki() {
     state.requests.push({ method: req.method, path: url.pathname, params });
 
     if (state.down) return json(res, 503, { error: 'down' });
+    if (state.delayMs) await new Promise(resolve => setTimeout(resolve, state.delayMs));
 
     if (url.pathname === '/oauth2/access_token') {
       if (params.grant_type === 'authorization_code' && params.code === state.oauth.code) {
