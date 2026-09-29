@@ -66,6 +66,17 @@
   .table th { @apply px-md py-sm bg-surface-container-low border-b border-outline-variant text-label-md font-bold text-on-surface-variant whitespace-nowrap; }
   .table td { @apply px-md py-sm border-b border-outline-variant align-top; }
   .table tbody tr:hover { @apply bg-surface-container-low; }
+  /* Below md, rows of a .table-stack become cards: checkbox + name, then details and actions */
+  @media (max-width: 767.98px) {
+    .table-stack thead th:not(.stack-keep) { display: none; }
+    .table-stack thead tr { display: flex; }
+    .table-stack thead th.stack-keep { width: 100%; }
+    .table-stack tbody tr { display: flex; flex-wrap: wrap; align-items: flex-start; padding: 8px 0; @apply border-b border-outline-variant; }
+    .table-stack tbody td { border-bottom-width: 0; padding: 4px 16px; }
+    .table-stack tbody td[data-cell='name'] { flex: 1; padding-left: 0; }
+    .table-stack tbody td[data-cell='meta'], .table-stack tbody td[data-cell='actions'] { width: 100%; padding-left: 56px; text-align: left; white-space: normal; }
+    .table-stack tbody td[colspan] { width: 100%; }
+  }
 
   .nav-link { @apply text-label-md text-on-surface-variant hover:text-primary no-underline py-xs; }
   .nav-link[aria-current='page'] { @apply text-primary font-bold border-b-2 border-primary; }

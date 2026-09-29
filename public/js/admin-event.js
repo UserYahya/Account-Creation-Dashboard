@@ -67,7 +67,7 @@
       return `
         <tr data-id="${r.id}" class="${highlight && highlight.has(r.id) ? 'bg-secondary-container/25' : ''}">
           <td><input class="checkbox" type="checkbox" data-select value="${r.id}" ${selected.has(r.id) ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${esc(r.username)} নির্বাচন করুন"></td>
-          <td class="min-w-[200px]">
+          <td class="md:min-w-[200px]" data-cell="name">
             <div class="flex items-start gap-sm">
               <div class="avatar">${initial}</div>
               <div class="min-w-0">
@@ -78,9 +78,9 @@
               </div>
             </div>
           </td>
-          ${showEmail ? `<td class="font-mono text-label-md break-all">${esc(r.email || '-')}</td>` : ''}
-          <td class="whitespace-nowrap text-label-md">${esc(formatDate(r.requested_at, 'short'))}<br><span class="text-on-surface-variant">${esc(timeAgo(r.requested_at))}</span></td>
-          <td class="text-right whitespace-nowrap">
+          ${showEmail ? `<td class="font-mono text-label-md break-all" data-cell="meta">${esc(r.email || '-')}</td>` : ''}
+          <td class="whitespace-nowrap text-label-md" data-cell="meta">${esc(formatDate(r.requested_at, 'short'))}<br class="max-md:hidden"><span class="text-on-surface-variant max-md:ml-xs">${esc(timeAgo(r.requested_at))}</span></td>
+          <td class="text-right whitespace-nowrap" data-cell="actions">
             <button type="button" class="btn btn-primary btn-sm" data-action="approve" data-id="${r.id}" ${locked ? 'disabled' : ''}>${icon('check', 'icon-sm')} অনুমোদন</button>
             <button type="button" class="btn btn-ghost btn-sm" data-action="approve-comment" data-id="${r.id}" ${locked ? 'disabled' : ''} title="মন্তব্যসহ অনুমোদন" aria-label="${esc(r.username)}: মন্তব্যসহ অনুমোদন">${icon('add_comment', 'icon-sm')}</button>
             <button type="button" class="btn btn-ghost btn-sm" data-action="rename" data-id="${r.id}" ${locked ? 'disabled' : ''} title="নাম পরিবর্তন" aria-label="${esc(r.username)}: নাম পরিবর্তন">${icon('edit', 'icon-sm')}</button>

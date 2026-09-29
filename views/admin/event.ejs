@@ -56,10 +56,11 @@
         <div class="h-2 bg-surface-container-high rounded-pill overflow-hidden"><div id="bulkProgressBar" class="h-full bg-primary transition-all w-0"></div></div>
       </div>
       <div class="overflow-x-auto">
-        <table class="table">
+        <%# On phones the pending rows stack into cards so the action buttons stay in view %>
+        <table class="table table-stack">
           <thead>
             <tr>
-              <th class="w-10"><input class="checkbox" type="checkbox" id="selectAll" aria-label="সব নির্বাচন করুন"></th>
+              <th class="w-10 stack-keep"><label class="inline-flex items-center gap-sm"><input class="checkbox" type="checkbox" id="selectAll" aria-label="সব নির্বাচন করুন"><span class="md:hidden">সব নির্বাচন</span></label></th>
               <th>ব্যবহারকারী নাম</th>
               <th data-email-col hidden>ইমেইল</th>
               <th>আবেদনের সময়</th>
