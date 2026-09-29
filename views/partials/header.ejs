@@ -1,0 +1,67 @@
+<%
+  const statsLink = locals.statsUrl || '/stats';
+  const current = locals.currentPath || '';
+%>
+<header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
+  <div class="flex justify-between items-center gap-md max-w-container-max mx-auto h-16 px-md md:px-xl">
+    <a href="/" class="text-headline-sm font-bold text-on-surface no-underline tracking-tight">ইভেন্ট ড্যাশবোর্ড</a>
+    <nav class="hidden md:flex items-center gap-lg" aria-label="প্রধান মেনু">
+      <a class="nav-link" href="/" <%- current === '/' ? 'aria-current="page"' : '' %>>হোম</a>
+      <div class="relative" data-dropdown>
+        <button type="button" class="nav-link inline-flex items-center gap-xs" aria-expanded="false" aria-haspopup="true" data-dropdown-toggle>
+          চলমান ইভেন্টসমূহ <%- icon('keyboard_arrow_down', 'icon-sm') %>
+        </button>
+        <div class="hidden absolute right-0 mt-sm w-72 card p-sm z-50" data-dropdown-menu>
+          <% if (navEvents.length === 0) { %>
+            <p class="text-label-md text-on-surface-variant px-sm py-xs">বর্তমানে কোনো ইভেন্টে নিবন্ধন চলছে না।</p>
+          <% } %>
+          <% navEvents.forEach(e => { %>
+            <a class="block px-sm py-xs rounded text-body-md font-medium truncate no-underline hover:bg-surface-container" href="/event/<%= e.id %>" title="<%= e.name %>"><%= e.name %></a>
+          <% }) %>
+          <div class="border-t border-outline-variant mt-xs pt-xs">
+            <a class="block px-sm py-xs text-label-md no-underline hover:underline" href="/events">সব ইভেন্ট ও আর্কাইভ</a>
+          </div>
+        </div>
+      </div>
+      <a class="nav-link" href="<%= statsLink %>" <%- current.endsWith('/stats') || current === '/events' ? 'aria-current="page"' : '' %>>পরিসংখ্যান</a>
+      <a class="nav-link" href="/about" <%- current === '/about' ? 'aria-current="page"' : '' %>>ড্যাশবোর্ড পরিচিতি</a>
+    </nav>
+    <div class="flex items-center gap-sm">
+      <% if (user) { %>
+        <a class="btn btn-tonal btn-sm" href="/admin"><%- icon('dashboard', 'icon-sm') %> অ্যাডমিন</a>
+        <form method="post" action="/logout" class="hidden md:block">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-ghost btn-sm text-error" type="submit">লগ আউট</button>
+        </form>
+      <% } else { %>
+        <a class="btn btn-outline btn-sm hidden sm:inline-flex" href="/login">আয়োজক লগ ইন</a>
+      <% } %>
+      <button type="button" class="md:hidden btn btn-ghost p-sm" aria-label="মেনু" aria-expanded="false" aria-controls="mobileMenu" data-menu-toggle>
+        <%- icon('menu', 'icon-lg') %>
+      </button>
+    </div>
+  </div>
+  <nav id="mobileMenu" class="md:hidden hidden border-t border-outline-variant bg-surface px-md pb-md max-h-[80vh] overflow-y-auto" aria-label="মোবাইল মেনু">
+    <a class="block py-sm border-b border-outline-variant/60 no-underline text-body-lg" href="/">হোম</a>
+    <a class="block py-sm border-b border-outline-variant/60 no-underline text-body-lg" href="<%= statsLink %>">পরিসংখ্যান</a>
+    <div class="py-sm border-b border-outline-variant/60">
+      <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">চলমান ইভেন্টসমূহ</p>
+      <% if (navEvents.length === 0) { %>
+        <p class="text-label-md text-on-surface-variant">বর্তমানে কোনো ইভেন্টে নিবন্ধন চলছে না।</p>
+      <% } %>
+      <% navEvents.forEach(e => { %>
+        <a class="block py-xs text-body-md no-underline" href="/event/<%= e.id %>"><%= e.name %></a>
+      <% }) %>
+    </div>
+    <a class="block py-sm border-b border-outline-variant/60 no-underline text-body-lg" href="/events">সব ইভেন্ট ও আর্কাইভ</a>
+    <a class="block py-sm border-b border-outline-variant/60 no-underline text-body-lg" href="/about">ড্যাশবোর্ড পরিচিতি</a>
+    <% if (user) { %>
+      <form method="post" action="/logout" class="pt-sm">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-danger-outline w-full" type="submit">লগ আউট</button>
+      </form>
+    <% } else { %>
+      <a class="block py-sm no-underline text-body-lg" href="/login">আয়োজক লগ ইন</a>
+    <% } %>
+  </nav>
+</header>

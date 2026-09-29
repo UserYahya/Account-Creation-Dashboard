@@ -1,0 +1,50 @@
+<%- include('partials/head') %>
+<%- include('partials/header', { statsUrl: event ? `/event/${event.id}/stats` : '/stats' }) %>
+
+<main id="main" class="flex-grow w-full max-w-[600px] mx-auto px-md py-lg md:py-xl space-y-lg">
+  <section class="card p-lg md:p-xl text-center space-y-md" aria-live="polite" id="statusCard">
+    <div id="statusIcon" class="mx-auto w-20 h-20 rounded-pill flex items-center justify-center"></div>
+    <h1 id="statusTitle" class="text-headline-md font-bold"></h1>
+    <p id="statusText" class="text-body-lg text-on-surface-variant"></p>
+    <dl class="text-left bg-surface-container-low rounded-lg p-md grid grid-cols-[auto_1fr] gap-x-md gap-y-xs text-body-md">
+      <dt class="font-bold text-on-surface-variant">ব্যবহারকারী নাম</dt><dd class="font-bold break-all"><%= request.username %></dd>
+      <% if (event) { %><dt class="font-bold text-on-surface-variant">ইভেন্ট</dt><dd><%= event.name %></dd><% } %>
+      <dt class="font-bold text-on-surface-variant">আবেদনের সময়</dt><dd><%= formatBn(request.requested_at) %></dd>
+      <% if (request.maskedEmail) { %><dt class="font-bold text-on-surface-variant">ইমেইল</dt><dd class="break-all"><%= request.maskedEmail %></dd><% } %>
+    </dl>
+    <div id="declineReason" class="alert alert-info text-left" hidden><%- icon('comment') %><p></p></div>
+  </section>
+
+  <section id="nextSteps" class="card p-lg space-y-md" hidden aria-labelledby="nextStepsTitle">
+    <h2 id="nextStepsTitle" class="text-headline-sm font-bold flex items-center gap-sm"><%- icon('checklist', 'icon-lg text-primary') %> এরপর কী করবেন</h2>
+    <ol class="list-decimal pl-lg space-y-sm text-body-md text-on-surface-variant">
+      <li>আপনার ইমেইলের ইনবক্স দেখুন। <strong>wiki@wikimedia.org</strong> থেকে একটি ইমেইল আসবে যেখানে একটি সাময়িক পাসওয়ার্ড থাকবে। ইনবক্সে না পেলে <strong>স্প্যাম/জাঙ্ক</strong> ফোল্ডার দেখুন।</li>
+      <li><a id="loginLink" href="https://bn.wikipedia.org/wiki/Special:UserLogin" target="_blank" rel="noopener">উইকিপিডিয়ায় লগ ইন পাতায়</a> যান এবং আপনার ব্যবহারকারী নাম ও সাময়িক পাসওয়ার্ড দিন।</li>
+      <li>লগ ইনের পর উইকিপিডিয়া আপনাকে নতুন একটি পাসওয়ার্ড দিতে বলবে। সহজে মনে রাখা যায় কিন্তু অনুমান করা কঠিন এমন পাসওয়ার্ড দিন।</li>
+      <li>সাময়িক পাসওয়ার্ডটি কিছুদিন পর অকার্যকর হয়ে যায়, তাই দেরি না করে আজই লগ ইন করুন।</li>
+    </ol>
+    <% if (event) { %>
+      <a class="btn btn-tonal" href="/event/<%= event.id %>/stats"><%- icon('leaderboard', 'icon-sm') %> ইভেন্টের লিডারবোর্ড দেখুন</a>
+    <% } %>
+  </section>
+
+  <section id="pendingHelp" class="card p-lg space-y-sm" hidden>
+    <p class="text-body-md text-on-surface-variant">আয়োজকরা আবেদনটি পর্যালোচনা করছেন। এই পাতাটি খোলা রাখলে অবস্থা নিজে থেকেই হালনাগাদ হবে। পরে দেখতে চাইলে নিচের লিংকটি সংরক্ষণ করুন।</p>
+    <div class="flex gap-sm items-center">
+      <input class="input" type="text" readonly value="" id="statusUrl" aria-label="এই পাতার লিংক">
+      <button type="button" class="btn btn-outline shrink-0" id="copyStatusUrl"><%- icon('content_copy', 'icon-sm') %> কপি</button>
+    </div>
+  </section>
+
+  <p class="text-center"><a class="font-bold" href="<%= event ? `/event/${event.id}` : '/' %>"><%- icon('arrow_back', 'icon-sm') %> নিবন্ধন পাতায় ফিরে যান</a></p>
+</main>
+
+<%- include('partials/footer') %>
+<script type="application/json" id="page-data"><%- pageData({
+  token: request.status_token,
+  status: request.status,
+  reason: request.status === 'declined' ? request.decision_reason : null,
+  createdOnWiki: request.created_on_wiki,
+  eventId: event ? event.id : null
+}) %></script>
+<%- include('partials/scripts', { scripts: ['status.js'] }) %>

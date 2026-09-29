@@ -1,0 +1,39 @@
+<%- include('partials/head', { bodyClass: 'bg-surface-container-low' }) %>
+<main id="main" class="flex-grow w-full max-w-[1600px] mx-auto p-md lg:p-lg grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-lg lg:h-screen lg:overflow-hidden">
+  <section class="card p-lg flex flex-col items-center justify-center text-center gap-sm lg:gap-md min-h-0">
+    <p class="text-body-lg font-bold text-primary">উইকিমিডিয়া বাংলাদেশ · ইভেন্ট ড্যাশবোর্ড</p>
+    <h1 class="text-[26px] lg:text-[34px] leading-tight font-extrabold break-words"><%= event.name %></h1>
+    <% if (registrationOpen) { %>
+      <%# The QR code shrinks with the screen height so the page fits a projector without scrolling %>
+      <img src="/event/<%= event.id %>/qr.png?size=900" alt="নিবন্ধন পাতার QR কোড" width="420" height="420" class="w-[260px] h-[260px] lg:w-[min(420px,48vh)] lg:h-[min(420px,48vh)] rounded-xl border border-outline-variant bg-white p-sm">
+      <p class="text-body-lg lg:text-headline-sm font-bold">মোবাইল দিয়ে স্ক্যান করে উইকিপিডিয়া অ্যাকাউন্টের আবেদন করুন</p>
+      <p class="text-[22px] lg:text-[28px] font-extrabold text-primary break-all"><%= shortUrl %></p>
+    <% } else { %>
+      <div class="alert alert-info text-left"><%- icon('info') %><p>এই ইভেন্টে এখন নিবন্ধন চলছে না।</p></div>
+    <% } %>
+  </section>
+
+  <section class="flex flex-col gap-md min-w-0 min-h-0">
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-md">
+      <% [['requests_submitted', 'আবেদন জমা পড়েছে'], ['accounts_created', 'অ্যাকাউন্ট তৈরি হয়েছে'], ['total_edits', 'মোট সম্পাদনা'], ['articles_created', 'নতুন নিবন্ধ']].forEach(([key, label]) => { %>
+        <div class="card p-md text-center">
+          <p class="text-body-md font-bold text-on-surface-variant"><%= label %></p>
+          <p class="text-[36px] lg:text-[44px] leading-none font-extrabold mt-sm" data-display="<%= key %>">-</p>
+        </div>
+      <% }) %>
+    </div>
+    <div class="card flex-1 min-h-0 overflow-hidden">
+      <div class="card-header">
+        <h2 class="card-title text-headline-sm"><%- icon('trophy', 'text-primary icon-lg') %> শীর্ষ ১০ অংশগ্রহণকারী</h2>
+        <span class="text-label-md text-on-surface-variant" id="displayUpdated"></span>
+      </div>
+      <ol id="displayLeaderboard" class="divide-y divide-outline-variant"><li class="p-lg text-center text-on-surface-variant">লোড হচ্ছে...</li></ol>
+    </div>
+    <div class="flex justify-end gap-sm">
+      <button type="button" class="btn btn-outline btn-sm" id="fullscreenBtn"><%- icon('fullscreen', 'icon-sm') %> পূর্ণ পর্দা</button>
+      <a class="btn btn-ghost btn-sm" href="/event/<%= event.id %>/stats">বিস্তারিত পরিসংখ্যান</a>
+    </div>
+  </section>
+</main>
+<script type="application/json" id="page-data"><%- pageData({ eventId: event.id }) %></script>
+<%- include('partials/scripts', { scripts: ['display.js'] }) %>

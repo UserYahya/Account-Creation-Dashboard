@@ -1,0 +1,115 @@
+<%- include('partials/head') %>
+<%- include('partials/header', { statsUrl: `/event/${event.id}/stats` }) %>
+
+<main id="main" class="flex-grow w-full max-w-container-max mx-auto px-md py-lg md:py-xl space-y-lg">
+  <section class="card p-lg flex flex-col lg:flex-row justify-between gap-md" aria-labelledby="eventTitle">
+    <div class="space-y-xs min-w-0">
+      <div class="flex flex-wrap items-center gap-xs">
+        <span class="badge badge-<%= phase %>"><%= phaseLabels[phase] %> ইভেন্ট</span>
+        <% if (isRegistrationOpen(event)) { %><span class="badge badge-ongoing">নিবন্ধন চলছে</span><% } %>
+      </div>
+      <h1 id="eventTitle" class="text-headline-md font-bold break-words"><%= event.name %></h1>
+      <p class="text-body-md text-on-surface-variant flex items-center gap-xs"><%- icon('calendar_month', 'icon-sm') %> <%= formatBn(event.start_time) %> – <%= formatBn(event.end_time) %></p>
+      <p class="text-body-md text-on-surface-variant flex items-center gap-xs"><%- icon('language', 'icon-sm') %> উইকি: <strong class="text-primary"><%= event.target_wikis.split(',').join(', ') %></strong></p>
+      <p class="text-body-md text-on-surface-variant flex items-center gap-xs"><%- icon('rule', 'icon-sm') %> নেমস্পেস: <strong class="text-primary" id="namespaceText"></strong></p>
+    </div>
+    <div class="flex flex-col items-start lg:items-end gap-sm shrink-0">
+      <div class="flex flex-wrap gap-sm">
+        <button type="button" class="btn btn-primary" id="refreshBtn"><%- icon('sync', 'icon-sm') %> রিফ্রেশ</button>
+        <% if (isRegistrationOpen(event)) { %><a class="btn btn-secondary" href="/event/<%= event.id %>"><%- icon('person_add', 'icon-sm') %> নিবন্ধন করুন</a><% } %>
+      </div>
+      <p class="text-label-md text-on-surface-variant" id="lastUpdated" aria-live="polite">লোড হচ্ছে...</p>
+      <div class="flex flex-wrap gap-xs">
+        <a class="btn btn-ghost btn-sm" href="/event/<%= event.id %>/display"><%- icon('slideshow', 'icon-sm') %> প্রজেক্টর</a>
+        <a class="btn btn-ghost btn-sm" href="/api/events/<%= event.id %>/leaderboard.csv"><%- icon('download', 'icon-sm') %> CSV</a>
+        <% if (user) { %><a class="btn btn-ghost btn-sm" href="/admin/events/<%= event.id %>#participants"><%- icon('manage_accounts', 'icon-sm') %> অংশগ্রহণকারী ব্যবস্থাপনা</a><% } %>
+      </div>
+    </div>
+  </section>
+
+  <div id="statsError" class="alert alert-warning" hidden><%- icon('warning') %><p></p></div>
+
+  <section aria-label="সারসংক্ষেপ" class="grid grid-cols-2 md:grid-cols-3 gap-sm md:gap-md">
+    <%# icons: group edit_note article description cloud_upload database %>
+    <% [
+      ['participants', 'group', 'অংশগ্রহণকারী', 'bg-primary/10 text-primary'],
+      ['edits', 'edit_note', 'মোট সম্পাদনা', 'bg-secondary/10 text-secondary'],
+      ['articles', 'article', 'নতুন নিবন্ধ', 'bg-tertiary/10 text-tertiary'],
+      ['pages', 'description', 'সম্পাদিত পাতা', 'bg-primary/10 text-primary'],
+      ['uploads', 'cloud_upload', 'ফাইল আপলোড', 'bg-secondary/10 text-secondary'],
+      ['bytes', 'database', 'যুক্ত করা ডেটা', 'bg-surface-container-high text-on-surface-variant']
+    ].forEach(([key, iconName, label, tone]) => { %>
+      <div class="stat-tile">
+        <div class="stat-icon <%= tone %>"><%- icon(iconName) %></div>
+        <div class="min-w-0"><p class="stat-label"><%= label %></p><p class="stat-value whitespace-nowrap" data-stat="<%= key %>">-</p><p class="text-[11px] text-on-surface-variant" data-stat-sub="<%= key %>"></p></div>
+      </div>
+    <% }) %>
+  </section>
+
+  <section id="goalCard" class="card p-lg space-y-sm" hidden aria-labelledby="goalTitle">
+    <h2 id="goalTitle" class="card-title"><%- icon('flag', 'text-secondary') %> ইভেন্টের লক্ষ্য</h2>
+    <p class="text-body-md text-on-surface-variant" id="goalText"></p>
+    <div class="h-3 rounded-pill bg-secondary/15 overflow-hidden" role="progressbar" aria-labelledby="goalTitle" id="goalMeter" aria-valuemin="0">
+      <div class="h-full bg-secondary rounded-pill transition-all w-0" id="goalBar"></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="chartTitle">
+    <div class="card-header">
+      <div>
+        <h2 id="chartTitle" class="card-title">সময়ের সাথে সম্পাদনা</h2>
+        <p class="text-label-md text-on-surface-variant" id="chartSubtitle"></p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="chart" class="relative w-full h-[240px]" tabindex="0" aria-describedby="chartHelp"></div>
+      <p id="chartHelp" class="sr-only">তীর চিহ্নের বোতাম দিয়ে প্রতিটি সময়ের সম্পাদনার সংখ্যা শুনতে পারেন। সব সংখ্যা নিচের টেবিলেও আছে।</p>
+      <details class="mt-md">
+        <summary class="cursor-pointer text-label-md font-bold text-primary">টেবিল হিসেবে দেখুন</summary>
+        <div class="max-h-64 overflow-y-auto mt-sm border border-outline-variant rounded-lg">
+          <table class="table"><thead><tr><th>সময়</th><th class="text-right">সম্পাদনা</th></tr></thead><tbody id="chartTable"></tbody></table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="leaderboardTitle">
+    <div class="card-header">
+      <h2 id="leaderboardTitle" class="card-title"><%- icon('trophy', 'text-primary') %> লিডারবোর্ড</h2>
+      <div>
+        <label class="sr-only" for="leaderboardSearch">অংশগ্রহণকারী খুঁজুন</label>
+        <input class="input w-56 py-xs" id="leaderboardSearch" type="search" placeholder="অংশগ্রহণকারী খুঁজুন...">
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table" id="leaderboardTable">
+        <thead>
+          <tr>
+            <th class="w-16 text-center">অবস্থান</th>
+            <th aria-sort="none" data-sort-col="username"><button type="button" class="inline-flex items-center gap-xs" data-sort="username">ব্যবহারকারী নাম</button></th>
+            <th class="text-right" aria-sort="descending" data-sort-col="total_edits"><button type="button" class="inline-flex items-center gap-xs" data-sort="total_edits">সম্পাদনা</button></th>
+            <th class="text-right" aria-sort="none" data-sort-col="articles_created"><button type="button" class="inline-flex items-center gap-xs" data-sort="articles_created">নতুন নিবন্ধ</button></th>
+            <th class="text-right" aria-sort="none" data-sort-col="pages_edited"><button type="button" class="inline-flex items-center gap-xs" data-sort="pages_edited">পাতা</button></th>
+            <th class="text-right" aria-sort="none" data-sort-col="file_uploads"><button type="button" class="inline-flex items-center gap-xs" data-sort="file_uploads">আপলোড</button></th>
+            <th class="text-right" aria-sort="none" data-sort-col="bytes_added"><button type="button" class="inline-flex items-center gap-xs" data-sort="bytes_added">যুক্ত ডেটা</button></th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"><tr><td colspan="7" class="text-center text-on-surface-variant py-lg">লোড হচ্ছে...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="detailModal" hidden role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="modal max-w-2xl">
+    <div class="card-header">
+      <h2 class="card-title break-all" id="detailTitle"></h2>
+      <button type="button" class="btn btn-ghost btn-sm" data-modal-close aria-label="বন্ধ করুন" data-autofocus><%- icon('close') %></button>
+    </div>
+    <div class="card-body overflow-y-auto space-y-md" id="detailBody"></div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
+<script type="application/json" id="page-data"><%- pageData({ eventId: event.id, isAdmin: !!user, targetNamespaces: event.target_namespaces }) %></script>
+<%- include('partials/scripts', { scripts: ['chart.js', 'stats.js'] }) %>

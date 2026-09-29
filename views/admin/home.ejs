@@ -1,0 +1,88 @@
+<%- include('../partials/admin-header') %>
+<div class="max-w-container-max mx-auto space-y-lg">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+    <div>
+      <h1 class="text-headline-md font-bold">অ্যাডমিন ড্যাশবোর্ড</h1>
+      <p class="text-body-md text-on-surface-variant">স্বাগতম, <%= user.username %>। একটি ইভেন্ট বেছে নিয়ে আবেদন ও অংশগ্রহণকারী পরিচালনা করুন।</p>
+    </div>
+    <a class="btn btn-primary" href="/admin/events/new"><%- icon('add', 'icon-sm') %> নতুন ইভেন্ট</a>
+  </div>
+
+  <% if (user.isMock) { %>
+    <div class="alert alert-warning"><%- icon('warning') %><p><strong>মক লগ ইন চালু আছে।</strong> শুধু পরীক্ষার জন্য: অনুমোদন করলে উইকিপিডিয়ায় আসল অ্যাকাউন্ট তৈরি হবে না। production-এ এটি কাজ করে না।</p></div>
+  <% } %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-md">
+    <div class="stat-tile">
+      <div class="stat-icon bg-secondary-container text-on-secondary-container"><%- icon('pending_actions') %></div>
+      <div><p class="stat-label">অপেক্ষমাণ আবেদন (সব ইভেন্ট)</p><p class="stat-value"><%= formatNumber(totals.pending) %></p></div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-icon bg-primary-fixed-dim text-on-primary-fixed-variant"><%- icon('verified_user') %></div>
+      <div><p class="stat-label">তৈরি হওয়া অ্যাকাউন্ট</p><p class="stat-value"><%= formatNumber(totals.approved) %></p></div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-icon bg-tertiary-fixed-dim text-on-tertiary-fixed-variant"><%- icon('event') %></div>
+      <div><p class="stat-label">চলমান ইভেন্ট</p><p class="stat-value"><%= formatNumber(groups.ongoing.length) %></p></div>
+    </div>
+  </div>
+
+  <% [['ongoing', 'চলমান ইভেন্ট', groups.ongoing], ['upcoming', 'আসন্ন ইভেন্ট', groups.upcoming], ['finished', 'সমাপ্ত ইভেন্ট', groups.finished]].forEach(([key, heading, list]) => { %>
+    <section class="card" aria-labelledby="h-<%= key %>">
+      <div class="card-header">
+        <h2 id="h-<%= key %>" class="card-title"><%= heading %> <span class="badge badge-<%= key %>"><%= formatNumber(list.length) %></span></h2>
+      </div>
+      <% if (list.length === 0) { %>
+        <p class="card-body text-body-md text-on-surface-variant">
+          <%= key === 'ongoing' ? 'এখন কোনো ইভেন্ট চলছে না।' : key === 'upcoming' ? 'কোনো আসন্ন ইভেন্ট নেই।' : 'এখনো কোনো ইভেন্ট শেষ হয়নি।' %>
+          <% if (key === 'ongoing') { %><a href="/admin/events/new">নতুন ইভেন্ট তৈরি করুন</a>।<% } %>
+        </p>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr><th>ইভেন্ট</th><th>সময়কাল</th><th class="text-center">অপেক্ষমাণ</th><th class="text-center">অ্যাকাউন্ট তৈরি</th><th class="text-center">অংশগ্রহণকারী</th><th class="text-right">লিংক</th></tr>
+            </thead>
+            <tbody>
+              <% list.forEach(e => { const c = counts[e.id] || { pending: 0, processing: 0, approved: 0, participants: 0 }; const pending = c.pending + c.processing; %>
+                <tr>
+                  <td class="min-w-[220px]">
+                    <a class="font-bold" href="/admin/events/<%= e.id %>"><%= e.name %></a>
+                    <div class="mt-xs flex flex-wrap gap-xs">
+                      <% if (key === 'ongoing') { %>
+                        <span class="badge <%= e.registration_active ? 'badge-ongoing' : 'badge-pending' %>"><%= e.registration_active ? 'নিবন্ধন চালু' : 'নিবন্ধন বন্ধ' %></span>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td class="whitespace-nowrap text-label-md text-on-surface-variant"><%= formatBn(e.start_time, 'short') %> –<br><%= formatBn(e.end_time, 'short') %></td>
+                  <td class="text-center">
+                    <% if (pending > 0) { %><a class="badge badge-upcoming text-[13px]" href="/admin/events/<%= e.id %>#requests"><%= formatNumber(pending) %></a><% } else { %><span class="text-on-surface-variant">০</span><% } %>
+                  </td>
+                  <td class="text-center tabular-nums"><%= formatNumber(c.approved) %></td>
+                  <td class="text-center tabular-nums"><%= formatNumber(c.participants) %></td>
+                  <td class="text-right whitespace-nowrap">
+                    <a class="btn btn-primary btn-sm" href="/admin/events/<%= e.id %>">পরিচালনা</a>
+                    <a class="btn btn-ghost btn-sm" href="/event/<%= e.id %>" title="নিবন্ধন পাতা" aria-label="নিবন্ধন পাতা"><%- icon('open_in_new', 'icon-sm') %></a>
+                    <a class="btn btn-ghost btn-sm" href="/event/<%= e.id %>/stats" title="পরিসংখ্যান" aria-label="পরিসংখ্যান"><%- icon('leaderboard', 'icon-sm') %></a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </section>
+  <% }) %>
+
+  <% if (user.isDeveloper) { %>
+    <section class="card" aria-labelledby="devTools">
+      <div class="card-header"><h2 id="devTools" class="card-title"><%- icon('build', 'text-primary') %> ডেভেলপার টুলস</h2></div>
+      <div class="card-body flex flex-wrap gap-sm">
+        <a class="btn btn-outline" href="/api/admin/download-log"><%- icon('download', 'icon-sm') %> সব আবেদনের লগ (CSV, ইমেইলসহ)</a>
+        <a class="btn btn-outline" href="/api/admin/download-login-log"><%- icon('history', 'icon-sm') %> লগ ইনের ইতিহাস (CSV)</a>
+        <a class="btn btn-outline" href="/admin/audit"><%- icon('manage_search', 'icon-sm') %> কার্যক্রমের লগ</a>
+      </div>
+    </section>
+  <% } %>
+</div>
+<%- include('../partials/admin-footer') %>

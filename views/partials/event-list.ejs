@@ -1,0 +1,22 @@
+<%# A list of events as cards. Expects: list, emptyText %>
+<% if (list.length === 0) { %>
+  <p class="text-body-md text-on-surface-variant py-md"><%= emptyText %></p>
+<% } else { %>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+    <% list.forEach(e => { const phase = eventPhase(e); const open = isRegistrationOpen(e); %>
+      <article class="card p-lg flex flex-col gap-sm">
+        <div class="flex flex-wrap items-center gap-xs">
+          <span class="badge badge-<%= phase %>"><%= phaseLabels[phase] %></span>
+          <% if (phase === 'ongoing' && !open) { %><span class="badge badge-pending">নিবন্ধন বন্ধ</span><% } %>
+        </div>
+        <h3 class="text-[17px] font-bold leading-6"><%= e.name %></h3>
+        <p class="text-label-md text-on-surface-variant flex items-center gap-xs"><%- icon('calendar_month', 'icon-sm') %> <%= formatBn(e.start_time, 'date') %> – <%= formatBn(e.end_time, 'date') %></p>
+        <p class="text-label-md text-on-surface-variant flex items-center gap-xs"><%- icon('language', 'icon-sm') %> <%= e.target_wikis.split(',').join(', ') %></p>
+        <div class="flex flex-wrap gap-sm mt-auto pt-sm">
+          <% if (open) { %><a class="btn btn-primary btn-sm" href="/event/<%= e.id %>"><%- icon('person_add', 'icon-sm') %> নিবন্ধন করুন</a><% } %>
+          <a class="btn btn-tonal btn-sm" href="/event/<%= e.id %>/stats"><%- icon('leaderboard', 'icon-sm') %> পরিসংখ্যান</a>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+<% } %>

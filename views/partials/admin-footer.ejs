@@ -1,0 +1,9 @@
+  </main>
+</div>
+<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-outline-variant flex justify-around items-center h-16" aria-label="অ্যাডমিন মেনু">
+  <a href="/admin" class="flex flex-col items-center gap-[2px] text-[11px] no-underline <%= (locals.currentPath || '') === '/admin' ? 'text-primary font-bold' : 'text-on-surface-variant' %>"><%- icon('dashboard') %>ইভেন্ট</a>
+  <a href="/admin/events/new" class="flex flex-col items-center gap-[2px] text-[11px] no-underline <%= (locals.currentPath || '') === '/admin/events/new' ? 'text-primary font-bold' : 'text-on-surface-variant' %>"><%- icon('add_circle') %>নতুন</a>
+  <a href="/admin/settings" class="flex flex-col items-center gap-[2px] text-[11px] no-underline <%= (locals.currentPath || '') === '/admin/settings' ? 'text-primary font-bold' : 'text-on-surface-variant' %>"><%- icon('settings') %>সেটিংস</a>
+  <a href="/events" class="flex flex-col items-center gap-[2px] text-[11px] no-underline text-on-surface-variant"><%- icon('leaderboard') %>পরিসংখ্যান</a>
+</nav>
+<%- include('scripts') %>

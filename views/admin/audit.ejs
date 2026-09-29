@@ -1,0 +1,29 @@
+<%- include('../partials/admin-header') %>
+<div class="max-w-container-max mx-auto space-y-lg">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
+    <div>
+      <h1 class="text-headline-md font-bold">কার্যক্রমের লগ</h1>
+      <p class="text-body-md text-on-surface-variant">আয়োজকদের সর্বশেষ ৫০০টি কাজ (অনুমোদন, বাতিল, ইভেন্ট ও অংশগ্রহণকারীর পরিবর্তন)।</p>
+    </div>
+    <a class="btn btn-outline" href="/api/admin/audit.csv"><%- icon('download', 'icon-sm') %> পুরো লগ (CSV)</a>
+  </div>
+  <div class="card overflow-x-auto">
+    <table class="table">
+      <thead><tr><th>সময়</th><th>কে</th><th>কাজ</th><th>ইভেন্ট</th><th>কার উপর</th><th>বিস্তারিত</th></tr></thead>
+      <tbody>
+        <% if (entries.length === 0) { %><tr><td colspan="6" class="text-center text-on-surface-variant py-lg">এখনো কোনো কাজ লগ হয়নি।</td></tr><% } %>
+        <% entries.forEach(a => { %>
+          <tr>
+            <td class="whitespace-nowrap text-label-md"><%= formatBn(a.created_at, 'short') %></td>
+            <td class="font-bold"><%= a.actor || '-' %></td>
+            <td><code class="text-label-md"><%= a.action %></code></td>
+            <td><% if (a.event_id && events.has(a.event_id)) { %><a href="/admin/events/<%= a.event_id %>"><%= events.get(a.event_id) %></a><% } else { %><%= a.event_id || '-' %><% } %></td>
+            <td class="break-all"><%= a.target || '-' %></td>
+            <td class="text-label-md text-on-surface-variant break-all max-w-xs"><%= a.details || '' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/admin-footer') %>

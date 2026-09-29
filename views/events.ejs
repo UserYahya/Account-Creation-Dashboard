@@ -1,0 +1,24 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+
+<main id="main" class="flex-grow w-full max-w-container-max mx-auto px-md py-lg md:py-xl space-y-xl">
+  <section class="text-center space-y-sm">
+    <h1 class="text-display-lg font-bold tracking-tight">ইভেন্টসমূহ</h1>
+    <p class="text-body-lg text-on-surface-variant">যেকোনো ইভেন্টের লাইভ বা সমাপ্ত পরিসংখ্যান দেখতে সেটি বেছে নিন।</p>
+  </section>
+  <section id="ongoing" class="space-y-md" aria-labelledby="ongoingTitle">
+    <h2 id="ongoingTitle" class="text-headline-sm font-bold">চলমান ইভেন্ট</h2>
+    <%- include('partials/event-list', { list: groups.ongoing, emptyText: 'এখন কোনো ইভেন্ট চলছে না।' }) %>
+  </section>
+  <section id="upcoming" class="space-y-md" aria-labelledby="upcomingTitle">
+    <h2 id="upcomingTitle" class="text-headline-sm font-bold">আসন্ন ইভেন্ট</h2>
+    <%- include('partials/event-list', { list: groups.upcoming, emptyText: 'কোনো আসন্ন ইভেন্ট নেই।' }) %>
+  </section>
+  <section id="finished" class="space-y-md" aria-labelledby="finishedTitle">
+    <h2 id="finishedTitle" class="text-headline-sm font-bold">সমাপ্ত ইভেন্ট (আর্কাইভ)</h2>
+    <%- include('partials/event-list', { list: groups.finished, emptyText: 'আর্কাইভে কোনো ইভেন্ট নেই।' }) %>
+  </section>
+</main>
+
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

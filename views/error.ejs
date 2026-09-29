@@ -1,0 +1,15 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main" class="flex-grow w-full max-w-[640px] mx-auto px-md py-xl">
+  <section class="card p-lg md:p-xl text-center space-y-md">
+    <div class="mx-auto w-20 h-20 rounded-pill bg-error/15 text-error flex items-center justify-center"><%- icon('error', 'icon-xl') %></div>
+    <h1 class="text-headline-md font-bold"><%= locals.heading || 'সমস্যা হয়েছে' %></h1>
+    <p class="text-body-lg text-on-surface-variant"><%= locals.message || '' %></p>
+    <div class="flex flex-wrap justify-center gap-sm pt-sm">
+      <a class="btn btn-primary" href="/"><%- icon('home', 'icon-sm') %> হোম পাতা</a>
+      <a class="btn btn-outline" href="/events">সব ইভেন্ট</a>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

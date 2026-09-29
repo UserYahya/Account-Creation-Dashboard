@@ -1,0 +1,37 @@
+<%- include('partials/head') %>
+<%- include('partials/header', { statsUrl: `/event/${event.id}/stats` }) %>
+
+<main id="main" class="flex-grow w-full max-w-[640px] mx-auto px-md py-xl space-y-lg">
+  <section class="card p-lg md:p-xl text-center space-y-md">
+    <div class="mx-auto w-20 h-20 rounded-pill bg-surface-container-high text-on-surface-variant flex items-center justify-center"><%- icon(phase === 'upcoming' ? 'schedule' : 'event_busy', 'icon-xl') %></div>
+    <h1 class="text-headline-md font-bold">
+      <% if (phase === 'upcoming') { %>"<%= event.name %>" ইভেন্টের নিবন্ধন এখনো শুরু হয়নি
+      <% } else if (phase === 'finished') { %>"<%= event.name %>" ইভেন্টটি শেষ হয়েছে
+      <% } else { %>"<%= event.name %>" ইভেন্টের নিবন্ধন সাময়িকভাবে বন্ধ<% } %>
+    </h1>
+    <p class="text-body-lg text-on-surface-variant">
+      <% if (phase === 'upcoming') { %>নিবন্ধন শুরু হবে <strong><%= formatBn(event.start_time) %></strong>-এ। তখন আবার এই পাতায় আসুন।
+      <% } else if (phase === 'finished') { %>ইভেন্টটি <%= formatBn(event.end_time) %>-এ শেষ হয়েছে। অংশগ্রহণকারীদের অবদান দেখতে পরিসংখ্যান পাতায় যান।
+      <% } else { %>আয়োজকরা আপাতত নিবন্ধন বন্ধ রেখেছেন। বিস্তারিত জানতে আয়োজকদের সাথে কথা বলুন।<% } %>
+    </p>
+    <div class="flex flex-wrap justify-center gap-sm pt-sm">
+      <a class="btn btn-primary" href="/event/<%= event.id %>/stats"><%- icon('leaderboard', 'icon-sm') %> পরিসংখ্যান দেখুন</a>
+      <% if (user) { %><a class="btn btn-outline" href="/admin/events/<%= event.id %>"><%- icon('edit', 'icon-sm') %> ইভেন্ট পরিচালনা</a><% } %>
+      <a class="btn btn-outline" href="https://bn.wikipedia.org" target="_blank" rel="noopener">উইকিপিডিয়ায় যান</a>
+    </div>
+  </section>
+
+  <% if (otherEvents.length > 0) { %>
+    <section class="card p-lg space-y-sm">
+      <h2 class="text-headline-sm font-bold">এখন যেসব ইভেন্টে নিবন্ধন চলছে</h2>
+      <% otherEvents.forEach(e => { %>
+        <a class="flex justify-between items-center gap-sm py-sm border-b border-outline-variant/50 font-bold no-underline hover:underline" href="/event/<%= e.id %>">
+          <span class="truncate"><%= e.name %></span><%- icon('arrow_forward', 'icon-sm') %>
+        </a>
+      <% }) %>
+    </section>
+  <% } %>
+</main>
+
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

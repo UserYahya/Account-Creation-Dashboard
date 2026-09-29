@@ -1,0 +1,7 @@
+  <div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
+  <script src="<%= asset('js/common.js') %>"></script>
+  <% (locals.scripts || []).forEach(file => { %>
+  <script src="<%= asset('js/' + file) %>"></script>
+  <% }) %>
+</body>
+</html>

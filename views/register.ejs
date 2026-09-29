@@ -1,0 +1,119 @@
+<%- include('partials/head') %>
+<%- include('partials/header', { statsUrl: `/event/${event.id}/stats` }) %>
+
+<main id="main" class="flex-grow w-full max-w-[560px] mx-auto px-md py-lg md:py-xl space-y-lg">
+  <section class="card p-lg md:p-xl" aria-labelledby="formTitle">
+    <div class="text-center mb-lg">
+      <h1 id="formTitle" class="text-headline-md font-bold">উইকিপিডিয়া অ্যাকাউন্টের আবেদন</h1>
+      <p class="mt-xs text-body-md text-primary font-semibold">
+        ইভেন্ট:
+        <% if (event.workshop_url) { %><a href="<%= event.workshop_url %>" target="_blank" rel="noopener"><%= event.name %></a><% } else { %><%= event.name %><% } %>
+      </p>
+      <p class="mt-xs text-label-md text-on-surface-variant">নিবন্ধন খোলা থাকবে <%= formatBn(event.end_time) %> পর্যন্ত</p>
+      <div class="mt-md flex flex-wrap justify-center gap-sm">
+        <a class="btn btn-tonal btn-sm" href="/event/<%= event.id %>/stats"><%- icon('leaderboard', 'icon-sm') %> লাইভ পরিসংখ্যান</a>
+        <% if (user) { %>
+          <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.id %>"><%- icon('edit', 'icon-sm') %> ইভেন্ট পরিচালনা</a>
+        <% } %>
+      </div>
+    </div>
+
+    <div id="existingApplication" class="alert alert-info mb-md" hidden>
+      <%- icon('info') %>
+      <p>এই ডিভাইস থেকে আপনি ইতিমধ্যে <strong data-username></strong> নামে আবেদন করেছেন। <a data-status-link href="#">আবেদনের অবস্থা দেখুন</a></p>
+    </div>
+
+    <% if (event.allow_self_enroll) { %>
+      <div class="flex border-b border-outline-variant mb-lg" role="tablist" aria-label="আবেদনের ধরন">
+        <button type="button" class="tab flex-1" role="tab" id="tab-new" aria-controls="panel-new" aria-selected="true" data-tab="new">নতুন অ্যাকাউন্ট চাই</button>
+        <button type="button" class="tab flex-1" role="tab" id="tab-join" aria-controls="panel-join" aria-selected="false" tabindex="-1" data-tab="join">আমার অ্যাকাউন্ট আছে</button>
+      </div>
+    <% } %>
+
+    <div id="panel-new" role="tabpanel" aria-labelledby="tab-new">
+      <div id="formError" class="alert alert-error mb-md" role="alert" hidden><%- icon('error') %><p></p></div>
+      <form id="registrationForm" class="space-y-lg" novalidate>
+        <div>
+          <label class="label" for="email">ইমেইল ঠিকানা</label>
+          <input class="input input-lg" id="email" name="email" type="email" inputmode="email" autocomplete="email" required maxlength="254" placeholder="example@gmail.com" aria-describedby="emailHelp emailHint">
+          <p id="emailHelp" class="help">এই ঠিকানায় উইকিপিডিয়া থেকে আপনার সাময়িক পাসওয়ার্ড পাঠানো হবে। সঠিক ঠিকানা দিন।</p>
+          <p id="emailHint" class="help" hidden></p>
+        </div>
+        <div>
+          <label class="label" for="emailConfirm">ইমেইল ঠিকানাটি আবার লিখুন</label>
+          <input class="input input-lg" id="emailConfirm" name="email_confirm" type="email" inputmode="email" autocomplete="off" required maxlength="254" aria-describedby="emailConfirmMsg">
+          <p id="emailConfirmMsg" class="help" aria-live="polite"></p>
+        </div>
+        <div>
+          <label class="label" for="username">পছন্দের ব্যবহারকারী নাম</label>
+          <input class="input input-lg" id="username" name="username" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" required maxlength="85" placeholder="যেমন: Rahim Uddin" aria-describedby="usernamePreview usernameFeedback">
+          <p id="usernamePreview" class="help" hidden>উইকিপিডিয়ায় নামটি এভাবে দেখাবে: <strong class="text-on-surface"></strong></p>
+          <div id="usernameFeedback" class="mt-sm" aria-live="polite"></div>
+          <div id="usernameSuggestions" class="mt-sm" hidden>
+            <p class="help mb-xs">এই নামগুলো খালি আছে, পছন্দ হলে চাপুন:</p>
+            <div class="flex flex-wrap gap-xs" data-list></div>
+          </div>
+        </div>
+        <div class="visually-offscreen" aria-hidden="true">
+          <label for="website">Website</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <div class="flex items-start gap-sm">
+          <input class="checkbox mt-1 w-5 h-5" id="consent" name="consent" type="checkbox" required>
+          <label for="consent" class="text-body-md text-on-surface-variant">
+            আমি সম্মতি দিচ্ছি যে আমার ইমেইল ঠিকানা শুধু এই অ্যাকাউন্ট তৈরির জন্য ব্যবহার হবে এবং সিদ্ধান্তের <%= formatNumber(retentionDays) %> দিন পর মুছে ফেলা হবে।
+            <a href="/privacy" target="_blank">বিস্তারিত</a>
+          </label>
+        </div>
+        <button id="submitBtn" class="btn btn-primary btn-lg w-full" type="submit">আবেদন জমা দিন</button>
+      </form>
+    </div>
+
+    <% if (event.allow_self_enroll) { %>
+      <div id="panel-join" role="tabpanel" aria-labelledby="tab-join" hidden>
+        <p class="text-body-md text-on-surface-variant mb-md">আগে থেকেই উইকিপিডিয়া অ্যাকাউন্ট থাকলে নতুন অ্যাকাউন্টের দরকার নেই। আপনার ব্যবহারকারী নাম দিয়ে এই ইভেন্টের লিডারবোর্ডে যুক্ত হন।</p>
+        <div id="joinMessage" class="mb-md" aria-live="polite"></div>
+        <form id="joinForm" class="space-y-lg" novalidate>
+          <div>
+            <label class="label" for="joinUsername">আপনার উইকিপিডিয়া ব্যবহারকারী নাম</label>
+            <input class="input input-lg" id="joinUsername" name="username" type="text" autocomplete="username" autocapitalize="words" spellcheck="false" required maxlength="85">
+          </div>
+          <div class="visually-offscreen" aria-hidden="true">
+            <label for="joinWebsite">Website</label>
+            <input id="joinWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <button id="joinBtn" class="btn btn-secondary btn-lg w-full" type="submit">ইভেন্টে যুক্ত হন</button>
+        </form>
+      </div>
+    <% } %>
+
+    <div class="text-center pt-md border-t border-outline-variant mt-lg">
+      <a href="https://bn.wikipedia.org" class="inline-flex items-center gap-xs font-bold text-label-md"><%- icon('arrow_back', 'icon-sm') %> উইকিপিডিয়ায় ফেরত যান</a>
+    </div>
+  </section>
+
+  <%- include('partials/username-policy', { instructions }) %>
+
+  <%# QR code for projecting in the room; hidden on phones where it is not useful %>
+  <section class="hidden md:block card p-xl text-center space-y-md" aria-labelledby="qrTitle">
+    <h2 id="qrTitle" class="text-headline-sm font-bold flex items-center justify-center gap-sm"><%- icon('qr_code_2', 'icon-lg text-primary') %> মোবাইল থেকে অংশ নিতে স্ক্যান করুন</h2>
+    <img src="/event/<%= event.id %>/qr.png?size=512" alt="এই পাতার QR কোড" width="256" height="256" class="w-64 h-64 mx-auto rounded-lg border border-outline-variant bg-white p-xs">
+    <p class="text-body-lg font-bold text-primary break-all"><%= eventUrl.replace(/^https?:\/\//, '') %></p>
+    <a class="btn btn-outline btn-sm" href="/event/<%= event.id %>/display"><%- icon('slideshow', 'icon-sm') %> প্রজেক্টরে দেখান</a>
+  </section>
+
+  <% if (otherEvents.length > 0) { %>
+    <section class="card p-lg space-y-sm" aria-labelledby="otherEventsTitle">
+      <h2 id="otherEventsTitle" class="text-headline-sm font-bold flex items-center gap-sm"><%- icon('event_upcoming', 'icon-lg text-primary') %> অন্যান্য চলমান ইভেন্ট</h2>
+      <% otherEvents.forEach(e => { %>
+        <a class="flex justify-between items-center gap-sm py-sm border-b border-outline-variant/50 font-bold no-underline hover:underline" href="/event/<%= e.id %>">
+          <span class="truncate"><%= e.name %></span><%- icon('arrow_forward', 'icon-sm') %>
+        </a>
+      <% }) %>
+    </section>
+  <% } %>
+</main>
+
+<%- include('partials/footer') %>
+<script type="application/json" id="page-data"><%- pageData({ eventId: event.id, allowSelfEnroll: event.allow_self_enroll === 1 }) %></script>
+<%- include('partials/scripts', { scripts: ['register.js'] }) %>

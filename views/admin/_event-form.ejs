@@ -1,0 +1,115 @@
+<%#
+  Event form shared by "new event" and the settings tab.
+  Expects: event (with start_local / end_local), adminWikis, globalWelcome, globalInstructions, formId, submitLabel
+%>
+<%
+  const namespaces = [
+    ['0', 'নিবন্ধ (Main)'], ['1', 'আলাপ (Talk)'], ['2', 'ব্যবহারকারী (User)'], ['4', 'প্রকল্প (Project)'],
+    ['6', 'ফাইল (File)'], ['10', 'টেমপ্লেট (Template)'], ['14', 'বিষয়শ্রেণী (Category)'], ['118', 'খসড়া (Draft)'], ['828', 'মডিউল (Module)']
+  ];
+  const selectedNs = event.target_namespaces === 'all' ? [] : String(event.target_namespaces).split(',');
+  const allNs = event.target_namespaces === 'all';
+%>
+<form id="<%= formId %>" class="space-y-lg" novalidate data-event-form>
+  <div id="<%= formId %>Error" class="alert alert-error" role="alert" hidden><%- icon('error') %><p></p></div>
+
+  <fieldset class="card">
+    <legend class="sr-only">মূল তথ্য</legend>
+    <div class="card-header"><h2 class="card-title"><%- icon('event', 'text-primary') %> মূল তথ্য</h2></div>
+    <div class="card-body space-y-lg">
+      <div>
+        <label class="label" for="<%= formId %>-name">ইভেন্টের নাম</label>
+        <input class="input" id="<%= formId %>-name" name="name" type="text" required maxlength="150" value="<%= event.name %>" placeholder="যেমন: অমর একুশে উইকিপিডিয়া নিবন্ধ প্রতিযোগিতা ২০২৬">
+      </div>
+      <div>
+        <label class="label" for="<%= formId %>-workshop">কর্মশালা বা ইভেন্ট পাতার লিংক (ঐচ্ছিক)</label>
+        <input class="input" id="<%= formId %>-workshop" name="workshop_url" type="url" maxlength="500" value="<%= event.workshop_url || '' %>" placeholder="https://bn.wikipedia.org/wiki/উইকিপিডিয়া:কর্মশালা">
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+        <div>
+          <label class="label" for="<%= formId %>-start">শুরুর সময় (বাংলাদেশ সময়)</label>
+          <input class="input" id="<%= formId %>-start" name="start_time" type="datetime-local" required value="<%= event.start_local %>">
+        </div>
+        <div>
+          <label class="label" for="<%= formId %>-end">শেষের সময় (বাংলাদেশ সময়)</label>
+          <input class="input" id="<%= formId %>-end" name="end_time" type="datetime-local" required value="<%= event.end_local %>">
+        </div>
+      </div>
+      <p class="help -mt-md">নিবন্ধন এবং অবদান গণনা শুধু এই সময়ের মধ্যে হবে।</p>
+      <div class="flex flex-col sm:flex-row gap-md">
+        <label class="flex items-start gap-sm flex-1 p-md border border-outline-variant rounded-lg cursor-pointer">
+          <input class="checkbox mt-1 w-5 h-5" type="checkbox" name="registration_active" <%= event.registration_active ? 'checked' : '' %>>
+          <span><strong class="block text-body-md">নিবন্ধন চালু</strong><span class="text-label-md text-on-surface-variant">বন্ধ করলে কেউ নতুন আবেদন করতে পারবেন না।</span></span>
+        </label>
+        <label class="flex items-start gap-sm flex-1 p-md border border-outline-variant rounded-lg cursor-pointer">
+          <input class="checkbox mt-1 w-5 h-5" type="checkbox" name="allow_self_enroll" <%= event.allow_self_enroll ? 'checked' : '' %>>
+          <span><strong class="block text-body-md">পুরনো অ্যাকাউন্টধারীরা নিজে যুক্ত হতে পারবেন</strong><span class="text-label-md text-on-surface-variant">নিবন্ধন পাতায় "আমার অ্যাকাউন্ট আছে" ট্যাব দেখাবে।</span></span>
+        </label>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="card">
+    <legend class="sr-only">অবদান গণনা</legend>
+    <div class="card-header"><h2 class="card-title"><%- icon('query_stats', 'text-primary') %> অবদান গণনা</h2></div>
+    <div class="card-body space-y-lg">
+      <div>
+        <label class="label" for="<%= formId %>-wikis">টার্গেট উইকি (কমা দিয়ে আলাদা করুন)</label>
+        <input class="input" id="<%= formId %>-wikis" name="target_wikis" type="text" required value="<%= event.target_wikis.split(',').join(', ') %>" placeholder="bn.wikipedia.org, commons.wikimedia.org">
+        <p class="help">শুধু উইকিমিডিয়ার প্রকল্প, যেমন bn.wikipedia.org, commons.wikimedia.org, www.wikidata.org।</p>
+      </div>
+      <div>
+        <span class="label">কোন নেমস্পেসের সম্পাদনা গণনা হবে</span>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-sm p-md border border-outline-variant rounded-lg">
+          <label class="flex items-center gap-sm text-body-md cursor-pointer col-span-2 sm:col-span-3 font-bold">
+            <input class="checkbox" type="checkbox" data-ns-all <%= allNs ? 'checked' : '' %>> সকল নেমস্পেস
+          </label>
+          <% namespaces.forEach(([id, label]) => { %>
+            <label class="flex items-center gap-sm text-body-md cursor-pointer">
+              <input class="checkbox" type="checkbox" data-ns value="<%= id %>" <%= selectedNs.includes(id) ? 'checked' : '' %> <%= allNs ? 'disabled' : '' %>> <%= label %>
+            </label>
+          <% }) %>
+        </div>
+        <p class="help">ফাইল আপলোড গণনা করতে "সকল" অথবা "ফাইল" নেমস্পেস রাখুন।</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+        <div>
+          <label class="label" for="<%= formId %>-goal-edits">প্রত্যেকের সম্পাদনার লক্ষ্য (ঐচ্ছিক)</label>
+          <input class="input" id="<%= formId %>-goal-edits" name="goal_edits" type="number" min="1" max="100000" inputmode="numeric" value="<%= event.goal_edits || '' %>" placeholder="যেমন: ১০">
+        </div>
+        <div>
+          <label class="label" for="<%= formId %>-goal-articles">প্রত্যেকের নতুন নিবন্ধের লক্ষ্য (ঐচ্ছিক)</label>
+          <input class="input" id="<%= formId %>-goal-articles" name="goal_articles" type="number" min="1" max="100000" inputmode="numeric" value="<%= event.goal_articles || '' %>" placeholder="যেমন: ২">
+        </div>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="card">
+    <legend class="sr-only">অ্যাকাউন্ট ও বার্তা</legend>
+    <div class="card-header"><h2 class="card-title"><%- icon('mail', 'text-primary') %> অ্যাকাউন্ট তৈরি ও বার্তা</h2></div>
+    <div class="card-body space-y-lg">
+      <div>
+        <label class="label" for="<%= formId %>-account-wiki">কোন উইকিতে অ্যাকাউন্ট তৈরি হবে</label>
+        <select class="input" id="<%= formId %>-account-wiki" name="account_wiki">
+          <option value="" <%= !event.account_wiki ? 'selected' : '' %>>অনুমোদনকারী প্রশাসকের নিজের উইকি</option>
+          <% adminWikis.forEach(w => { %><option value="<%= w %>" <%= event.account_wiki === w ? 'selected' : '' %>><%= w %></option><% }) %>
+        </select>
+        <p class="help">স্বাগত বার্তা এই উইকির আলাপ পাতায় যাবে। অনুমোদনকারীর ওই উইকিতে প্রশাসক অধিকার না থাকলে তার নিজের উইকি ব্যবহার হবে।</p>
+      </div>
+      <div>
+        <label class="label" for="<%= formId %>-instructions">নিবন্ধন পাতায় আয়োজকদের নির্দেশনা (ঐচ্ছিক, প্রতি লাইনে একটি)</label>
+        <textarea class="input font-sans" id="<%= formId %>-instructions" name="instructions" rows="3" maxlength="5000" placeholder="<%= globalInstructions || 'খালি রাখলে সাধারণ সেটিংসের নির্দেশনা দেখাবে।' %>"><%= event.instructions || '' %></textarea>
+      </div>
+      <div>
+        <label class="label" for="<%= formId %>-welcome">স্বাগত বার্তা (ঐচ্ছিক, উইকিটেক্সট)</label>
+        <textarea class="input font-mono text-label-md" id="<%= formId %>-welcome" name="welcome_message" rows="4" maxlength="10000" placeholder="<%= globalWelcome || 'খালি রাখলে সাধারণ সেটিংসের বার্তা যাবে।' %>"><%= event.welcome_message || '' %></textarea>
+        <p class="help">খালি রাখলে সাধারণ সেটিংসের বার্তা ব্যবহার হবে। <code>{{username}}</code> লিখলে নতুন ব্যবহারকারীর নাম বসবে, <code>{{event}}</code> লিখলে ইভেন্টের নাম।</p>
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="flex justify-end gap-sm">
+    <button class="btn btn-primary btn-lg" type="submit" data-submit><%- icon('save', 'icon-sm') %> <%= submitLabel %></button>
+  </div>
+</form>

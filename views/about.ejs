@@ -1,0 +1,72 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+
+<main id="main" class="flex-grow w-full max-w-[880px] mx-auto px-md py-lg md:py-xl space-y-xl">
+  <section class="text-center space-y-sm">
+    <h1 class="text-[34px] leading-tight font-extrabold tracking-tight">ইভেন্ট ড্যাশবোর্ড পরিচিতি</h1>
+    <p class="text-body-lg text-on-surface-variant max-w-2xl mx-auto">উইকিমিডিয়া কর্মশালা ও এডিটাথনের অংশগ্রহণকারীদের সহজে ও দ্রুত উইকিপিডিয়া অ্যাকাউন্ট তৈরি করে দেওয়া এবং ইভেন্ট চলাকালীন তাদের অগ্রগতি দেখার একটি প্ল্যাটফর্ম।</p>
+  </section>
+
+  <section class="card p-lg md:p-xl prose-bn text-body-lg text-on-surface-variant">
+    <h2 class="!mt-0 flex items-center gap-sm"><%- icon('help', 'icon-lg text-primary') %> পটভূমি ও উদ্দেশ্য</h2>
+    <p><strong>১. আইপি সীমাবদ্ধতার সমস্যা:</strong> উইকিপিডিয়ার নিয়ম অনুযায়ী একটি আইপি ঠিকানা থেকে ২৪ ঘণ্টায় সর্বোচ্চ ৬টি অ্যাকাউন্ট তৈরি করা যায়। কর্মশালা বা এডিটাথনে অনেক অংশগ্রহণকারী একই ওয়াইফাই ব্যবহার করে অ্যাকাউন্ট খুলতে গেলে এই সীমায় আটকে যান।</p>
+    <p><strong>২. অন্যান্য টুলের সীমাবদ্ধতা:</strong></p>
+    <ul>
+      <li><strong>আউটরিচ ড্যাশবোর্ড (Outreach Dashboard):</strong> স্বয়ংক্রিয় অ্যাকাউন্ট তৈরির সুবিধা দিলেও এটি মূলত ইংরেজি উইকিপিডিয়ার উপর নির্ভর করে, যার জন্য আয়োজকদের সেখানে বিশেষ অনুমতির প্রয়োজন হয়।</li>
+      <li><strong>accounts.wmcloud.org:</strong> এতে প্রবেশাধিকার পেতে ইংরেজি উইকিপিডিয়ায় উল্লেখযোগ্য অবদান ও আলাদা আবেদন-অনুমোদন প্রক্রিয়ার প্রয়োজন হয়।</li>
+    </ul>
+    <p><strong>৩. সমাধান:</strong> বাংলা উইকিপিডিয়া বা উইকিমিডিয়া বাংলাদেশের প্রশাসকরা কোনো বাড়তি বৈশ্বিক অনুমতি ছাড়াই নিজেদের অ্যাকাউন্ট দিয়ে OAuth-এর মাধ্যমে লগ ইন করে অংশগ্রহণকারীদের জন্য সরাসরি অ্যাকাউন্ট তৈরি করতে পারেন।</p>
+  </section>
+
+  <section class="space-y-md">
+    <h2 class="text-headline-md font-bold flex items-center gap-sm"><%- icon('featured_play_list', 'icon-lg text-primary') %> মূল বৈশিষ্ট্য</h2>
+    <%# icons: verified_user person_search mail fact_check done_all leaderboard group_add slideshow %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+      <% [
+        ['verified_user', 'নিরাপদ OAuth লগ ইন', 'উইকিমিডিয়ার অফিসিয়াল OAuth ২.০ দিয়ে লগ ইন। লগ ইনের পর যাচাই করা হয় আয়োজক bn.wikipedia.org বা bd.wikimedia.org-এর প্রশাসক কিনা।'],
+        ['person_search', 'লাইভ ব্যবহারকারী নাম পরীক্ষা', 'নাম লেখার সাথে সাথে দেখা হয় নামটি আগে থেকে আছে কিনা, AntiSpoof সংঘাত বা নিষিদ্ধ নামের তালিকায় পড়ে কিনা। নাম না পেলে খালি থাকা বিকল্প নাম দেখানো হয়।'],
+        ['mail', 'ইমেইলে সাময়িক পাসওয়ার্ড', 'অ্যাকাউন্ট তৈরি হলে উইকিপিডিয়া নিজেই অংশগ্রহণকারীর ইমেইলে সাময়িক পাসওয়ার্ড পাঠায়। আয়োজকদের কখনো পাসওয়ার্ড দেখতে হয় না।'],
+        ['fact_check', 'আবেদনের অবস্থা দেখা', 'আবেদন জমা দেওয়ার পর অংশগ্রহণকারী একটি ব্যক্তিগত লিংকে আবেদনের অবস্থা (অপেক্ষমাণ, তৈরি হয়েছে, বাতিল) এবং পরবর্তী করণীয় দেখতে পান।'],
+        ['done_all', 'একসাথে অনেক আবেদন অনুমোদন', 'কর্মশালায় অনেক আবেদন এলে আয়োজকরা একসাথে নির্বাচন করে অনুমোদন করতে পারেন। আবেদনের তালিকা নিজে থেকেই হালনাগাদ হয়।'],
+        ['leaderboard', 'লাইভ লিডারবোর্ড ও পরিসংখ্যান', 'অংশগ্রহণকারীদের সম্পাদনা, নতুন নিবন্ধ, ফাইল আপলোড ও যুক্ত করা বাইট গণনা করে লিডারবোর্ড, সময়ভিত্তিক চার্ট এবং প্রত্যেকের সম্পাদনার তালিকা দেখায়।'],
+        ['group_add', 'পুরনো অ্যাকাউন্টধারীদের যুক্ত হওয়া', 'যাদের আগে থেকেই অ্যাকাউন্ট আছে, তারা নিজের ব্যবহারকারী নাম দিয়ে ইভেন্টে যুক্ত হতে পারেন। আয়োজকরাও একসাথে অনেক নাম যোগ করতে পারেন।'],
+        ['slideshow', 'প্রজেক্টর মোড', 'কর্মশালার পর্দায় দেখানোর জন্য বড় QR কোড, নিবন্ধনের সংখ্যা ও শীর্ষ অংশগ্রহণকারীদের তালিকাসহ একটি পাতা।']
+      ].forEach(([iconName, heading, text]) => { %>
+        <article class="card p-lg space-y-sm">
+          <div class="w-10 h-10 rounded-pill bg-primary/10 text-primary flex items-center justify-center"><%- icon(iconName) %></div>
+          <h3 class="text-body-lg font-bold"><%= heading %></h3>
+          <p class="text-body-md text-on-surface-variant"><%= text %></p>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="space-y-md">
+    <h2 class="text-headline-md font-bold flex items-center gap-sm"><%- icon('menu_book', 'icon-lg text-primary') %> কীভাবে ব্যবহার করবেন</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+      <article class="card p-lg space-y-sm">
+        <h3 class="text-body-lg font-bold flex items-center gap-sm"><%- icon('person', 'text-primary') %> অংশগ্রহণকারীদের জন্য</h3>
+        <ol class="list-decimal pl-lg space-y-sm text-body-md text-on-surface-variant">
+          <li>আয়োজকদের দেওয়া QR কোড স্ক্যান করুন বা ইভেন্টের লিংকে যান।</li>
+          <li>ইমেইল ঠিকানা (দুবার) এবং পছন্দের ব্যবহারকারী নাম দিয়ে <strong>"আবেদন জমা দিন"</strong> চাপুন।</li>
+          <li>আবেদনের অবস্থার পাতাটি খোলা রাখুন; অনুমোদন হলে সেখানে জানানো হবে।</li>
+          <li>ইমেইলে আসা সাময়িক পাসওয়ার্ড দিয়ে উইকিপিডিয়ায় লগ ইন করে নতুন পাসওয়ার্ড দিন।</li>
+          <li>আগে থেকেই অ্যাকাউন্ট থাকলে <strong>"আমার অ্যাকাউন্ট আছে"</strong> ট্যাব থেকে ইভেন্টে যুক্ত হন।</li>
+        </ol>
+      </article>
+      <article class="card p-lg space-y-sm">
+        <h3 class="text-body-lg font-bold flex items-center gap-sm"><%- icon('admin_panel_settings', 'text-primary') %> আয়োজকদের জন্য</h3>
+        <ol class="list-decimal pl-lg space-y-sm text-body-md text-on-surface-variant">
+          <li><strong>"আয়োজক লগ ইন"</strong> চেপে উইকিমিডিয়া অ্যাকাউন্ট দিয়ে লগ ইন করুন।</li>
+          <li>অ্যাডমিন প্যানেল থেকে নতুন ইভেন্ট তৈরি করুন: সময়সীমা, টার্গেট উইকি ও নেমস্পেস ঠিক করে দিন।</li>
+          <li>ইভেন্টের পাতায় আবেদনগুলো দেখুন। একটি একটি করে বা একসাথে নির্বাচন করে অনুমোদন করুন।</li>
+          <li>প্রজেক্টর পাতাটি পর্দায় দেখান, যাতে অংশগ্রহণকারীরা QR কোড স্ক্যান করতে পারেন।</li>
+          <li>অংশগ্রহণকারী ট্যাব থেকে বিদ্যমান ব্যবহারকারীদের যোগ বা বাদ দিন এবং CSV ডাউনলোড করুন।</li>
+        </ol>
+      </article>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

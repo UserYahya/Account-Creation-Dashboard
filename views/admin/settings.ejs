@@ -1,0 +1,33 @@
+<%- include('../partials/admin-header') %>
+<div class="max-w-3xl mx-auto space-y-lg">
+  <div>
+    <h1 class="text-headline-md font-bold">সাধারণ সেটিংস</h1>
+    <p class="text-body-md text-on-surface-variant">যেসব ইভেন্টে নিজস্ব বার্তা দেওয়া নেই, সেগুলোতে এখানকার লেখা ব্যবহার হবে।</p>
+  </div>
+  <form id="settingsForm" class="card" novalidate>
+    <div class="card-body space-y-lg">
+      <div>
+        <label class="label" for="instructions">নিবন্ধন পাতায় আয়োজকদের নির্দেশনা (প্রতি লাইনে একটি)</label>
+        <textarea class="input" id="instructions" name="additional_instructions" rows="4" maxlength="5000"><%= instructions %></textarea>
+        <p class="help">প্রতিটি লাইন আলাদা নির্দেশনা হিসেবে "ব্যবহারকারী নামের নীতিমালা" কার্ডে দেখাবে।</p>
+      </div>
+      <div>
+        <label class="label" for="welcome">স্বাগত বার্তা (অ্যাকাউন্ট তৈরির পর আলাপ পাতায় যাবে)</label>
+        <textarea class="input font-mono text-label-md" id="welcome" name="welcome_message" rows="5" maxlength="10000"><%= welcome %></textarea>
+        <p class="help"><code>{{username}}</code> লিখলে নতুন ব্যবহারকারীর নাম, <code>{{event}}</code> লিখলে ইভেন্টের নাম বসবে। খালি রাখলে কোনো বার্তা যাবে না। বার্তাটি কখনো বিদ্যমান আলাপ পাতা মুছে লেখে না।</p>
+      </div>
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-primary" type="submit" id="saveSettings"><%- icon('save', 'icon-sm') %> সংরক্ষণ করুন</button>
+    </div>
+  </form>
+
+  <section class="card">
+    <div class="card-header"><h2 class="card-title"><%- icon('shield', 'text-primary') %> তথ্য সংরক্ষণ</h2></div>
+    <div class="card-body text-body-md text-on-surface-variant space-y-sm">
+      <p>আবেদনকারীদের ইমেইল ঠিকানা সিদ্ধান্তের <strong><%= formatNumber(retentionDays) %> দিন</strong> পর স্বয়ংক্রিয়ভাবে মুছে ফেলা হয় (সার্ভারে <code>EMAIL_RETENTION_DAYS</code> দিয়ে পরিবর্তন করা যায়)।</p>
+      <p>ইমেইল ঠিকানা শুধু ডেভেলপাররা দেখতে পারেন।</p>
+    </div>
+  </section>
+</div>
+<%- include('../partials/admin-footer', { scripts: ['admin-settings.js'] }) %>

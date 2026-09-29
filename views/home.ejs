@@ -1,0 +1,39 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+
+<main id="main" class="flex-grow w-full max-w-container-max mx-auto px-md py-lg md:py-xl space-y-xl">
+  <section class="text-center space-y-sm">
+    <h1 class="text-display-lg font-bold tracking-tight">উইকিপিডিয়া অ্যাকাউন্ট ও ইভেন্ট ড্যাশবোর্ড</h1>
+    <p class="text-body-lg text-on-surface-variant max-w-2xl mx-auto">উইকিমিডিয়া কর্মশালা ও এডিটাথনের অংশগ্রহণকারীদের জন্য উইকিপিডিয়া অ্যাকাউন্টের আবেদন এবং ইভেন্টের লাইভ পরিসংখ্যান।</p>
+  </section>
+
+  <section aria-labelledby="openTitle" class="space-y-md">
+    <h2 id="openTitle" class="text-headline-sm font-bold flex items-center gap-sm"><%- icon('how_to_reg', 'icon-lg text-secondary') %> এখন নিবন্ধন চলছে</h2>
+    <% if (open.length === 0) { %>
+      <div class="alert alert-info"><%- icon('info') %><p>এই মুহূর্তে কোনো ইভেন্টে নিবন্ধন চলছে না। আপনার ইভেন্টের আয়োজকদের দেওয়া লিংক বা QR কোড ব্যবহার করুন।</p></div>
+    <% } else { %>
+      <p class="text-body-md text-on-surface-variant">আপনি যে ইভেন্টে অংশ নিচ্ছেন সেটি বেছে নিন।</p>
+      <%- include('partials/event-list', { list: open, emptyText: '' }) %>
+    <% } %>
+  </section>
+
+  <% if (upcoming.length > 0) { %>
+    <section aria-labelledby="upcomingTitle" class="space-y-md">
+      <h2 id="upcomingTitle" class="text-headline-sm font-bold flex items-center gap-sm"><%- icon('event_upcoming', 'icon-lg text-primary') %> আসন্ন ইভেন্ট</h2>
+      <%- include('partials/event-list', { list: upcoming, emptyText: '' }) %>
+    </section>
+  <% } %>
+
+  <% if (finished.length > 0) { %>
+    <section aria-labelledby="finishedTitle" class="space-y-md">
+      <div class="flex items-center justify-between gap-sm flex-wrap">
+        <h2 id="finishedTitle" class="text-headline-sm font-bold flex items-center gap-sm"><%- icon('history', 'icon-lg text-on-surface-variant') %> সাম্প্রতিক সমাপ্ত ইভেন্ট</h2>
+        <a class="font-bold text-label-md" href="/events#finished">সব দেখুন</a>
+      </div>
+      <%- include('partials/event-list', { list: finished, emptyText: '' }) %>
+    </section>
+  <% } %>
+</main>
+
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

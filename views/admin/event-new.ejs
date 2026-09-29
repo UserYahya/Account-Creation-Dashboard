@@ -1,0 +1,11 @@
+<%- include('../partials/admin-header') %>
+<div class="max-w-3xl mx-auto space-y-lg">
+  <div>
+    <a class="text-label-md font-bold" href="/admin"><%- icon('arrow_back', 'icon-sm') %> ড্যাশবোর্ডে ফিরুন</a>
+    <h1 class="text-headline-md font-bold mt-xs">নতুন ইভেন্ট তৈরি করুন</h1>
+    <p class="text-body-md text-on-surface-variant">তৈরি করার পর ইভেন্টের নিজস্ব নিবন্ধন লিংক ও QR কোড পাবেন।</p>
+  </div>
+  <%- include('_event-form', { formId: 'eventForm', submitLabel: 'ইভেন্ট তৈরি করুন' }) %>
+</div>
+<script type="application/json" id="page-data"><%- pageData({ mode: 'create' }) %></script>
+<%- include('../partials/admin-footer', { scripts: ['admin-event-form.js'] }) %>
