@@ -33,7 +33,8 @@
  *     labels: { on: '…', off: '…', tooltip: '…' }
  *   };
  *
- * Source and documentation: https://github.com/UserYahya/Account-Creation-Dashboard
+ * Source: https://github.com/UserYahya/wikimedia
+ * Tests and a browser check: https://github.com/UserYahya/Account-Creation-Dashboard (userscripts/)
  */
 ( function () {
 	'use strict';
