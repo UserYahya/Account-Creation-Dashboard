@@ -8,6 +8,7 @@
     "dev": "node --watch server.js",
     "build": "node scripts/build-assets.js && tailwindcss -c tailwind.config.js -i src/styles/app.css -o public/css/app.css --minify",
     "test": "node --test test/*.test.js",
+    "test:browser": "node test/browser/vector-2022-mobile.check.js",
     "lint": "eslint ."
   },
   "dependencies": {

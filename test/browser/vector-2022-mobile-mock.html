@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<!--
+  Mock of a Wikipedia article in the Vector 2022 skin, used by vector-2022-mobile.check.js.
+  The CSS is a hand-picked subset of Vector 2022 and MediaWiki core (real compiled values),
+  the viewport tag is the one Wikimedia wikis send, and `mw` is a tiny stand-in.
+-->
+<html class="client-js vector-feature-custom-font-size-clientpref-0 vector-feature-limited-width-clientpref-1 vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-page-tools-pinned-disabled vector-feature-appearance-pinned-clientpref-1" lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>Bangladesh - Wikipedia (mock Vector 2022)</title>
+<meta name="viewport" content="width=1120">
+<style>
+/* --- Subset of Vector 2022 + MediaWiki core styles, with the real compiled values --- */
+html { font-size: 100%; touch-action: manipulation; }
+html, body { font-family: sans-serif; }
+body { margin: 0; background-color: #f8f9fa; color: #202122; }
+a { color: #3366cc; text-decoration: none; }
+.mw-page-container { min-width: 18.75em; max-width: 99.75rem; padding-left: 1.5rem; padding-right: 1.5rem; box-sizing: border-box; position: relative; z-index: 0; margin: 0 auto; padding-top: 0.05px; background-color: #fff; }
+@media (min-width: 1120px) { .mw-page-container, .vector-header-container .mw-header { padding-left: 2.75rem; padding-right: 2.75rem; } }
+.skin--responsive .mw-page-container { min-width: auto; }
+.vector-header-container { width: 100%; display: flex; justify-content: center; }
+.vector-header-container .mw-header { width: 100%; min-height: 3.125rem; background-color: #fff; min-width: 18.75em; max-width: 99.75rem; padding-left: 1.5rem; padding-right: 1.5rem; box-sizing: border-box; }
+.mw-header { display: flex; flex-wrap: wrap; align-items: center; padding-top: 8px; padding-bottom: 8px; gap: 16px; position: relative; z-index: 4; }
+.mw-header .vector-header-start { gap: 20px; }
+.mw-header .vector-header-start, .mw-header .vector-header-end { display: flex; align-items: center; }
+.mw-header .vector-header-end { flex-grow: 1; }
+.mw-header .search-toggle { display: inline-flex; }
+@media (min-width: 1120px) { .mw-header .search-toggle { display: none !important; } }
+.mw-header .vector-typeahead-search-container { display: none; }
+@media (min-width: 1120px) { .mw-header .vector-typeahead-search-container { display: block; } }
+.vector-search-box { font-size: 0.875rem; flex-grow: 1; }
+.vector-search-box .vector-typeahead-search-container { max-width: 31.25rem; margin-right: 12px; }
+.cdx-text-input__input { width: 100%; box-sizing: border-box; height: 32px; font-size: 0.8125em; padding: 4px 8px; border: 1px solid #a2a9b1; border-radius: 2px; }
+.cdx-button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 0 12px; border: 1px solid transparent; border-radius: 2px; background: transparent; font-size: 0.875rem; box-sizing: border-box; }
+.cdx-button--icon-only { padding: 0; width: 32px; }
+.vector-user-links { display: flex; align-items: center; position: relative; justify-content: flex-end; flex-shrink: 1; margin-left: auto; }
+.vector-user-links .mw-list-item, .vector-user-links .vector-dropdown-label { margin: 0 4px; }
+.vector-user-links-main { display: flex; align-items: center; }
+.vector-user-links-main .vector-menu-content-list { display: flex; align-items: center; font-size: 0.875rem; }
+@media (max-width: 639px) { .vector-user-links-main .vector-menu-item--collapsible { display: none; } }
+.mw-logo { display: flex; height: 100%; align-items: center; }
+.mw-logo-icon { float: left; margin-right: 10px; display: none; width: 3.125em; height: 3.125em; }
+@media (min-width: 640px) { .mw-logo-icon { display: block; } }
+.mw-logo-container { float: left; max-width: 120px; }
+.mw-logo-container img { width: 100%; }
+@media (min-width: 640px) { .mw-logo-container { max-width: none; } .mw-logo-container img { width: auto; } }
+.mw-logo-wordmark { display: block; margin: 0 auto; }
+.mw-logo-tagline { display: block; margin: 5px auto 0; }
+.vector-menu-content-list { list-style: none; margin: 0; padding: 0; }
+.vector-dropdown { position: relative; }
+.vector-dropdown-checkbox { cursor: pointer; position: absolute; top: 0; left: 0; z-index: 1; opacity: 0; width: 100%; height: 100%; margin: 0; padding: 0; }
+.vector-dropdown-checkbox:checked ~ .vector-dropdown-content { opacity: 1; visibility: visible; height: auto; }
+.vector-dropdown-content { position: absolute; top: 100%; left: -1px; opacity: 0; height: 0; visibility: hidden; overflow: hidden auto; z-index: 50; background: #fff; padding: 16px 16px; font-size: 0.875rem; box-shadow: 0 2px 6px -1px rgba(0,0,0,0.2); width: max-content; max-width: 200px; max-height: 75vh; }
+.vector-user-menu .vector-dropdown-content, #right-navigation .vector-dropdown-content { left: auto; right: 0; }
+.vector-dropdown-content .mw-list-item { padding: 0; }
+.vector-dropdown-content .mw-list-item a { display: flex; align-items: center; padding: 6px 0; }
+.vector-pinned-container { background: #fff; padding: 0 16px; margin-bottom: 2rem; display: block; }
+@media (max-width: 1119px) { .client-js .vector-pinned-container, .client-js .vector-sticky-pinned-container { display: none; } }
+.vector-sticky-pinned-container { position: sticky; top: 24px; }
+.vector-toc .vector-toc-text { padding: 6px 0; display: block; }
+.vector-toc-link { display: block; word-break: break-word; }
+.vector-toc-contents, .vector-toc-list { list-style: none; margin: 0; padding: 0 0 0 12px; }
+@media (min-width: 1120px) {
+  .mw-page-container-inner { display: grid; column-gap: 24px; grid-template: min-content 1fr min-content / 12.25rem minmax(0, 1fr); grid-template-areas: 'siteNotice siteNotice' 'columnStart pageContent' 'footer footer'; }
+  .vector-sitenotice-container { grid-area: siteNotice; }
+  .vector-column-start { grid-area: columnStart; }
+  .mw-content-container { grid-area: pageContent; }
+  .mw-footer-container { grid-area: footer; }
+  .vector-column-start, .vector-column-end { margin-top: 2.8rem; border-top: 1px solid transparent; }
+  .mw-body { display: grid; grid-template: min-content min-content min-content 1fr / minmax(0, 59.25rem) min-content; grid-template-areas: 'titlebar-cx .' 'titlebar columnEnd' 'toolbar columnEnd' 'content columnEnd'; }
+  .mw-body .vector-page-titlebar { grid-area: titlebar; }
+  .mw-body .vector-page-toolbar { grid-area: toolbar; }
+  .mw-body #bodyContent { grid-area: content; }
+  .mw-body .vector-column-end { grid-area: columnEnd; }
+}
+.vector-page-titlebar { position: relative; display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; }
+@media (max-width: 639px) { .vector-page-titlebar { flex-wrap: wrap; } .vector-page-titlebar .firstHeading { flex-basis: 70%; } }
+.vector-page-titlebar .firstHeading { flex-grow: 1; padding: 0; border: 0; }
+.vector-page-titlebar::after { content: ''; display: block; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background-color: #a2a9b1; }
+.mw-body .firstHeading { word-wrap: break-word; margin-bottom: 0; font-family: 'Linux Libertine', Georgia, Times, serif; font-size: 1.8em; line-height: 1.375; font-weight: normal; }
+.vector-page-toolbar-container { display: flex; flex-flow: row; justify-content: space-between; font-size: 0.875rem; box-shadow: 0 1px #c8ccd1; margin-bottom: 1px; }
+#right-navigation, #left-navigation { display: flex; align-items: center; margin: 0 -8px; }
+.vector-menu-tabs .vector-menu-content-list { display: flex; }
+.vector-menu-tabs .mw-list-item a { display: block; padding: 0.8em 8px; }
+@media (max-width: 639px) { .mw-portlet-views .vector-menu-item--collapsible { display: none; } }
+#mw-content-text { margin-top: 16px; }
+.vector-body { position: relative; z-index: 0; font-size: var(--font-size-medium); line-height: var(--line-height-content); }
+html.vector-feature-custom-font-size-clientpref-0 { --font-size-medium: 0.875rem; --line-height-content: 1.5714285; }
+.mw-body p { margin: 0.5em 0 1em 0; }
+.mw-body h2 { font-family: 'Linux Libertine', Georgia, Times, serif; font-size: 1.5em; line-height: 1.375; margin: 0.25em 0; font-weight: normal; border-bottom: 1px solid #a2a9b1; }
+.mw-footer { font-size: 0.75em; padding: 1em 0; }
+.mw-footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5em 1em; }
+/* core: content-body */
+.mw-parser-output a.external.free { overflow-wrap: break-word; }
+/* core: elements */
+pre, code, .mw-code { background-color: #f8f9fa; color: #000; border: 1px solid #eaecf0; font-family: monospace, monospace; }
+pre, .mw-code { padding: 1em; white-space: pre-wrap; overflow-x: hidden; word-wrap: break-word; line-height: 1.3; }
+/* core: content-tables */
+@media all and (max-width: 639px) {
+  .mw-parser-output table { display: block; overflow: auto; max-width: 100%; width: fit-content; }
+  .mw-parser-output .noresize table { display: table; }
+}
+.wikitable { background-color: #f8f9fa; color: #202122; margin: 1em 0; border: 1px solid #a2a9b1; border-collapse: collapse; }
+.wikitable > tr > th, .wikitable > tr > td, .wikitable > * > tr > th, .wikitable > * > tr > td { border: 1px solid #a2a9b1; padding: 0.2em 0.4em; }
+.wikitable > tr > th, .wikitable > * > tr > th { background-color: #eaecf0; text-align: center; }
+@media all and (max-width: 639px) { body.skin--responsive .wikitable { float: none; margin-left: 0; margin-right: 0; } }
+/* core: content-media */
+figure[typeof~='mw:File/Thumb'], figure[typeof~='mw:File/Frame'] { display: table; text-align: center; border: 1px solid #c8ccd1; border-bottom: 0; background-color: #f8f9fa; margin: 0.5em 0 1.3em 1.4em; float: right; clear: right; }
+figure[typeof~='mw:File/Thumb'].mw-halign-left { margin: 0.5em 1.4em 1.3em 0; float: left; clear: left; }
+figure[typeof~='mw:File/Thumb'] > a { display: block; }
+figure[typeof~='mw:File/Thumb'] > :not(figcaption) .mw-file-element { background-color: #fff; border: 1px solid #c8ccd1; margin: 3px; }
+figure[typeof~='mw:File/Thumb'] > figcaption { display: table-caption; caption-side: bottom; border: 1px solid #c8ccd1; border-top: 0; font-size: 88.4%; padding: 0 6px 6px 6px; text-align: start; word-break: break-word; }
+@media all and (max-width: 639px) { body.skin--responsive figure { margin: 0 auto !important; float: none !important; } }
+body.skin--responsive .mw-parser-output figure img.mw-file-element { height: auto; max-width: 100%; }
+body.skin--responsive .mw-parser-output figure[typeof~='mw:File/Thumb'] img.mw-file-element { max-width: calc(100% - 6px - 2px); }
+.noresize { max-width: 100%; overflow-x: auto; }
+/* TemplateStyles: Module:Infobox/styles.css (enwiki) */
+.infobox { border: 1px solid #a2a9b1; border-spacing: 3px; background-color: #f8f9fa; color: #000; margin: 0.5em 0 0.5em 1em; padding: 0.2em; float: right; clear: right; font-size: 88%; line-height: 1.5em; width: 22em; }
+.infobox-image { text-align: center; }
+.infobox-header { text-align: center; font-weight: bold; background: #cedff2; }
+.infobox-label { text-align: left; font-weight: bold; }
+/* Template:Navbox */
+.navbox { box-sizing: border-box; border: 1px solid #a2a9b1; width: 100%; clear: both; font-size: 88%; text-align: center; padding: 1px; margin: 1em auto 0; }
+.navbox-inner { width: 100%; }
+.navbox-list { text-align: left; }
+</style>
+<script>
+/* Fake MediaWiki JS environment */
+(function () {
+  var hooks = {};
+  window.mw = {
+    config: { get: function (k) { return { skin: 'vector-2022', wgUserLanguage: 'en' }[k]; } },
+    hook: function (name) {
+      var h = hooks[name] = hooks[name] || { handlers: [], fired: null };
+      return {
+        add: function (fn) { h.handlers.push(fn); if (h.fired) { fn.apply(null, h.fired); } return this; },
+        fire: function () { h.fired = arguments; h.handlers.forEach(function (fn) { fn.apply(null, h.fired); }); return this; }
+      };
+    },
+    loader: { using: function () { return Promise.resolve(); } },
+    util: {
+      addPortletLink: function (portletId, href, text, id, tooltip) {
+        var portlet = document.getElementById(portletId);
+        if (!portlet) { return null; }
+        var ul = portlet.querySelector('ul');
+        var li = document.createElement('li');
+        li.id = id; li.className = 'mw-list-item mw-list-item-js';
+        var a = document.createElement('a'); a.href = href; a.title = tooltip; a.textContent = text;
+        li.appendChild(a); ul.appendChild(li);
+        return li;
+      }
+    }
+  };
+  document.addEventListener('DOMContentLoaded', function () {
+    var $content = { toArray: function () { return [document.getElementById('mw-content-text')]; } };
+    mw.hook('wikipage.content').fire($content);
+  });
+}());
+</script>
+</head>
+<body class="skin-vector skin-vector-search-vue mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-Bangladesh rootpage-Bangladesh skin-vector-2022 action-view">
+<div class="vector-header-container">
+<header class="vector-header mw-header">
+  <div class="vector-header-start">
+    <nav class="vector-main-menu-landmark"><div id="vector-main-menu-dropdown" class="vector-dropdown vector-main-menu-dropdown"><input type="checkbox" id="vector-main-menu-dropdown-checkbox" class="vector-dropdown-checkbox"><label class="vector-dropdown-label cdx-button cdx-button--icon-only" for="vector-main-menu-dropdown-checkbox">☰</label><div class="vector-dropdown-content"><div id="p-navigation" class="vector-menu"><ul class="vector-menu-content-list"><li class="mw-list-item"><a href="#">Main page</a></li><li class="mw-list-item"><a href="#">Contents</a></li><li class="mw-list-item"><a href="#">Current events</a></li><li class="mw-list-item"><a href="#">Random article</a></li></ul></div></div></div></nav>
+    <a href="#" class="mw-logo"><img class="mw-logo-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Ccircle cx='25' cy='25' r='24' fill='%23ccc'/%3E%3C/svg%3E" alt="" width="50" height="50"><span class="mw-logo-container skin-invert"><img class="mw-logo-wordmark" alt="Wikipedia" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='119' height='18'%3E%3Crect width='119' height='18' fill='%23333'/%3E%3C/svg%3E" style="width: 7.4375em; height: 1.125em;"><img class="mw-logo-tagline" alt="The Free Encyclopedia" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='117' height='13'%3E%3Crect width='117' height='13' fill='%23777'/%3E%3C/svg%3E" width="117" height="13" style="width: 7.3125em; height: 0.8125em;"></span></a>
+  </div>
+  <div class="vector-header-end">
+    <div id="p-search" role="search" class="vector-search-box-vue vector-search-box-collapses vector-search-box-show-thumbnail vector-search-box-auto-expand-width vector-search-box">
+      <a href="#" class="cdx-button cdx-button--fake-button cdx-button--icon-only search-toggle" title="Search Wikipedia [f]">🔍</a>
+      <div class="vector-typeahead-search-container"><div class="cdx-typeahead-search"><form class="cdx-search-input"><div class="cdx-text-input"><input class="cdx-text-input__input mw-searchInput" type="search" placeholder="Search Wikipedia"></div></form></div></div>
+    </div>
+    <nav class="vector-user-links vector-user-links-wide">
+      <div class="vector-user-links-main">
+        <div id="p-vector-user-menu-preferences" class="vector-menu"><ul class="vector-menu-content-list"><li class="mw-list-item vector-menu-item--collapsible"><a class="cdx-button" href="#">Appearance</a></li></ul></div>
+        <div id="p-notifications" class="vector-menu"><ul class="vector-menu-content-list"><li class="mw-list-item"><a class="cdx-button cdx-button--icon-only" href="#">🔔</a></li><li class="mw-list-item"><a class="cdx-button cdx-button--icon-only" href="#">📥</a></li></ul></div>
+      </div>
+      <div id="vector-user-links-dropdown" class="vector-dropdown vector-user-menu vector-user-menu-logged-in"><input type="checkbox" id="vector-user-links-dropdown-checkbox" class="vector-dropdown-checkbox"><label class="vector-dropdown-label cdx-button" for="vector-user-links-dropdown-checkbox">👤 ▾</label>
+        <div class="vector-dropdown-content">
+          <div id="p-personal" class="vector-menu mw-portlet"><ul class="vector-menu-content-list"><li id="pt-userpage-2" class="mw-list-item"><a href="#">Yahya</a></li><li id="pt-mytalk" class="mw-list-item"><a href="#">Talk</a></li><li id="pt-preferences" class="mw-list-item"><a href="#">Preferences</a></li><li id="pt-watchlist" class="mw-list-item"><a href="#">Watchlist</a></li><li id="pt-mycontris" class="mw-list-item"><a href="#">Contributions</a></li><li id="pt-logout" class="mw-list-item"><a href="#">Log out</a></li></ul></div>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>
+</div>
+<div class="mw-page-container">
+<div class="mw-page-container-inner">
+<div class="vector-sitenotice-container"></div>
+<div class="vector-column-start">
+  <div class="vector-sticky-pinned-container">
+    <nav id="mw-panel-toc" class="mw-table-of-contents-container vector-toc-landmark">
+      <div id="vector-toc-pinned-container" class="vector-pinned-container"><div id="vector-toc" class="vector-toc vector-pinnable-element"><ul class="vector-toc-contents"><li class="vector-toc-list-item vector-toc-level-1"><a class="vector-toc-link" href="#"><div class="vector-toc-text">(Top)</div></a></li><li class="vector-toc-list-item vector-toc-level-1"><a class="vector-toc-link" href="#History"><div class="vector-toc-text">History</div></a></li><li class="vector-toc-list-item vector-toc-level-1"><a class="vector-toc-link" href="#Geography"><div class="vector-toc-text">Geography</div></a></li><li class="vector-toc-list-item vector-toc-level-1"><a class="vector-toc-link" href="#Data"><div class="vector-toc-text">Data</div></a></li></ul></div></div>
+    </nav>
+  </div>
+</div>
+<div class="mw-content-container">
+<main id="content" class="mw-body">
+  <header class="mw-body-header vector-page-titlebar"><nav class="vector-toc-landmark"></nav><h1 id="firstHeading" class="firstHeading mw-first-heading">Bangladesh</h1></header>
+  <div class="vector-page-toolbar"><div class="vector-page-toolbar-container">
+    <div id="left-navigation"><nav><div id="p-associated-pages" class="vector-menu vector-menu-tabs"><ul class="vector-menu-content-list"><li id="ca-nstab-main" class="selected mw-list-item"><a href="#">Article</a></li><li id="ca-talk" class="mw-list-item"><a href="#">Talk</a></li></ul></div></nav></div>
+    <div id="right-navigation" class="vector-collapsible"><nav><div id="p-views" class="vector-menu vector-menu-tabs mw-portlet-views"><ul class="vector-menu-content-list"><li id="ca-view" class="selected vector-menu-item--collapsible mw-list-item"><a href="#">Read</a></li><li id="ca-edit" class="vector-menu-item--collapsible mw-list-item"><a href="#">Edit</a></li><li id="ca-history" class="vector-menu-item--collapsible mw-list-item"><a href="#">View history</a></li></ul></div></nav>
+      <nav class="vector-page-tools-landmark"><div id="vector-page-tools-dropdown" class="vector-dropdown"><input type="checkbox" id="vector-page-tools-dropdown-checkbox" class="vector-dropdown-checkbox"><label class="vector-dropdown-label cdx-button" for="vector-page-tools-dropdown-checkbox">Tools ▾</label><div class="vector-dropdown-content"><div id="p-cactions" class="vector-menu"><ul class="vector-menu-content-list"><li class="mw-list-item"><a href="#">What links here</a></li><li class="mw-list-item"><a href="#">Related changes</a></li><li class="mw-list-item"><a href="#">Permanent link</a></li></ul></div></div></div></nav>
+    </div>
+  </div></div>
+  <div class="vector-column-end"></div>
+  <div id="bodyContent" class="vector-body">
+    <div id="mw-content-text" class="mw-body-content">
+    <div class="mw-content-ltr mw-parser-output" lang="en" dir="ltr">
+      <table class="infobox" id="infobox"><tbody>
+        <tr><th colspan="2" class="infobox-header">People's Republic of Bangladesh</th></tr>
+        <tr><td colspan="2" class="infobox-image"><span typeof="mw:File"><a href="#"><img id="infobox-img" class="mw-file-element" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='180'%3E%3Crect width='300' height='180' fill='%23006a4e'/%3E%3Ccircle cx='135' cy='90' r='60' fill='%23f42a41'/%3E%3C/svg%3E" width="300" height="180" alt="Flag"></a></span></td></tr>
+        <tr><th class="infobox-label">Capital</th><td>Dhaka</td></tr>
+        <tr><th class="infobox-label">Official language</th><td>Bengali</td></tr>
+        <tr><th class="infobox-label">Area</th><td>148,460 km² (57,320 sq mi)</td></tr>
+        <tr><th class="infobox-label">Population (2022)</th><td>169,828,911</td></tr>
+        <tr><th class="infobox-label">Website</th><td><a class="external free" href="#">https://bangladesh.gov.bd/</a></td></tr>
+      </tbody></table>
+      <p><b>Bangladesh</b>, officially the People's Republic of Bangladesh, is a country in South Asia. It is the eighth-most populous country in the world and among the most densely populated with a population of over 170 million within an area of 148,460 square kilometres. Bangladesh shares land borders with India to the north, west, and east, and Myanmar to the southeast. It has a coastline along the Bay of Bengal to its south and is separated from Bhutan and Nepal by the Siliguri Corridor, and from China by the Indian state of Sikkim to its north.</p>
+      <p id="longurl">A long link that must not widen the page: <a class="external free" href="#">https://example.org/a/very/long/path/that/keeps/going/without/any/spaces/0123456789/0123456789/0123456789/0123456789/0123456789/0123456789</a> and a long word: Rindfleischetikettierungsüberwachungsaufgabenübertragungsgesetz-Durchführungsverordnungsentwurf.</p>
+      <h2 id="History">History</h2>
+      <figure typeof="mw:File/Thumb" class="mw-halign-right" id="thumb"><a href="#" class="mw-file-description"><img id="thumb-img" class="mw-file-element" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='260'%3E%3Crect width='400' height='260' fill='%23789'/%3E%3C/svg%3E" width="400" height="260"></a><figcaption>Sixty Dome Mosque in Bagerhat, a UNESCO World Heritage Site built in the 15th century</figcaption></figure>
+      <p>The history of Bangladesh dates back over four millennia to the Chalcolithic era. The region's early documented history featured successions of Hindu and Buddhist kingdoms and empires, vying for regional dominance. Islam arrived during the 8th century and became dominant gradually since the early 13th century with the conquests led by Bakhtiyar Khalji as well as activities of Sunni missionaries such as Shah Jalal in the region. Later, Muslim rulers initiated the preaching of Islam by building mosques.</p>
+      <p>From the 14th century onward, it was ruled by the Bengal Sultanate, founded by Fakhruddin Mubarak Shah, which was a dominant power in the region. During the Mughal period, Bengal was the wealthiest province of the empire and the Mughals described it as the Paradise of Nations.</p>
+      <h2 id="Geography">Geography</h2>
+      <p>Code sample that must wrap:</p>
+      <pre id="pre">$ curl -sS "https://bn.wikipedia.org/w/api.php?action=query&amp;list=usercontribs&amp;ucuser=Example&amp;uclimit=500&amp;ucprop=ids|title|timestamp|sizediff|flags&amp;format=json&amp;formatversion=2" | jq '.query.usercontribs | length'</pre>
+      <p>A formula: <img id="math" class="mwe-math-fallback-image-display" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='40'%3E%3Crect width='900' height='40' fill='%23ddd'/%3E%3C/svg%3E" width="900" height="40" style="display:block;margin:0 auto"></p>
+      <h2 id="Data">Data</h2>
+      <table class="wikitable sortable" id="wide" style="white-space: nowrap;">
+        <caption>Administrative divisions: a wide table (12 columns)</caption>
+        <tbody><tr><th>Division</th><th>Established</th><th>Capital</th><th>Area (km²)</th><th>Population (2022)</th><th>Density (/km²)</th><th>Districts</th><th>Upazilas</th><th>Literacy rate</th><th>HDI (2021)</th><th>Largest city</th><th>Notes and remarks</th></tr>
+        <tr><td>Barisal</td><td>1 January 1993</td><td>Barisal</td><td>13,225</td><td>9,100,102</td><td>688</td><td>6</td><td>42</td><td>75.4%</td><td>0.640 (medium)</td><td>Barisal</td><td>Smallest division by population<table id="nested" class="wikitable" style="margin:0"><tr><td>nested</td><td>table</td></tr></table></td></tr>
+        <tr><td>Chittagong</td><td>1 January 1829</td><td>Chittagong</td><td>33,909</td><td>33,202,326</td><td>979</td><td>11</td><td>103</td><td>75.6%</td><td>0.663 (medium)</td><td>Chittagong</td><td>Largest division by area</td></tr>
+        <tr><td>Dhaka</td><td>1 January 1829</td><td>Dhaka</td><td>20,594</td><td>44,215,107</td><td>2,147</td><td>13</td><td>93</td><td>78.1%</td><td>0.713 (high)</td><td>Dhaka</td><td>Largest division by population</td></tr>
+        </tbody></table>
+      <table class="wikitable" id="full" style="width: 100%"><tbody><tr><th>Year</th><th>Population</th><th>Growth</th></tr><tr><td>2011</td><td>144,043,697</td><td>1.37%</td></tr><tr><td>2022</td><td>169,828,911</td><td>1.22%</td></tr></tbody></table>
+      <table class="wikitable" id="floated" style="float: right; width: 20em; margin-left: 1em;"><tbody><tr><th colspan="2">Floated table</th></tr><tr><td>Dhaka</td><td>10,278,882</td></tr><tr><td>Chittagong</td><td>3,227,246</td></tr></tbody></table>
+      <p>Side by side tables made with <code>display:inline-table</code>:</p>
+      <table class="wikitable" id="inline1" style="display: inline-table; margin-right: 1em;"><tbody><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></tbody></table>
+      <table class="wikitable" id="inline2" style="display: inline-table;"><tbody><tr><th>C</th><th>D</th></tr><tr><td>3</td><td>4</td></tr></tbody></table>
+      <div class="noresize"><table class="wikitable" id="noresize" style="white-space: nowrap;"><tbody><tr><th>An editor already marked this table noresize</th><th>Column two with a long heading</th><th>Column three with a long heading</th><th>Column four with a long heading</th><th>Column five with a long heading</th></tr><tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr></tbody></table></div>
+      <p style="clear: both">After the tables. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      <div class="navbox" id="navbox"><table class="nowraplinks navbox-inner"><tbody><tr><th colspan="2">Bangladesh topics</th></tr><tr><th>History</th><td class="navbox-list">Ancient Bengal · Vanga · Pundra · Gangaridai · Samatata · Harikela · Pala Empire · Sena dynasty · Bengal Sultanate · Mughal Bengal · Nawabs of Bengal · British Bengal · Partition of Bengal · East Pakistan · Liberation War</td></tr></tbody></table></div>
+    </div>
+    </div>
+  </div>
+</main>
+</div>
+<div class="mw-footer-container"><footer id="footer" class="mw-footer"><ul id="footer-info"><li>This page was last edited on 1 November 2026, at 08:00 (UTC).</li><li>Text is available under the Creative Commons Attribution-ShareAlike 4.0 License.</li></ul><ul id="footer-places"><li><a href="#">Privacy policy</a></li><li><a href="#">About Wikipedia</a></li><li><a href="#">Disclaimers</a></li><li><a href="#">Mobile view</a></li></ul></footer></div>
+</div>
+</div>
+</body>
+</html>

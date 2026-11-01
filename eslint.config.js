@@ -17,5 +17,15 @@ module.exports = [
   {
     files: ['public/js/**/*.js'],
     languageOptions: { sourceType: 'script', globals: { ...globals.browser } }
+  },
+  {
+    // MediaWiki user scripts run in the browser; each file declares `mw` with a `global` comment
+    files: ['userscripts/**/*.js'],
+    languageOptions: { sourceType: 'script', globals: { ...globals.browser } }
+  },
+  {
+    // Playwright checks: Node runners whose page.evaluate callbacks run in the browser
+    files: ['test/browser/**/*.js'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } }
   }
 ];
