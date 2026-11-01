@@ -220,6 +220,7 @@ test('switches Vector 2022 into its responsive mode', async () => {
   assert.match(style.textContent, /max-width: 639px/);
   assert.match(style.textContent, /max-width: 1119px/);
   assert.ok(!/min-width/.test(style.textContent), 'no rule applies at desktop widths');
+  assert.match(style.textContent, /\.mw-logo-container \{ display: none; \}/, 'wordmark hidden on phones by default');
   assert.equal(window.vector2022Mobile.enabled, true);
 
   await flush();
@@ -322,9 +323,10 @@ test('labels follow the user language and can be overridden', async () => {
 });
 
 test('features can be turned off with window.vector2022MobileConfig', () => {
-  const { window, document, content } = runScript({ config: { tables: false, infobox: false, text: false, menuLink: false } });
+  const { window, document, content } = runScript({ config: { tables: false, infobox: false, text: false, hideLogo: false, menuLink: false } });
   const css = document.getElementById('vector-2022-mobile-styles').textContent;
   assert.ok(!/infobox/.test(css));
+  assert.ok(!/mw-logo-container/.test(css), 'wordmark kept when hideLogo is false');
   assert.ok(!/font-size: 1rem; line-height/.test(css));
   assert.ok(!/vector-2022-mobile-table/.test(css));
   content.clientWidth = 300;

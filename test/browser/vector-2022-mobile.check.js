@@ -64,6 +64,8 @@ const measure = () => {
     math: r('math'),
     bodyFont: getComputedStyle(document.getElementById('bodyContent')).fontSize,
     menuItemHeight: Math.round(document.querySelector('#p-personal .mw-list-item a').getBoundingClientRect().height),
+    wordmarkVisible: getComputedStyle(document.querySelector('.mw-logo-container')).display !== 'none',
+    headerRows: new Set([...document.querySelectorAll('.mw-header .vector-header-start, .mw-header .vector-header-end')].map(el => Math.round(el.getBoundingClientRect().top))).size,
     wrappers: document.querySelectorAll('.vector-2022-mobile-table').length
   };
 };
@@ -119,10 +121,12 @@ const measure = () => {
       check('body text is 16px', after.bodyFont === '16px', after.bodyFont);
       check('menu items at least 40px tall', after.menuItemHeight >= 40, String(after.menuItemHeight));
       check('side gutters are 16px', after.contentWidth === dev.viewport.width - 32, `${after.contentWidth} vs ${dev.viewport.width - 32}`);
+      check('wordmark hidden and header on one row', !after.wordmarkVisible && after.headerRows === 1 && after.header.h <= 66, JSON.stringify({ wordmark: after.wordmarkVisible, rows: after.headerRows, h: after.header.h }));
     } else if (dev.viewport.width <= 1119) {
       check('infobox keeps floating on tablets', after.infoboxFloat === 'right', after.infoboxFloat);
       check('wide table got a scrolling wrapper', after.wideScroller === 'wrapper' && /noresize/.test(after.wideParent), after.wideParent);
       check('body text unchanged (14px)', after.bodyFont === '14px', after.bodyFont);
+      check('wordmark still shown on tablets', after.wordmarkVisible, 'hidden');
     } else {
       const same = ['infobox', 'infoboxImg', 'thumb', 'thumbImg', 'wide', 'full', 'floated', 'inline1', 'math', 'header'].filter(k => JSON.stringify(before[k]) !== JSON.stringify(after[k]));
       check('desktop layout identical before and after', same.length === 0 && after.wrappers === 0 && before.innerWidth === after.innerWidth && before.contentWidth === after.contentWidth, `changed: ${same.join(', ')} wrappers=${after.wrappers}`);
