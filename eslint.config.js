@@ -17,5 +17,10 @@ module.exports = [
   {
     files: ['public/js/**/*.js'],
     languageOptions: { sourceType: 'script', globals: { ...globals.browser } }
+  },
+  {
+    // Wikimedia on-wiki user scripts (run in the browser on commons.wikimedia.org)
+    files: ['userscripts/**/*.js'],
+    languageOptions: { ecmaVersion: 2017, sourceType: 'script', globals: { ...globals.browser } }
   }
 ];
