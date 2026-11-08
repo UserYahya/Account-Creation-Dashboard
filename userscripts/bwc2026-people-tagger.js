@@ -2,7 +2,7 @@
  * BWC 2026 People Tagger — a Wikimedia Commons user script.
  *
  * Adds a person category (a subcategory of
- * [[Category:People at Bangla WikiConference 2026]]) to images with one click.
+ * [[Category:People at Bangla WikiConference 2026 by name]]) to images with one click.
  *
  * Instead of printing ~70 names under every image (70 × 200 buttons on a full
  * category page), the page gets:
@@ -49,7 +49,7 @@
 
 	const DEFAULTS = {
 		// Category whose subcategories are the people.
-		peopleCategory: 'Category:People at Bangla WikiConference 2026',
+		peopleCategory: 'Category:People at Bangla WikiConference 2026 by name',
 		// Start automatically when the page title, or one of its categories, matches.
 		activateRegex: /Bangla[ _]WikiConference[ _]2026/i,
 		autoStart: true,

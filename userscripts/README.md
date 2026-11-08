@@ -3,7 +3,7 @@
 ## `bwc2026-people-tagger.js` — tag people in Commons photos
 
 Adds the categories under
-[Category:People at Bangla WikiConference 2026](https://commons.wikimedia.org/wiki/Category:People_at_Bangla_WikiConference_2026)
+[Category:People at Bangla WikiConference 2026 by name](https://commons.wikimedia.org/wiki/Category:People_at_Bangla_WikiConference_2026_by_name)
 to images with one click.
 
 Putting ~70 names under each of up to 200 images on a category page would mean
